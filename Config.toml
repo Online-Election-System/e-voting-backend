@@ -1,9 +1,0 @@
-
-[e_backend.voter]
-host = "localhost"
-port = 5432
-user = "postgres"
-password = "rash456$"
-database = "online_election"
-
-
