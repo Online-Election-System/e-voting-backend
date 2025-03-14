@@ -18,7 +18,7 @@ import ballerina/sql;
 
 public type Voter record {|
     @sql:Column { name: "id" }
-    readonly int id;   // Identity field must be readonly
+    readonly string id;   // Identity field must be readonly
 
     @sql:Column { name: "national_id" }
     string nationalId; // Unique National ID (not optional)
@@ -53,9 +53,3 @@ public type Voter record {|
     @sql:Column { name: "password" }
     string password;
 |};
-
-
-
-
-
-
