@@ -1,9 +1,54 @@
 
-[e_backend.voter]
+
+[e_backend.data]
 host = "localhost"
 port = 5432
 user = "postgres"
 password = "rash456$"
 database = "online_election"
 
+
+
+# "rootcert" is an optional value
+# rootcert = ""	# Type of STRING
+
+# "key" is an optional value
+# [key]	# Type of OBJECT
+
+# "rowFetchSize" is an optional value
+# rowFetchSize = 0	# Type of INTEGER
+
+# "cachedMetadataFieldsCount" is an optional value
+# cachedMetadataFieldsCount = 0	# Type of INTEGER
+
+# "cachedMetadataFieldSize" is an optional value
+# cachedMetadataFieldSize = 0	# Type of INTEGER
+
+# "preparedStatementThreshold" is an optional value
+# preparedStatementThreshold = 0	# Type of INTEGER
+
+# "preparedStatementCacheQueries" is an optional value
+# preparedStatementCacheQueries = 0	# Type of INTEGER
+
+# "preparedStatementCacheSize" is an optional value
+# preparedStatementCacheSize = 0	# Type of INTEGER
+
+# "keepAliveTcpProbe" is an optional value
+# keepAliveTcpProbe = false	# Type of BOOLEAN
+
+# "binaryTransfer" is an optional value
+# binaryTransfer = false	# Type of BOOLEAN
+
+# "currentSchema" is an optional value
+# currentSchema = ""	# Type of STRING
+
+# mode = ""	# Type of STRING
+
+# connectTimeout = 0.0	# Type of NUMBER
+
+# socketTimeout = 0.0	# Type of NUMBER
+
+# loginTimeout = 0.0	# Type of NUMBER
+
+# cancelSignalTimeout = 0.0	# Type of NUMBER
 
