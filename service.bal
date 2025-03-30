@@ -2,96 +2,71 @@ import ballerina/http;
 import ballerina/crypto;
 import ballerina/uuid;
 import e_backend.data;
-import ballerina/persist;
-import ballerina/sql;
 
 listener http:Listener voterListener = new (9090);
 
 final data:Client dbClient = check new ();
 
+service /voter\-registration/api/v1 on voterListener {
 
-public type VoterLogin record { 
-    string nationalId; 
-    string password; 
-};
-
-service /Voter\-registration/api/v1 on voterListener {
-
-    // Register a new voter
+    // Register Chief Occupant
     @http:ResourceConfig {}
-    resource function post voters/register(@http:Payload data:Voter newVoter)
+    resource function post chiefoccupants/register(@http:Payload data:ChiefOccupant newChiefOccupant)
             returns http:Created|http:Forbidden|error {
 
-        string hashedPassword = crypto:hashMd5(newVoter.password.toBytes()).toBase16();
+        string hashedPassword = crypto:hashMd5(newChiefOccupant.passwordHash.toBytes()).toBase16();
+        string chiefOccupantId = generateId();
 
-        data:VoterInsert voterInsert = {
-            id: generateId(),
-            nationalId: newVoter.nationalId,
-            fullName: newVoter.fullName,
-            mobileNumber: newVoter.mobileNumber,
-            dob: newVoter.dob,
-            gender: newVoter.gender,
-            nicChiefOccupant: newVoter.nicChiefOccupant,
-            address: newVoter.address,
-            district: newVoter.district,
-            householdNo: newVoter.householdNo,
-            gramaNiladhari: newVoter.gramaNiladhari,
-            password: hashedPassword
+        data:ChiefOccupantInsert chiefOccupantInsert = {
+            id: chiefOccupantId,
+            fullName: newChiefOccupant.fullName,
+            nic: newChiefOccupant.nic,
+            phoneNumber: newChiefOccupant.phoneNumber,
+            dob: newChiefOccupant.dob,
+            gender: newChiefOccupant.gender,
+            civilStatus: newChiefOccupant.civilStatus,
+            passwordHash: hashedPassword,
+            idCopyPath: newChiefOccupant.idCopyPath
         };
 
-        data:VoterInsert[] voterInsertArr = [voterInsert];
-        string[] | error response = dbClient->/voters.post(voterInsertArr);
-
-        if response is error {
-            return response;
+        // Insert into database
+        string[] | error chiefResponse = dbClient->/chiefoccupants.post([chiefOccupantInsert]);
+        if chiefResponse is error {
+            return chiefResponse;
         }
         return http:CREATED;
     }
 
-    // Voter Login
+    // Register Household Details
     @http:ResourceConfig {}
-    resource function post voters/login(@http:Payload VoterLogin loginDetails)
-    returns http:Response|http:Unauthorized|error {
-    
-        
-        sql:ParameterizedQuery query = `SELECT * FROM "Voter" WHERE "nationalId"::text = ${loginDetails.nationalId}`;
-        
-        stream<data:Voter, persist:Error?>|error queryResult = dbClient->queryNativeSQL(query);
-        
-        if queryResult is error {
-            return error("Internal Server Error");
+    resource function post householddetails/register2(@http:Payload data:HouseholdDetails newHousehold)
+            returns http:Created|http:Forbidden|error {
+
+        if newHousehold.chiefOccupantId == "" { 
+          return error("Chief Occupant ID is required");
         }
-        
-        stream<data:Voter, persist:Error?> voterStream = queryResult;
-        var voterRecord = voterStream.next();
-        
-        data:Voter? voter = ();
-        
-        if voterRecord is record {| data:Voter value; |} {
-            voter = voterRecord.value;
+
+        string householdId = generateId();
+
+        data:HouseholdDetailsInsert householdInsert = {
+            id: householdId,
+            chiefOccupantId: newHousehold.chiefOccupantId,
+            electoralDistrict: newHousehold.electoralDistrict,
+            pollingDivision: newHousehold.pollingDivision,
+            pollingDistrictNumber: newHousehold.pollingDistrictNumber,
+            gramaNiladhariDivision: newHousehold.gramaNiladhariDivision,
+            villageStreetEstate: newHousehold.villageStreetEstate,
+            houseNumber: newHousehold.houseNumber,
+            householdMemberCount: newHousehold.householdMemberCount
+        };
+
+        // Insert into database
+        string[] | error householdResponse = dbClient->/householddetails.post([householdInsert]);
+        if householdResponse is error {
+            return householdResponse;
         }
-        
-        check voterStream.close();
-        
-        if voter is () {
-            
-            return http:UNAUTHORIZED;
-        }
-        
-        string hashedInputPassword = crypto:hashMd5(loginDetails.password.toBytes()).toBase16();
-        
-        
-        if voter.password == hashedInputPassword {
-            string sessionToken = generateId();
-            json responseBody = { "message": "Login successful", "token": sessionToken };
-            http:Response response = new;
-            response.statusCode = http:STATUS_OK;
-            response.setJsonPayload(responseBody);
-            return response;
-        } else {
-            //log:printError("Invalid password for National ID: " + loginDetails.nationalId);
-            return http:UNAUTHORIZED;
-        }
+
+        return http:CREATED;
     }
 
 }
