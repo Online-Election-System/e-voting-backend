@@ -1,14 +1,19 @@
+import election_config.elections;
+
 import ballerina/http;
+import ballerina/persist;
 
 listener http:Listener ElectionConfigListener = new (8080);
-
-// In-memory storage for demonstration purposes
-map<ElectionConfig> ElectionConfigs = {};
+elections:Client dbElection = check new ();
 
 service /electionConfig/api/v1 on ElectionConfigListener {
 
-    resource function get elections() returns ElectionConfig[]|error {
-        return ElectionConfigs.toArray();
+    resource function get elections() returns elections:Election[]|error {
+        stream<elections:Election, persist:Error?> electionStream = dbElection->/elections;
+        elections:Election[] elections = check from elections:Election election in electionStream
+            select election;
+
+        return elections;
     }
 
     // @http:ResourceConfig {
@@ -17,9 +22,15 @@ service /electionConfig/api/v1 on ElectionConfigListener {
     //     }
     // }
     resource function post elections/create(@http:Header string authorization, ElectionConfig newElectionConfig)
-            returns http:Created|http:Forbidden|error {
-        string id = "election_" + (ElectionConfigs.length() + 1).toString();
-        ElectionConfigs[id] = newElectionConfig;
+        returns http:Created|http:Forbidden|error {
+
+        elections:ElectionInsert electionInsert = {
+            id: generateId(),
+            ...newElectionConfig
+        };
+
+        string[]|persist:Error result = dbElection->/elections.post([electionInsert]);
+
         return http:CREATED;
     }
 
@@ -28,10 +39,13 @@ service /electionConfig/api/v1 on ElectionConfigListener {
     //         scopes: ["admin"]
     //     }
     // }
-    resource function put elections/[string electionId]/update(@http:Header string authorization, ElectionConfig updatedConfig)
-            returns http:Ok|http:Forbidden|error {
-        if ElectionConfigs.hasKey(electionId) {
-            ElectionConfigs[electionId] = updatedConfig;
+    resource function put elections/[string electionId]/update(@http:Header string authorization, elections:ElectionUpdate updatedElection)
+        returns http:Ok|http:Forbidden|error {
+
+        elections:Election|persist:Error existingElection = dbElection->/elections/[electionId];
+
+        if existingElection is elections:Election {
+            elections:Election updated = check dbElection->/elections/[electionId].put(updatedElection);
             return http:OK;
         } else {
             return error("Election configuration not found");
@@ -45,19 +59,9 @@ service /electionConfig/api/v1 on ElectionConfigListener {
     // }
     resource function delete elections/[string electionId]/delete(@http:Header string authorization)
             returns http:NoContent|http:Forbidden|error {
-        if ElectionConfigs.hasKey(electionId) {
-            _ = ElectionConfigs.remove(electionId);
-            return http:NO_CONTENT;
-        } else {
-            return {body: "Election configuration not found"};
-        }
+        // string userId = check getUserId(authorization);
+        elections:Election election = check dbElection->/elections/[electionId];
+        _ = check dbElection->/elections/[electionId].delete();
+        return http:NO_CONTENT;
     }
 }
-
-type ElectionConfig record {
-    string election_name;
-    string description;
-    string start_date;
-    string end_date;
-    int no_of_candidates;
-};
