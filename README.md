@@ -8,10 +8,10 @@ Follow the steps below to set up and run the backend for the e-voting system:
    bal --version
    ```
 
-2. **Generate the Data Store**  
-   Run the following command to generate the necessary datastore configuration for PostgreSQL:
+2. **Navigate to the Folder**  
+   Run the following command to navigate to the necessary folder:
    ```bash
-   bal persist generate --datastore postgresql --module elections
+   cd election-config
    ```
 
 3. **Run the Application**  
