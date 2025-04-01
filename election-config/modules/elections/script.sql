@@ -10,6 +10,7 @@ CREATE TABLE "Election" (
 	"election_name" VARCHAR(191) NOT NULL,
 	"description" VARCHAR(191) NOT NULL,
 	"start_date" DATE NOT NULL,
+	"enrol_ddl" DATE NOT NULL,
 	"end_date" DATE NOT NULL,
 	"no_of_candidates" INT NOT NULL,
 	PRIMARY KEY("id")

@@ -28,6 +28,7 @@ public isolated client class Client {
                 election_name: {columnName: "election_name"},
                 description: {columnName: "description"},
                 start_date: {columnName: "start_date"},
+                enrol_ddl: {columnName: "enrol_ddl"},
                 end_date: {columnName: "end_date"},
                 no_of_candidates: {columnName: "no_of_candidates"}
             },

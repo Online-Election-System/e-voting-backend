@@ -10,6 +10,7 @@ public type Election record {|
     string election_name;
     string description;
     time:Date start_date;
+    time:Date enrol_ddl;
     time:Date end_date;
     int no_of_candidates;
 |};
@@ -19,6 +20,7 @@ public type ElectionOptionalized record {|
     string election_name?;
     string description?;
     time:Date start_date?;
+    time:Date enrol_ddl?;
     time:Date end_date?;
     int no_of_candidates?;
 |};
@@ -31,6 +33,7 @@ public type ElectionUpdate record {|
     string election_name?;
     string description?;
     time:Date start_date?;
+    time:Date enrol_ddl?;
     time:Date end_date?;
     int no_of_candidates?;
 |};
