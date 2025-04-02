@@ -16,6 +16,13 @@ service /electionConfig/api/v1 on ElectionConfigListener {
         return elections;
     }
 
+    resource function get elections/[string electionId]() returns elections:Election|error {
+
+        elections:Election|persist:Error election = check dbElection->/elections/[electionId];
+        return election;
+
+    }
+
     // @http:ResourceConfig {
     //     auth: {
     //         scopes: ["admin"]
