@@ -376,8 +376,8 @@ modules = [
 ]
 
 [[package]]
-org = "user"
-name = "election_config"
+org = "codeCrew"
+name = "online_election"
 version = "0.1.0"
 dependencies = [
 	{org = "ballerina", name = "http"},
@@ -392,7 +392,9 @@ dependencies = [
 	{org = "ballerinax", name = "postgresql.driver"}
 ]
 modules = [
-	{org = "user", packageName = "election_config", moduleName = "election_config"},
-	{org = "user", packageName = "election_config", moduleName = "election_config.elections"}
+	{org = "codeCrew", packageName = "online_election", moduleName = "online_election"},
+	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.auth"},
+	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.election"},
+	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.store"}
 ]
 

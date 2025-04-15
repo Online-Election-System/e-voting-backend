@@ -1,6 +1,6 @@
 [package]
-org = "user"
-name = "election_config"
+org = "codeCrew"
+name = "online_election"
 version = "0.1.0"
 distribution = "2201.12.2"
 
