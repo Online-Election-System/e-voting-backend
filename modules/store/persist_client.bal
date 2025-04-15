@@ -11,6 +11,7 @@ import ballerinax/postgresql;
 import ballerinax/postgresql.driver as _;
 
 const VOTER = "voters";
+const ELECTION = "elections";
 
 public isolated client class Client {
     *persist:AbstractPersistClient;
@@ -25,17 +26,31 @@ public isolated client class Client {
             tableName: "Voter",
             fieldMetadata: {
                 id: {columnName: "id"},
-                nationalId: {columnName: "nationalId"},
-                fullName: {columnName: "fullName"},
-                mobileNumber: {columnName: "mobileNumber"},
+                nationalId: {columnName: "national_id"},
+                fullName: {columnName: "full_name"},
+                mobileNumber: {columnName: "mobile_number"},
                 dob: {columnName: "dob"},
                 gender: {columnName: "gender"},
-                nicChiefOccupant: {columnName: "nicChiefOccupant"},
+                nicChiefOccupant: {columnName: "nic_chief_occupant"},
                 address: {columnName: "address"},
                 district: {columnName: "district"},
-                householdNo: {columnName: "householdNo"},
-                gramaNiladhari: {columnName: "gramaNiladhari"},
+                householdNo: {columnName: "household_no"},
+                gramaNiladhari: {columnName: "grama_niladhari"},
                 password: {columnName: "password"}
+            },
+            keyFields: ["id"]
+        },
+        [ELECTION]: {
+            entityName: "Election",
+            tableName: "Election",
+            fieldMetadata: {
+                id: {columnName: "id"},
+                electionName: {columnName: "election_name"},
+                description: {columnName: "description"},
+                startDate: {columnName: "start_date"},
+                enrolDdl: {columnName: "enrol_ddl"},
+                endDate: {columnName: "end_date"},
+                noOfCandidates: {columnName: "no_of_candidates"}
             },
             keyFields: ["id"]
         }
@@ -66,7 +81,10 @@ public isolated client class Client {
                 }
             }
         }
-        self.persistClients = {[VOTER]: check new (dbClient, self.metadata.get(VOTER).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)};
+        self.persistClients = {
+            [VOTER]: check new (dbClient, self.metadata.get(VOTER).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [ELECTION]: check new (dbClient, self.metadata.get(ELECTION).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
+        };
     }
 
     isolated resource function get voters(VoterTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
@@ -103,6 +121,45 @@ public isolated client class Client {
         psql:SQLClient sqlClient;
         lock {
             sqlClient = self.persistClients.get(VOTER);
+        }
+        _ = check sqlClient.runDeleteQuery(id);
+        return result;
+    }
+
+    isolated resource function get elections(ElectionTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get elections/[string id](ElectionTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post elections(ElectionInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ELECTION);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from ElectionInsert inserted in data
+            select inserted.id;
+    }
+
+    isolated resource function put elections/[string id](ElectionUpdate value) returns Election|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ELECTION);
+        }
+        _ = check sqlClient.runUpdateQuery(id, value);
+        return self->/elections/[id].get();
+    }
+
+    isolated resource function delete elections/[string id]() returns Election|persist:Error {
+        Election result = check self->/elections/[id].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ELECTION);
         }
         _ = check sqlClient.runDeleteQuery(id);
         return result;
