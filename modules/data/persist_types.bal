@@ -12,7 +12,8 @@ public type ChiefOccupant record {|
     string gender;
     string civilStatus;
     string passwordHash;
-    string? idCopyPath; 
+    string email;
+    string? idCopyPath;
 |};
 
 public type ChiefOccupantOptionalized record {|
@@ -24,6 +25,7 @@ public type ChiefOccupantOptionalized record {|
     string gender?;
     string civilStatus?;
     string passwordHash?;
+    string email?;
     string? idCopyPath?;
 |};
 
@@ -39,6 +41,7 @@ public type ChiefOccupantUpdate record {|
     string gender?;
     string civilStatus?;
     string passwordHash?;
+    string email?;
     string? idCopyPath?;
 |};
 
@@ -92,6 +95,8 @@ public type HouseholdMembers record {|
     string relationshipWithChiefOccupant;
     string? idCopyPath;
     boolean approvedByChief;
+    string passwordHash;
+    boolean passwordchanged;
 |};
 
 public type HouseholdMembersOptionalized record {|
@@ -105,6 +110,8 @@ public type HouseholdMembersOptionalized record {|
     string relationshipWithChiefOccupant?;
     string? idCopyPath?;
     boolean approvedByChief?;
+    string passwordHash?;
+    boolean passwordchanged?;
 |};
 
 public type HouseholdMembersTargetType typedesc<HouseholdMembersOptionalized>;
@@ -121,5 +128,7 @@ public type HouseholdMembersUpdate record {|
     string relationshipWithChiefOccupant?;
     string? idCopyPath?;
     boolean approvedByChief?;
+    string passwordHash?;
+    boolean passwordchanged?;
 |};
 
