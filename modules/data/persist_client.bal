@@ -34,6 +34,7 @@ public isolated client class Client {
                 gender: {columnName: "gender"},
                 civilStatus: {columnName: "civilStatus"},
                 passwordHash: {columnName: "passwordHash"},
+                email: {columnName: "email"},
                 idCopyPath: {columnName: "idCopyPath"}
             },
             keyFields: ["id"]
@@ -67,7 +68,9 @@ public isolated client class Client {
                 civilStatus: {columnName: "civilStatus"},
                 relationshipWithChiefOccupant: {columnName: "relationshipWithChiefOccupant"},
                 idCopyPath: {columnName: "idCopyPath"},
-                approvedByChief: {columnName: "approvedByChief"}
+                approvedByChief: {columnName: "approvedByChief"},
+                passwordHash: {columnName: "passwordHash"},
+                passwordchanged: {columnName: "passwordchanged"}
             },
             keyFields: ["id"]
         }

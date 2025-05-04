@@ -18,6 +18,8 @@ CREATE TABLE "HouseholdMembers" (
 	"relationshipWithChiefOccupant" VARCHAR(191) NOT NULL,
 	"idCopyPath" VARCHAR(191),
 	"approvedByChief" BOOLEAN NOT NULL,
+	"passwordHash" VARCHAR(191) NOT NULL,
+	"passwordchanged" BOOLEAN NOT NULL,
 	PRIMARY KEY("id")
 );
 
@@ -43,6 +45,7 @@ CREATE TABLE "ChiefOccupant" (
 	"gender" VARCHAR(191) NOT NULL,
 	"civilStatus" VARCHAR(191) NOT NULL,
 	"passwordHash" VARCHAR(191) NOT NULL,
+	"email" VARCHAR(191) NOT NULL,
 	"idCopyPath" VARCHAR(191),
 	PRIMARY KEY("id")
 );

@@ -12,6 +12,7 @@ import ballerina/sql;
 # + civilStatus - Marital Status
 # + passwordHash - Hashed Password
 # + idCopyPath - File Path of ID Copy
+# + email - email of chiefoccupant
 
 public type ChiefOccupant record {| 
     @sql:Column { name: "id" }
@@ -38,11 +39,12 @@ public type ChiefOccupant record {|
     @sql:Column { name: "password_hash" }
     string passwordHash;
 
+    @sql:Column { name: "email" }
+    string email;
+
     @sql:Column { name: "id_copy_path" }
     string? idCopyPath;
 |};
-
-
 # HouseholdDetails Table
 #
 # + id - Auto-incrementing Primary Key
@@ -97,6 +99,8 @@ public type HouseholdDetails record {|
 # + relationshipWithChiefOccupant - Relationship with Chief Occupant
 # + idCopyPath - File Path of ID Copy
 # + approvedByChief - Chief Occupant Approval Status
+# + passwordHash - Hashed Password
+# + passwordchanged - if the password change
 
 public type HouseholdMembers record {| 
     @sql:Column { name: "id" }
@@ -128,4 +132,9 @@ public type HouseholdMembers record {|
 
     @sql:Column { name: "approved_by_chief" }
     boolean approvedByChief;
+
+    @sql:Column {name: "Hased_password"}
+    string passwordHash;
+
+    boolean passwordchanged;
 |};
