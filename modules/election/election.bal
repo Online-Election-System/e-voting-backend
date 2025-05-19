@@ -13,7 +13,7 @@ public function getElections() returns store:Election[]|error {
     return elections;
 }
 
-public function getOneElection(string electionId) returns store:Election|error {
+public function getElectionById(string electionId) returns store:Election|error {
     store:Election|persist:Error election = dbElection->/elections/[electionId];
     if election is persist:Error {
         return error("Election not found for ID: " + electionId);

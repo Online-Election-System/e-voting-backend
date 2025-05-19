@@ -59,8 +59,13 @@ public type Election record {|
     string description;
     time:Date startDate;
     time:Date enrolDdl;
+    time:Date electionDate;
     time:Date endDate;
     int noOfCandidates;
+    string electionType;
+    time:TimeOfDay startTime;
+    time:TimeOfDay endTime;
+    string status;
 |};
 
 public type ElectionOptionalized record {|
@@ -69,8 +74,13 @@ public type ElectionOptionalized record {|
     string description?;
     time:Date startDate?;
     time:Date enrolDdl?;
+    time:Date electionDate?;
     time:Date endDate?;
     int noOfCandidates?;
+    string electionType?;
+    time:TimeOfDay startTime?;
+    time:TimeOfDay endTime?;
+    string status?;
 |};
 
 public type ElectionTargetType typedesc<ElectionOptionalized>;
@@ -82,7 +92,12 @@ public type ElectionUpdate record {|
     string description?;
     time:Date startDate?;
     time:Date enrolDdl?;
+    time:Date electionDate?;
     time:Date endDate?;
     int noOfCandidates?;
+    string electionType?;
+    time:TimeOfDay startTime?;
+    time:TimeOfDay endTime?;
+    string status?;
 |};
 
