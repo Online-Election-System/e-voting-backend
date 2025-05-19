@@ -49,8 +49,13 @@ public isolated client class Client {
                 description: {columnName: "description"},
                 startDate: {columnName: "start_date"},
                 enrolDdl: {columnName: "enrol_ddl"},
+                electionDate: {columnName: "election_date"},
                 endDate: {columnName: "end_date"},
-                noOfCandidates: {columnName: "no_of_candidates"}
+                noOfCandidates: {columnName: "no_of_candidates"},
+                electionType: {columnName: "election_type"},
+                startTime: {columnName: "start_time"},
+                endTime: {columnName: "end_time"},
+                status: {columnName: "status"}
             },
             keyFields: ["id"]
         }

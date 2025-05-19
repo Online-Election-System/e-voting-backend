@@ -46,6 +46,9 @@ dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "time"}
 ]
+modules = [
+	{org = "ballerina", packageName = "crypto", moduleName = "crypto"}
+]
 
 [[package]]
 org = "ballerina"
@@ -70,7 +73,7 @@ dependencies = [
 [[package]]
 org = "ballerina"
 name = "http"
-version = "2.14.0"
+version = "2.14.1"
 dependencies = [
 	{org = "ballerina", name = "auth"},
 	{org = "ballerina", name = "cache"},
@@ -380,6 +383,7 @@ org = "codeCrew"
 name = "online_election"
 version = "0.1.0"
 dependencies = [
+	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "http"},
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "persist"},
@@ -394,6 +398,7 @@ dependencies = [
 modules = [
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election"},
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.auth"},
+	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.common"},
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.election"},
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.store"}
 ]

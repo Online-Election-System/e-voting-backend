@@ -6,6 +6,11 @@ import ballerina/http;
 
 listener http:Listener SharedListener = new (8080);
 
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["http://localhost:3000"]
+    }
+}
 service /voter\-registration/api/v1 on SharedListener {
     // Register a new voter
     resource function post voters/register(store:Voter newVoter)
@@ -20,13 +25,20 @@ service /voter\-registration/api/v1 on SharedListener {
     }
 }
 
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["http://localhost:3000"],
+        allowMethods: ["GET", "POST", "PUT", "DELETE"],
+        allowHeaders: ["Content-Type"]
+    }
+}
 service /election/api/v1 on SharedListener {
     resource function get elections() returns store:Election[]|error {
         return check election:getElections();
     }
 
     resource function get elections/[string electionId]() returns store:Election|error {
-        return check election:getOneElection(electionId);
+        return check election:getElectionById(electionId);
     }
 
     // @http:ResourceConfig {

@@ -43,10 +43,15 @@ public type Voter record {|
 # + id - election id (Primary Key)
 # + electionName - election title
 # + description - election description
-# + startDate - election start date
+# + startDate - the date where election should start being visible
 # + enrolDdl - election enrollment deadline
+# + electionDate - the date of the election happening
 # + endDate - election end date
 # + noOfCandidates - election number of candidates
+# + electionType - National / Regional / District / City / Local
+# + startTime - election starting time
+# + endTime - election ending time
+# + status - Scheduled / Upcoming / Active / Completed / Cancelled
 
 public type Election record {|
     readonly string id;
@@ -57,8 +62,17 @@ public type Election record {|
     time:Date startDate;
     @sql:Name {value: "enrol_ddl"}
     time:Date enrolDdl;
+    @sql:Name {value: "election_date"}
+    time:Date electionDate;
     @sql:Name {value: "end_date"}
     time:Date endDate;
     @sql:Name {value: "no_of_candidates"}
     int noOfCandidates;
+    @sql:Name {value: "election_type"}
+    string electionType;
+    @sql:Name {value: "start_time"}
+    time:TimeOfDay startTime;
+    @sql:Name {value: "end_time"}
+    time:TimeOfDay endTime;
+    string status;
 |};
