@@ -17,10 +17,10 @@ type HouseholdMemberInput record {
     string civilStatus;
     string relationshipWithChiefOccupant;
     string? idCopyPath;
+    boolean approvedByChief;
 };
-
 type HouseholdDetailsInput record {
-    string chiefOccupantId;
+    string? chiefOccupantId?;
     string electoralDistrict;
     string pollingDivision;
     string pollingDistrictNumber;
@@ -29,30 +29,33 @@ type HouseholdDetailsInput record {
     string? houseNumber;
     int householdMemberCount;
 };
-
 type HouseholdMembersRequest record {
-    string chiefOccupantId;
+    string? chiefOccupantId?;
     HouseholdMemberInput[] members;
 };
 public type ChiefOccupantQueryResult record {
     string chiefOccupantId;
 };
-
 type LoginRequest record {|
     string nic;
     string password;
 |};
-
 type LoginResponse record {|
     string userId;
-    string userType; // "chief" or "householdMember"
+    string userType; 
     string fullName;
     string message;
+    string token;
 |};
-
 type ChangePasswordRequest record {|
     string userId;
     string oldPassword;
     string newPassword;
     string userType;
 |};
+type VoterRegistrationRequest record {
+    ChiefOccupantInput chiefOccupant;
+    HouseholdDetailsInput householdDetails;
+    HouseholdMembersRequest newHouseholdMembers;
+};
+
