@@ -1,5 +1,6 @@
 import ballerina/persist as _;
-import ballerina/sql;
+import ballerinax/persist.sql;
+import ballerina/time;
 
 # Description.
 #
@@ -17,45 +18,61 @@ import ballerina/sql;
 # + password - Hashed Password for Authentication
 
 public type Voter record {|
-    @sql:Column { name: "id" }
-    readonly int id;   // Identity field must be readonly
-
-    @sql:Column { name: "national_id" }
-    string nationalId; // Unique National ID (not optional)
-
-    @sql:Column { name: "full_name" }
+    readonly string id;
+    @sql:Name { value: "national_id" }
+    string nationalId;
+    @sql:Name { value: "full_name" }
     string fullName;
-
-    @sql:Column { name: "mobile_number" }
-    string? mobileNumber; // Use `?` for nullable fields
-
-    @sql:Column { name: "dob" }
+    @sql:Name { value: "mobile_number" }
+    string? mobileNumber;
     string? dob;
-
-    @sql:Column { name: "gender" }
     string? gender;
-
-    @sql:Column { name: "nic_chief_occupant" }
+    @sql:Name { value: "nic_chief_occupant" }
     string? nicChiefOccupant;
-
-    @sql:Column { name: "address" }
     string? address;
-
-    @sql:Column { name: "district" }
     string? district;
-
-    @sql:Column { name: "household_no" }
+    @sql:Name { value: "household_no" }
     string? householdNo;
-
-    @sql:Column { name: "grama_niladhari" }
+    @sql:Name { value: "grama_niladhari" }
     string? gramaNiladhari;
-
-    @sql:Column { name: "password" }
     string password;
 |};
 
+# Description for elections to be insterted.
+#
+# + id - election id (Primary Key)
+# + electionName - election title
+# + description - election description
+# + startDate - the date where election should start being visible
+# + enrolDdl - election enrollment deadline
+# + electionDate - the date of the election happening
+# + endDate - election end date
+# + noOfCandidates - election number of candidates
+# + electionType - National / Regional / District / City / Local
+# + startTime - election starting time
+# + endTime - election ending time
+# + status - Scheduled / Upcoming / Active / Completed / Cancelled
 
-
-
-
-
+public type Election record {|
+    readonly string id;
+    @sql:Name {value: "election_name"}
+    string electionName;
+    string description;
+    @sql:Name {value: "start_date"}
+    time:Date startDate;
+    @sql:Name {value: "enrol_ddl"}
+    time:Date enrolDdl;
+    @sql:Name {value: "election_date"}
+    time:Date electionDate;
+    @sql:Name {value: "end_date"}
+    time:Date endDate;
+    @sql:Name {value: "no_of_candidates"}
+    int noOfCandidates;
+    @sql:Name {value: "election_type"}
+    string electionType;
+    @sql:Name {value: "start_time"}
+    time:TimeOfDay startTime;
+    @sql:Name {value: "end_time"}
+    time:TimeOfDay endTime;
+    string status;
+|};
