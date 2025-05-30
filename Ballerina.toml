@@ -1,0 +1,13 @@
+[package]
+org = "param"
+name = "election"
+version = "0.1.0"
+distribution = "2201.10.2"
+
+[[platform.java11.dependency]]
+groupId = "org.postgresql"
+artifactId = "postgresql"
+version = "42.5.1"
+
+[build-options]
+observabilityIncluded = true
