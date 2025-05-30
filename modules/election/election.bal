@@ -21,7 +21,7 @@ public function getElectionById(string electionId) returns store:Election|error 
     return election;
 }
 
-public function createElection(ElectionConfig newElectionConfig) returns http:Created|http:Forbidden|error {
+public function createElection(ElectionConfig newElectionConfig) returns error|http:Response {
     store:ElectionInsert electionInsert = {
         id: common:generateId(),
         ...newElectionConfig
@@ -30,16 +30,29 @@ public function createElection(ElectionConfig newElectionConfig) returns http:Cr
     if result is persist:Error {
         return error("Election not created");
     }
-    return http:CREATED;
+    store:Election createdElection = {
+        id: electionInsert.id,
+        ...newElectionConfig
+    };
+    
+    http:Response res = new;
+    res.setPayload(createdElection);
+    return res;
 }
 
-public function updateElection(string electionId, store:ElectionUpdate updatedElection) returns http:Ok|http:Forbidden|error {
+public function updateElection(string electionId, store:ElectionUpdate updatedElection) returns error|http:Response {
     store:Election|persist:Error existingElection = dbElection->/elections/[electionId];
     if existingElection is persist:Error {
         return error("Election configuration not found");
     }
-    store:Election _ = check dbElection->/elections/[electionId].put(updatedElection);
-    return http:OK;
+    store:Election|persist:Error result = check dbElection->/elections/[electionId].put(updatedElection);
+    if result is persist:Error {
+        return error("Election not created");
+    }
+    
+    http:Response res = new;
+    res.setPayload(updatedElection);
+    return res;
 }
 
 public function deleteElection(string electionId) returns http:NoContent|http:Forbidden|error {
