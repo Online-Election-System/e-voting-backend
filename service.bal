@@ -28,8 +28,9 @@ service /voter\-registration/api/v1 on SharedListener {
 @http:ServiceConfig {
     cors: {
         allowOrigins: ["http://localhost:3000"],
-        allowMethods: ["GET", "POST", "PUT", "DELETE"],
-        allowHeaders: ["Content-Type"]
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowHeaders: ["Content-Type", "Authorization"],
+        allowCredentials: true
     }
 }
 service /election/api/v1 on SharedListener {
@@ -37,8 +38,16 @@ service /election/api/v1 on SharedListener {
         return check election:getElections();
     }
 
+    resource function get count() returns int|error {
+        return check election:getElectionCount();
+    }
+
     resource function get elections/[string electionId]() returns store:Election|error {
         return check election:getElectionById(electionId);
+    }
+
+    resource function get elections/upcoming() returns store:Election[]|error {
+        return check election:getUpcomingElections();
     }
 
     // @http:ResourceConfig {
@@ -47,7 +56,7 @@ service /election/api/v1 on SharedListener {
     //     }
     // }
     resource function post elections/create(@http:Header string authorization, election:ElectionConfig newElectionConfig)
-    returns http:Created|http:Forbidden|error {
+    returns error|http:Response {
         return check election:createElection(newElectionConfig);
     }
 
@@ -57,7 +66,7 @@ service /election/api/v1 on SharedListener {
     //     }
     // }
     resource function put elections/[string electionId]/update(@http:Header string authorization, store:ElectionUpdate updatedElection)
-    returns http:Ok|http:Forbidden|error {
+    returns error|http:Response {
         return check election:updateElection(electionId, updatedElection);
     }
 
