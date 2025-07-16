@@ -38,8 +38,16 @@ service /election/api/v1 on SharedListener {
         return check election:getElections();
     }
 
+    resource function get count() returns int|error {
+        return check election:getElectionCount();
+    }
+
     resource function get elections/[string electionId]() returns store:Election|error {
         return check election:getElectionById(electionId);
+    }
+
+    resource function get elections/upcoming() returns store:Election[]|error {
+        return check election:getUpcomingElections();
     }
 
     // @http:ResourceConfig {
