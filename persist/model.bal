@@ -1,41 +1,105 @@
 import ballerina/persist as _;
-import ballerinax/persist.sql;
 import ballerina/time;
+import ballerinax/persist.sql;
 
-# Description.
+# ChiefOccupant Table
 #
-# + id - Voter ID (Auto-incrementing Primary Key)
-# + nationalId - National Identity Card Number (Unique Identifier)
-# + fullName - Full Name of the voter
-# + mobileNumber - Contact Number (Nullable)
-# + dob - Date of Birth (Stored as String MM/DD/YYYY)
-# + gender - Gender (Male/Female - Nullable)
-# + nicChiefOccupant - NIC of Chief Occupant (Nullable)
-# + address - Registered Address of the voter
-# + district - Voter's District
-# + householdNo - Household Number (Nullable)
-# + gramaNiladhari - Grama Niladhari Division (Nullable)
-# + password - Hashed Password for Authentication
+# + id - Auto-incrementing Primary Key
+# + fullName - Full Name of Chief Occupant
+# + nic - National Identity Card (Unique)
+# + phoneNumber - Contact Number
+# + dob - Date of Birth (MM/DD/YYYY)
+# + gender - Gender (Male/Female)
+# + civilStatus - Marital Status
+# + passwordHash - Hashed Password
+# + idCopyPath - File Path of ID Copy
+# + email - email of chiefoccupant
 
-public type Voter record {|
+public type ChiefOccupant record {|
     readonly string id;
-    @sql:Name { value: "national_id" }
-    string nationalId;
-    @sql:Name { value: "full_name" }
+    @sql:Name {value: "full_name"}
     string fullName;
-    @sql:Name { value: "mobile_number" }
-    string? mobileNumber;
-    string? dob;
-    string? gender;
-    @sql:Name { value: "nic_chief_occupant" }
-    string? nicChiefOccupant;
-    string? address;
-    string? district;
-    @sql:Name { value: "household_no" }
-    string? householdNo;
-    @sql:Name { value: "grama_niladhari" }
-    string? gramaNiladhari;
-    string password;
+    string nic;
+    @sql:Name {value: "phone_number"}
+    string? phoneNumber;
+    string dob;
+    string gender;
+    @sql:Name {value: "civil_status"}
+    string civilStatus;
+    @sql:Name {value: "password_hash"}
+    string passwordHash;
+    string email;
+    @sql:Name {value: "id_copy_path"}
+    string? idCopyPath;
+|};
+
+# HouseholdDetails Table
+#
+# + id - Auto-incrementing Primary Key
+# + chiefOccupantId - Foreign Key (ChiefOccupant)
+# + electoralDistrict - District of Registration
+# + pollingDivision - Polling Division Name
+# + pollingDistrictNumber - Polling District Number
+# + gramaNiladhariDivision - GN Division
+# + villageStreetEstate - Location Information
+# + houseNumber - Registered House Number
+# + householdMemberCount - Number of Members (excluding Chief)
+
+public type HouseholdDetails record {|
+    readonly string id;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId;
+    @sql:Name {value: "electoral_district"}
+    string electoralDistrict;
+    @sql:Name {value: "polling_division"}
+    string pollingDivision;
+    @sql:Name {value: "polling_district_number"}
+    string pollingDistrictNumber;
+    @sql:Name {value: "grama_niladhari_division"}
+    string? gramaNiladhariDivision;
+    @sql:Name {value: "village_street_estate"}
+    string? villageStreetEstate;
+    @sql:Name {value: "house_number"}
+    string? houseNumber;
+    @sql:Name {value: "household_member_count"}
+    int householdMemberCount;
+|};
+
+# HouseholdMembers Table
+#
+# + id - Auto-incrementing Primary Key
+# + chiefOccupantId - Foreign Key (ChiefOccupant)
+# + fullName - Full Name of Household Member
+# + nic - National Identity Card (Nullable)
+# + dob - Date of Birth (MM/DD/YYYY)
+# + gender - Gender (Male/Female)
+# + civilStatus - Marital Status
+# + relationshipWithChiefOccupant - Relationship with Chief Occupant
+# + idCopyPath - File Path of ID Copy
+# + approvedByChief - Chief Occupant Approval Status
+# + passwordHash - Hashed Password
+# + passwordchanged - if the password change
+
+public type HouseholdMembers record {|
+    readonly string id;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId;
+    @sql:Name {value: "full_name"}
+    string fullName;
+    string? nic;
+    string dob;
+    string gender;
+    @sql:Name {value: "civil_status"}
+    string civilStatus;
+    @sql:Name {value: "relationship_with_chief_occupant"}
+    string relationshipWithChiefOccupant;
+    @sql:Name {value: "id_copy_path"}
+    string? idCopyPath;
+    @sql:Name {value: "approved_by_chief"}
+    boolean approvedByChief;
+    @sql:Name {value: "Hased_password"}
+    string passwordHash;
+    boolean passwordchanged;
 |};
 
 # Description for elections to be insterted.
