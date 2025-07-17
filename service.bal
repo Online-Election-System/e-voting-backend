@@ -13,15 +13,44 @@ listener http:Listener SharedListener = new (8080);
 }
 service /voter\-registration/api/v1 on SharedListener {
     // Register a new voter
-    resource function post voters/register(store:Voter newVoter)
-    returns http:Created|http:Forbidden|error {
-        return check auth:registerVoter(newVoter);
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        }
+    }
+    resource function post register(auth:VoterRegistrationRequest request)
+    returns json|http:Forbidden|error {
+        return check auth:postRegistration(request);
     }
 
     // Voter Login
-    resource function post voters/login(auth:VoterLogin loginDetails)
-    returns http:Response|http:Unauthorized|error {
-        return check auth:loginVoter(loginDetails);
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        }
+    }
+    resource function post login(auth:LoginRequest loginReq)
+    returns auth:LoginResponse|http:Unauthorized|error {
+        return check auth:postLogin(loginReq);
+    }
+
+    // Change Password
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        }
+    }
+    resource function put change\-password(auth:ChangePasswordRequest req) returns http:Ok|http:Unauthorized|json|error {
+        return check auth:putChangePassword(req);
     }
 }
 
