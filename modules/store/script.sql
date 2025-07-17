@@ -27,7 +27,7 @@ CREATE TABLE "Voter" (
 	"gender" VARCHAR(191),
 	"nic_chief_occupant" VARCHAR(191),
 	"address" VARCHAR(191),
-	"district" VARCHAR(191),
+	"district" VARCHAR(191) NOT NULL,
 	"household_no" VARCHAR(191),
 	"grama_niladhari" VARCHAR(191),
 	"password" VARCHAR(191) NOT NULL,
@@ -39,6 +39,7 @@ CREATE TABLE "Vote" (
 	"voter_id" VARCHAR(191) NOT NULL,
 	"election_id" VARCHAR(191) NOT NULL,
 	"candidate_id" VARCHAR(191) NOT NULL,
+	"district" VARCHAR(191) NOT NULL,
 	"timestamp" VARCHAR(191) NOT NULL,
 	PRIMARY KEY("id")
 );

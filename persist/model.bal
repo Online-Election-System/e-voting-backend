@@ -17,6 +17,7 @@ import ballerina/time;
 # + gramaNiladhari - Grama Niladhari Division (Nullable)
 # + password - Hashed Password for Authentication
 
+
 public type Voter record {|
     readonly string id;
     @sql:Name { value: "national_id" }
@@ -30,12 +31,13 @@ public type Voter record {|
     @sql:Name { value: "nic_chief_occupant" }
     string? nicChiefOccupant;
     string? address;
-    string? district;
+    string district;
     @sql:Name { value: "household_no" }
     string? householdNo;
     @sql:Name { value: "grama_niladhari" }
     string? gramaNiladhari;
     string password;
+  
 |};
 
 # Description for elections to be insterted.
@@ -47,6 +49,7 @@ public type Voter record {|
 # + enrolDdl - election enrollment deadline
 # + endDate - election end date
 # + noOfCandidates - election number of candidates
+
 
 public type Election record {|
     readonly string id;
@@ -70,6 +73,7 @@ public type Election record {|
 # + electionId - election table election id(foreign key)
 # + candidateId - candidate table candidate id(foreign key)
 # + timestamp - vote time
+# + district - voters district(foreign key)
 
 public type Vote record {|
     readonly string id;
@@ -79,5 +83,6 @@ public type Vote record {|
     string electionId;
     @sql:Name {value: "candidate_id"}
     string candidateId;
+    string district;
     string timestamp;
 |};

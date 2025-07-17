@@ -14,7 +14,7 @@ public type Voter record {|
     string? gender;
     string? nicChiefOccupant;
     string? address;
-    string? district;
+    string district;
     string? householdNo;
     string? gramaNiladhari;
     string password;
@@ -29,7 +29,7 @@ public type VoterOptionalized record {|
     string? gender?;
     string? nicChiefOccupant?;
     string? address?;
-    string? district?;
+    string district?;
     string? householdNo?;
     string? gramaNiladhari?;
     string password?;
@@ -47,7 +47,7 @@ public type VoterUpdate record {|
     string? gender?;
     string? nicChiefOccupant?;
     string? address?;
-    string? district?;
+    string district?;
     string? householdNo?;
     string? gramaNiladhari?;
     string password?;
@@ -91,6 +91,7 @@ public type Vote record {|
     string voterId;
     string electionId;
     string candidateId;
+    string district;
     string timestamp;
 |};
 
@@ -99,6 +100,7 @@ public type VoteOptionalized record {|
     string voterId?;
     string electionId?;
     string candidateId?;
+    string district?;
     string timestamp?;
 |};
 
@@ -110,6 +112,7 @@ public type VoteUpdate record {|
     string voterId?;
     string electionId?;
     string candidateId?;
+    string district?;
     string timestamp?;
 |};
 

@@ -63,6 +63,7 @@ public isolated client class Client {
                 voterId: {columnName: "voter_id"},
                 electionId: {columnName: "election_id"},
                 candidateId: {columnName: "candidate_id"},
+                district: {columnName: "district"},
                 timestamp: {columnName: "timestamp"}
             },
             keyFields: ["id"]
