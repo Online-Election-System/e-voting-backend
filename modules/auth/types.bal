@@ -56,7 +56,6 @@ public type ChiefOccupantQueryResult record {
 public type LoginRequest record {|
     string nic;
     string password;
-
 |};
 
 public type LoginResponse record {|
@@ -83,7 +82,7 @@ public type VoterRegistrationRequest record {
     HouseholdMembersRequest newHouseholdMembers;
 };
 
-public type ChiefOccupantInsert record {|
+public type ChiefOccupantInsert record {| // Added role, isVerified, verifiedAt, verifiedBy fields
     string id;
     string fullName;
     string nic;
@@ -94,9 +93,13 @@ public type ChiefOccupantInsert record {|
     string passwordHash;
     string email;
     string? idCopyPath;
+    string role = "chief_occupant";
+    boolean isVerified = false;
+    string? verifiedAt = ();
+    string? verifiedBy = ();
 |};
 
-public type HouseholdMembersInsert record {|
+public type HouseholdMembersInsert record {| // Added role, isVerified, verifiedAt, verifiedBy fields
     string id;
     string chiefOccupantId;
     string fullName;
@@ -109,6 +112,10 @@ public type HouseholdMembersInsert record {|
     string? idCopyPath;
     string passwordHash;
     boolean passwordchanged;
+    string role = "household_member";
+    boolean isVerified = false;
+    string? verifiedAt = ();
+    string? verifiedBy = ();
 |};
 
 public type PasswordResetRequest record {

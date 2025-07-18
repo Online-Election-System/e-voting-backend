@@ -14,6 +14,10 @@ import ballerinax/persist.sql;
 # + passwordHash - Hashed Password
 # + idCopyPath - File Path of ID Copy
 # + email - email of chiefoccupant
+# + role - User role (default: 'chief_occupant')
+# + isVerified - Verification status
+# + verifiedAt - Timestamp of verification
+# + verifiedBy - Admin who verified the user
 
 public type ChiefOccupant record {|
     readonly string id;
@@ -31,6 +35,13 @@ public type ChiefOccupant record {|
     string email;
     @sql:Name {value: "id_copy_path"}
     string? idCopyPath;
+    string role;
+    @sql:Name {value: "is_verified"}
+    boolean isVerified;
+    @sql:Name {value: "verified_at"}
+    time:Utc? verifiedAt;
+    @sql:Name {value: "verified_by"}
+    string? verifiedBy;
 |};
 
 # HouseholdDetails Table
@@ -79,6 +90,10 @@ public type HouseholdDetails record {|
 # + approvedByChief - Chief Occupant Approval Status
 # + passwordHash - Hashed Password
 # + passwordchanged - if the password change
+# + role - User role (default: 'household_member')
+# + isVerified - Verification status
+# + verifiedAt - Timestamp of verification
+# + verifiedBy - Admin who verified the user
 
 public type HouseholdMembers record {|
     readonly string id;
@@ -100,6 +115,36 @@ public type HouseholdMembers record {|
     @sql:Name {value: "Hased_password"}
     string passwordHash;
     boolean passwordchanged;
+    string role;
+    @sql:Name {value: "is_verified"}
+    boolean isVerified;
+    @sql:Name {value: "verified_at"}
+    time:Utc? verifiedAt;
+    @sql:Name {value: "verified_by"}
+    string? verifiedBy;
+|};
+
+# AdminUsers Table
+#
+# + id - Primary Key
+# + username - Admin username (Unique)
+# + email - Admin email (Unique)
+# + passwordHash - Hashed Password
+# + role - Admin role
+# + createdAt - Timestamp of creation
+# + isActive - Active status
+
+public type AdminUsers record {|
+    readonly string id;
+    string username;
+    string email;
+    @sql:Name {value: "password_hash"}
+    string passwordHash;
+    string role;
+    @sql:Name {value: "created_at"}
+    time:Utc createdAt;
+    @sql:Name {value: "is_active"}
+    boolean isActive;
 |};
 
 # Description for elections to be insterted.
