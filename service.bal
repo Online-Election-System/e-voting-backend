@@ -1,7 +1,10 @@
 import online_election.election;
 import online_election.store;
+import online_election.candidate;
 import ballerina/http;
 import online_election.vote;
+import ballerina/persist;
+
 
 listener http:Listener SharedListener = new (8080);
 
@@ -144,5 +147,51 @@ service /vote/api/v1 on SharedListener {
     resource function get votes/election/[string electionId]/district/[string district]()
     returns store:Vote[]|error {
         return check vote:getVotesByElectionAndDistrict(electionId, district);
+    }
+}
+
+
+
+
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["http://localhost:3000"],
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowHeaders: ["Content-Type", "Authorization"],
+        allowCredentials: true
+    }
+}
+service /candidate/api/v1 on SharedListener {
+    
+    // Get candidates by election ID from database
+    resource function get elections/[string electionId]/candidates() returns store:Candidate[]|error {
+        return check candidate:getCandidatesByElection(electionId);
+    }
+    
+    // Get all active candidates from database
+    resource function get candidates() returns store:Candidate[]|error {
+        return check candidate:getAllActiveCandidates();
+    }
+    
+    // Get candidate by ID from database
+    resource function get candidates/[string candidateId]() returns store:Candidate|http:NotFound|error {
+        store:Candidate|persist:Error candidate = candidate:getCandidateById(candidateId);
+        
+        if candidate is persist:Error {
+            return http:NOT_FOUND;
+        }
+        
+        return candidate;
+    }
+    
+    // Get candidates by election and party
+    resource function get elections/[string electionId]/candidates/party/[string partyName]() returns store:Candidate[]|error {
+        return check candidate:getCandidatesByElectionAndParty(electionId, partyName);
+    }
+    
+    // Check if candidate is active
+    resource function get candidates/[string candidateId]/active() returns boolean|error {
+        return check candidate:isCandidateActive(candidateId);
     }
 }

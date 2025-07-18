@@ -116,3 +116,48 @@ public type VoteUpdate record {|
     string timestamp?;
 |};
 
+public type Candidate record {|
+    readonly string candidateId;
+    string electionId;
+    string candidateName;
+    string partyName;
+    string? partySymbol;
+    string partyColor;
+    string? candidateImage;
+    int? popularVotes;
+    int? electoralVotes;
+    int? position;
+    boolean isActive;
+|};
+
+public type CandidateOptionalized record {|
+    string candidateId?;
+    string electionId?;
+    string candidateName?;
+    string partyName?;
+    string? partySymbol?;
+    string partyColor?;
+    string? candidateImage?;
+    int? popularVotes?;
+    int? electoralVotes?;
+    int? position?;
+    boolean isActive?;
+|};
+
+public type CandidateTargetType typedesc<CandidateOptionalized>;
+
+public type CandidateInsert Candidate;
+
+public type CandidateUpdate record {|
+    string electionId?;
+    string candidateName?;
+    string partyName?;
+    string? partySymbol?;
+    string partyColor?;
+    string? candidateImage?;
+    int? popularVotes?;
+    int? electoralVotes?;
+    int? position?;
+    boolean isActive?;
+|};
+

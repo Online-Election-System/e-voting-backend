@@ -13,6 +13,7 @@ import ballerinax/postgresql.driver as _;
 const VOTER = "voters";
 const ELECTION = "elections";
 const VOTE = "votes";
+const CANDIDATE = "candidates";
 
 public isolated client class Client {
     *persist:AbstractPersistClient;
@@ -67,6 +68,24 @@ public isolated client class Client {
                 timestamp: {columnName: "timestamp"}
             },
             keyFields: ["id"]
+        },
+        [CANDIDATE]: {
+            entityName: "Candidate",
+            tableName: "Candidate",
+            fieldMetadata: {
+                candidateId: {columnName: "candidate_id"},
+                electionId: {columnName: "election_id"},
+                candidateName: {columnName: "candidate_name"},
+                partyName: {columnName: "party_name"},
+                partySymbol: {columnName: "party_symbol"},
+                partyColor: {columnName: "party_color"},
+                candidateImage: {columnName: "candidate_image"},
+                popularVotes: {columnName: "popular_votes"},
+                electoralVotes: {columnName: "electoral_votes"},
+                position: {columnName: "position"},
+                isActive: {columnName: "is_active"}
+            },
+            keyFields: ["candidateId"]
         }
     };
 
@@ -98,7 +117,8 @@ public isolated client class Client {
         self.persistClients = {
             [VOTER]: check new (dbClient, self.metadata.get(VOTER).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [ELECTION]: check new (dbClient, self.metadata.get(ELECTION).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
-            [VOTE]: check new (dbClient, self.metadata.get(VOTE).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
+            [VOTE]: check new (dbClient, self.metadata.get(VOTE).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [CANDIDATE]: check new (dbClient, self.metadata.get(CANDIDATE).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
         };
     }
 
@@ -216,6 +236,45 @@ public isolated client class Client {
             sqlClient = self.persistClients.get(VOTE);
         }
         _ = check sqlClient.runDeleteQuery(id);
+        return result;
+    }
+
+    isolated resource function get candidates(CandidateTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get candidates/[string candidateId](CandidateTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post candidates(CandidateInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(CANDIDATE);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from CandidateInsert inserted in data
+            select inserted.candidateId;
+    }
+
+    isolated resource function put candidates/[string candidateId](CandidateUpdate value) returns Candidate|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(CANDIDATE);
+        }
+        _ = check sqlClient.runUpdateQuery(candidateId, value);
+        return self->/candidates/[candidateId].get();
+    }
+
+    isolated resource function delete candidates/[string candidateId]() returns Candidate|persist:Error {
+        Candidate result = check self->/candidates/[candidateId].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(CANDIDATE);
+        }
+        _ = check sqlClient.runDeleteQuery(candidateId);
         return result;
     }
 

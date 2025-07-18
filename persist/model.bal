@@ -17,7 +17,6 @@ import ballerina/time;
 # + gramaNiladhari - Grama Niladhari Division (Nullable)
 # + password - Hashed Password for Authentication
 
-
 public type Voter record {|
     readonly string id;
     @sql:Name { value: "national_id" }
@@ -37,7 +36,6 @@ public type Voter record {|
     @sql:Name { value: "grama_niladhari" }
     string? gramaNiladhari;
     string password;
-  
 |};
 
 # Description for elections to be insterted.
@@ -49,7 +47,6 @@ public type Voter record {|
 # + enrolDdl - election enrollment deadline
 # + endDate - election end date
 # + noOfCandidates - election number of candidates
-
 
 public type Election record {|
     readonly string id;
@@ -86,3 +83,40 @@ public type Vote record {|
     string district;
     string timestamp;
 |};
+
+# + candidateId - candidateId (primary key)
+# + electionId - electionId(forign key)
+# + candidateName - candidateName
+# + partyName - partyName
+# + partySymbol - partySymbol
+# + partyColor - partyColor
+# + candidateImage - candidateImage
+# + popularVotes - popularVotes
+# + electoralVotes - electoralVotes
+# + position - position
+# + isActive - isActive
+
+public type Candidate record {|
+    @sql:Name { value: "candidate_id" } 
+    readonly string candidateId;
+    @sql:Name { value: "election_id" } 
+    string electionId;
+    @sql:Name { value: "candidate_name" } 
+    string candidateName;
+    @sql:Name { value: "party_name" } 
+    string partyName;
+    @sql:Name { value: "party_symbol" } 
+    string? partySymbol;
+    @sql:Name { value: "party_color" } 
+    string partyColor;
+    @sql:Name { value: "candidate_image" } 
+    string? candidateImage;
+    @sql:Name { value: "popular_votes" } 
+    int? popularVotes;
+    @sql:Name { value: "electoral_votes" } 
+    int? electoralVotes;
+    int? position;
+    @sql:Name { value: "is_active" } 
+    boolean isActive;
+|};
+

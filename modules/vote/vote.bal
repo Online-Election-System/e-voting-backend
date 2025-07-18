@@ -3,6 +3,7 @@ import online_election.store;
 
 import ballerina/http;
 import ballerina/persist;
+import ballerina/crypto;
 
 final store:Client dbVote = check new ();
 
@@ -20,8 +21,10 @@ public function authenticateVoter(string nationalId, string password) returns st
     
     store:Voter voter = voters[0];
     
-    // Check password (adjust this based on how passwords are stored)
-    if voter.password != password {
+    // Hash the input password using MD5 (same as registration)
+    string hashedInputPassword = crypto:hashMd5(password.toBytes()).toBase16();
+    // Check password
+    if voter.password != hashedInputPassword {
         return http:UNAUTHORIZED; // Wrong password
     }
     
