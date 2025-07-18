@@ -67,7 +67,7 @@ function joinStrings(string[] values, string separator) returns string {
     return result;
 }
 
-public function generateJwt(string userId, string userType) returns string|error {
+public function generateJwt(string userId, UserRole role) returns string|error {
     int seconds = time:utcNow()[0];
     int expiryTime = seconds + 3600;
     jwt:IssuerConfig issuerConfig = {
@@ -77,7 +77,8 @@ public function generateJwt(string userId, string userType) returns string|error
         expTime: 3600,
         customClaims: {
             sub: userId,
-            role: userType,
+            role: role,
+            userRole: role,
             iat: seconds,
             exp: expiryTime
         },

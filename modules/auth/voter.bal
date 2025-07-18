@@ -59,7 +59,11 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
         civilStatus: request.chiefOccupant.civilStatus,
         passwordHash: hashedPassword,
         email: request.chiefOccupant.email,
-        idCopyPath: null // Temporarily set to null
+        idCopyPath: null,
+        role: "chief_occupant",
+        isVerified: false,
+        verifiedAt: (),
+        verifiedBy: ()
     };
 
     log:printInfo("Creating chief occupant with ID: " + chiefOccupantId);
@@ -132,7 +136,11 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
             civilStatus: member.civilStatus,
             idCopyPath: null, // Temporarily set to null
             passwordHash: memberHashedPassword,
-            passwordchanged: false
+            passwordchanged: false,
+            role: "household_member",
+            isVerified: false,
+            verifiedAt: (),
+            verifiedBy: ()
         };
 
         log:printInfo("Creating household member with ID: " + memberId);
@@ -187,7 +195,7 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
 
             // ADD THIS LOGGING
             io:println("About to generate JWT for chief ID: ", chief.id);
-            string|error token = generateJwt(chief.id.toString(), "chief");
+            string|error token = generateJwt(chief.id.toString(), "chief_occupant");
 
             if token is error {
                 io:println("JWT generation failed: ", token);
@@ -201,7 +209,7 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
             check chiefStream.close();
             return {
                 userId: chief.id,
-                userType: "chief",
+                userType: "chief_occupant",
                 fullName: chief.fullName,
                 message: "Login successful",
                 token: token
@@ -223,13 +231,13 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
                 return http:UNAUTHORIZED;
             }
 
-            string|error token = generateJwt(member.id.toString(), "householdMember");
+            string|error token = generateJwt(member.id.toString(), "household_member");
             if token is error {
                 return http:UNAUTHORIZED;
             }
             return {
                 userId: member.id,
-                userType: "householdMember",
+                userType: "household_member",
                 fullName: member.fullName,
                 message: member.passwordchanged ? "Login successful" : "First-time login. Please change your password.",
                 token: token
@@ -281,7 +289,7 @@ public function putChangePassword(ChangePasswordRequest req) returns http:Ok|htt
             passwordHash: newHashed
         };
         _ = check dbClient->/chiefoccupants/[req.userId].put(chiefUpdate);
-    } else if req.userType == "householdMember" {
+    } else if req.userType == "household_member" {
         store:HouseholdMembers member = check dbClient->/householdmembers/[req.userId].get();
 
         boolean|error isVerified = verifyPassword(req.oldPassword, member.passwordHash);
