@@ -1,3 +1,5 @@
+import ballerina/log;
+
 // Define what permissions each role has
 public function getRolePermissions(UserRole role) returns Permission[] {
     match role {
