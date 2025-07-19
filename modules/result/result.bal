@@ -1,11 +1,8 @@
 // result.bal - Election results processing, analytics, and reporting functions
 
 import ballerina/time;
-import ballerina/log;
-import ballerina/lang.'decimal;
 import online_election.store;
 import ballerina/lang.array;
-import ballerina/io;
 
 // Result processing and analytics functions using your database schema
 
@@ -174,13 +171,11 @@ public function calculateVictoryMargin(string electionId) returns VictoryMargin|
         };
     }
     
-    // ✅ Clone candidates and sort using array:sort() with key function
-    store:Candidate[] sortedCandidates = candidates.clone();
-    // Sort in descending order by popularVotes
-    sortedCandidates = array:sort(sortedCandidates, array:DESCENDING, 
-        function(store:Candidate candidate) returns int {
-            return candidate.popularVotes;
-        });
+    store:Candidate[] sortedCandidates = array:sort(candidates, array:DESCENDING, 
+    isolated function(store:Candidate candidate) returns int {
+        return candidate.popularVotes ?: 0;
+    });
+
     
     store:Candidate winner = sortedCandidates[0];
     store:Candidate runnerUp = sortedCandidates[1];
@@ -192,7 +187,7 @@ public function calculateVictoryMargin(string electionId) returns VictoryMargin|
     }
     int totalVotes = totalVotesResult;
     
-    int popularMargin = winner.popularVotes - runnerUp.popularVotes;
+    int popularMargin = (winner.popularVotes ?: 0) - (runnerUp.popularVotes ?: 0);
     decimal popularMarginPercentage = totalVotes > 0 ?
         <decimal>popularMargin / <decimal>totalVotes * 100.0d : 0.0d;
     
@@ -234,8 +229,8 @@ function generatePartySummaries(store:Candidate[] candidates) returns PartySumma
         
         PartySummary party = partyMap.get(partyName);
         party.candidates.push(candidate);
-        party.totalElectoralVotes += candidate.electoralVotes;
-        party.totalPopularVotes += candidate.popularVotes;
+        party.totalElectoralVotes += candidate.electoralVotes ?: 0;
+        party.totalPopularVotes = party.totalPopularVotes + (candidate.popularVotes ?: 0);
         party.popularVotePercentage = totalVotes > 0 ? <decimal>party.totalPopularVotes / <decimal>totalVotes * 100.0 : 0.0;
         
         partyMap[partyName] = party;
@@ -333,7 +328,7 @@ public function getCandidateMetrics(string candidateId, string electionId) retur
     return {
         candidateId: candidate.candidateId,
         candidateName: candidate.candidateName,
-        totalVotes: candidate.popularVotes,
+        totalVotes: candidate.popularVotes ?: 0,
         voteShare: voteShare,
         districtsWon: districtsWon,
         position: candidate.position ?: 0,
@@ -460,15 +455,9 @@ public function generateExecutiveSummary(string electionId) returns json|error {
 function calculateTotalVotes(store:Candidate[] candidates) returns int {
     int total = 0;
     foreach store:Candidate candidate in candidates {
-        total += candidate.popularVotes;
+        total += candidate.popularVotes ?: 0;
     }
     return total;
-}
-
-public function getDistrictsByProvince(string provinceId) returns store:District[]|error {
-    // TODO: Implement database query
-    // SELECT * FROM districts WHERE province_id = ?
-    return error("Not implemented - connect to your database");
 }
 
 public function getDistrictsByProvince(string provinceId) returns store:District[]|error {
