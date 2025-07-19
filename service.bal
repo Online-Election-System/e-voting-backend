@@ -3,6 +3,8 @@ import online_election.election;
 import online_election.store;
 
 import ballerina/http;
+import ballerina/log;
+import online_election.result;
 
 listener http:Listener SharedListener = new (8080);
 
@@ -137,7 +139,7 @@ service /election/api/v1 on SharedListener {
         return check election:getUpcomingElections();
     }
 
-    // Unified logout endpoint - 204 No Content response  
+    // Unified logout endpoint - 204 No Content response
     @http:ResourceConfig {
         cors: {
             allowOrigins: ["http://localhost:3000"],
@@ -223,5 +225,144 @@ service /election/api/v1 on SharedListener {
         }
 
         return auth:manualTokenCleanup();
+    }
+}
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001"],
+        allowCredentials: false,
+        allowHeaders: ["Content-Type", "Authorization"],
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    }
+}
+service /result/api/v1 on SharedListener {
+
+    // Core Election Data Endpoints
+
+    // Get complete election summary - Main endpoint for frontend
+    resource function get election/[string electionId]/summary() returns result:ElectionSummaryResponse|http:NotFound|http:InternalServerError {
+        result:ElectionSummaryResponse|error summary = result:generateElectionSummary(electionId);
+        if summary is result:ElectionSummaryResponse {
+            return summary;
+        }
+        log:printError("Election not found", electionId = electionId);
+        return http:NOT_FOUND;
+    }
+
+    // Get election winner
+    resource function get election/[string electionId]/winner() returns store:Candidate|http:NotFound|http:InternalServerError {
+        store:Candidate|error winner = result:calculateElectoralWinner(electionId);
+        if winner is store:Candidate {
+            return winner;
+        }
+        return http:NOT_FOUND;
+    }
+
+    // Get popular vote winner
+    resource function get election/[string electionId]/popular\-winner() returns store:Candidate|http:NotFound|http:InternalServerError {
+        store:Candidate|error winner = result:calculatePopularVoteWinner(electionId);
+        if winner is store:Candidate {
+            return winner;
+        }
+        return http:NOT_FOUND;
+    }
+
+    // Get election status
+    resource function get election/[string electionId]/status() returns json|http:NotFound|http:InternalServerError {
+        json|error status = result:getLiveElectionStatus(electionId);
+        if status is json {
+            return status;
+        }
+        return http:NOT_FOUND;
+    }
+
+    // Get victory margin
+    resource function get election/[string electionId]/margin() returns result:VictoryMargin|http:NotFound|http:InternalServerError {
+        result:VictoryMargin|error margin = result:calculateVictoryMargin(electionId);
+        if margin is result:VictoryMargin {
+            return margin;
+        }
+        return http:NOT_FOUND;
+    }
+
+    // Candidate Management Endpoints
+
+    // Get all candidates for a specific election
+    resource function get election/[string electionId]/candidates() returns store:Candidate[]|http:NotFound|http:InternalServerError {
+        store:Candidate[]|error candidates = result:getCandidatesByElection(electionId);
+        if candidates is store:Candidate[] {
+            return candidates;
+        }
+        return http:NOT_FOUND;
+    }
+
+    // Get specific candidate by ID
+    resource function get candidates/[string candidateId]() returns store:Candidate|http:NotFound|http:InternalServerError {
+        store:Candidate|error candidate = result:getCandidateById(candidateId);
+        if candidate is store:Candidate {
+            return candidate;
+        }
+        log:printWarn("Candidate not found", candidateId = candidateId);
+        return http:NOT_FOUND;
+    }
+
+    // Get candidate metrics and analytics
+    resource function get candidates/[string candidateId]/metrics(string electionId) returns result:CandidateMetrics|http:NotFound|http:InternalServerError {
+        result:CandidateMetrics|error metrics = result:getCandidateMetrics(candidateId, electionId);
+        if metrics is result:CandidateMetrics {
+            return metrics;
+        }
+        return http:NOT_FOUND;
+    }
+
+    // District Management Endpoints
+
+    // Get all districts
+    resource function get districts() returns store:District[]|http:InternalServerError {
+        return store:districtsStore.toArray();
+    }
+
+    // Get specific district by ID
+    resource function get districts/[string districtId]() returns store:District|http:NotFound|http:InternalServerError {
+        if (store:districtsStore.hasKey(districtId)) {
+            return store:districtsStore.get(districtId);
+        }
+        return http:NOT_FOUND;
+    }
+
+    // Get district results with detailed breakdown
+    resource function get districts/[string districtId]/results() returns store:DistrictResult[]|http:NotFound|http:InternalServerError {
+        if (!store:districtsStore.hasKey(districtId)) {
+            return http:NOT_FOUND;
+        }
+        
+        store:District district = store:districtsStore.get(districtId);
+        store:DistrictResult[]? results = district.results;
+        return results ?: [];
+    }
+
+    // Province Management Endpoints
+
+    // Get all provinces
+    resource function get provinces() returns store:ProvinceResult[]|http:InternalServerError {
+        return store:provincesStore.toArray();
+    }
+
+    // Get specific province by ID
+    resource function get provinces/[string provinceId]() returns store:ProvinceResult|http:NotFound|http:InternalServerError {
+        if (store:provincesStore.hasKey(provinceId)) {
+            return store:provincesStore.get(provinceId);
+        }
+        return http:NOT_FOUND;
+    }
+
+    // Get districts by province
+    resource function get provinces/[string provinceId]/districts() returns store:District[]|http:NotFound|http:InternalServerError {
+        store:District[]|error districts = result:getDistrictsByProvince(provinceId);
+        if districts is store:District[] {
+            return districts;
+        }
+        return http:NOT_FOUND;
     }
 }

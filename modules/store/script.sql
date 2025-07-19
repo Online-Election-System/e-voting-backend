@@ -3,10 +3,13 @@
 -- This file is an auto-generated file by Ballerina persistence layer for model.
 -- Please verify the generated scripts and execute them against the target DB server.
 
+DROP TABLE IF EXISTS "Candidate";
 DROP TABLE IF EXISTS "AdminUsers";
 DROP TABLE IF EXISTS "ChiefOccupant";
+DROP TABLE IF EXISTS "ElectionSummary";
 DROP TABLE IF EXISTS "HouseholdDetails";
 DROP TABLE IF EXISTS "Election";
+DROP TABLE IF EXISTS "DistrictResult";
 DROP TABLE IF EXISTS "HouseholdMembers";
 
 CREATE TABLE "HouseholdMembers" (
@@ -24,6 +27,17 @@ CREATE TABLE "HouseholdMembers" (
 	"passwordchanged" BOOLEAN NOT NULL,
 	"role" VARCHAR(191) NOT NULL,
 	PRIMARY KEY("id")
+);
+
+CREATE TABLE "DistrictResult" (
+	"district_code" VARCHAR(191) NOT NULL,
+	"election_id" VARCHAR(191) NOT NULL,
+	"district_name" VARCHAR(191) NOT NULL,
+	"total_votes" INT NOT NULL,
+	"votes_processed" INT NOT NULL,
+	"winner" VARCHAR(191),
+	"status" VARCHAR(191) NOT NULL,
+	PRIMARY KEY("district_code","election_id")
 );
 
 CREATE TABLE "Election" (
@@ -55,6 +69,17 @@ CREATE TABLE "HouseholdDetails" (
 	PRIMARY KEY("id")
 );
 
+CREATE TABLE "ElectionSummary" (
+	"electionId" VARCHAR(191) NOT NULL,
+	"total_registered_voters" INT NOT NULL,
+	"total_votes_cast" INT NOT NULL,
+	"total_rejected_votes" INT NOT NULL,
+	"turnout_percentage" DECIMAL(65,30) NOT NULL,
+	"winner_candidate_id" VARCHAR(191),
+	"election_status" VARCHAR(191) NOT NULL,
+	PRIMARY KEY("electionId")
+);
+
 CREATE TABLE "ChiefOccupant" (
 	"id" VARCHAR(191) NOT NULL,
 	"full_name" VARCHAR(191) NOT NULL,
@@ -79,6 +104,22 @@ CREATE TABLE "AdminUsers" (
 	"created_at" TIMESTAMP NOT NULL,
 	"is_active" BOOLEAN NOT NULL,
 	PRIMARY KEY("id")
+);
+
+CREATE TABLE "Candidate" (
+	"candidate_id" VARCHAR(191) NOT NULL,
+	"election_id" VARCHAR(191) NOT NULL,
+	"voter_id" VARCHAR(191) NOT NULL,
+	"candidate_name" VARCHAR(191) NOT NULL,
+	"party_name" VARCHAR(191) NOT NULL,
+	"party_symbol" VARCHAR(191),
+	"party_color" VARCHAR(191) NOT NULL,
+	"candidate_image" VARCHAR(191),
+	"popular_votes" INT NOT NULL,
+	"electoral_votes" INT NOT NULL,
+	"position" INT,
+	"is_active" BOOLEAN NOT NULL,
+	PRIMARY KEY("candidate_id")
 );
 
 

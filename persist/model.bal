@@ -157,3 +157,103 @@ public type AdminUsers record {|
     @sql:Name {value: "is_active"}
     boolean isActive;
 |};
+
+
+# Description for candidates to be inserted.
+#
+# + candidateId - Unique ID of the candidate (Primary Key)
+# + electionId - ID of the election the candidate belongs to (Foreign Key)
+# + candidateName - Full name of the candidate
+# + partyName - Name of the political party the candidate represents
+# + partySymbol - Optional symbol/logo of the party
+# + partyColor - Official color representing the candidate's party
+# + candidateImage - Optional image or profile picture of the candidate
+# + popularVotes - Number of popular votes received by the candidate
+# + electoralVotes - Number of electoral votes received by the candidate
+# + position - Final position or rank (1st, 2nd, etc.), optional
+# + isActive - Whether the candidate is active in the election (true/false)
+
+
+public type Candidate record {|
+    @sql:Name { value: "candidate_id" } readonly string candidateId;
+    @sql:Name { value: "election_id" } string electionId;
+    @sql:Name { value: "voter_id" } string voterId;
+    @sql:Name { value: "candidate_name" } string candidateName;
+    @sql:Name { value: "party_name" } string partyName;
+    @sql:Name { value: "party_symbol" } string? partySymbol;
+    @sql:Name { value: "party_color" } string partyColor;
+    @sql:Name { value: "candidate_image" } string? candidateImage;
+    @sql:Name { value: "popular_votes" } int popularVotes;
+    @sql:Name { value: "electoral_votes" } int electoralVotes;
+    int? position;
+    @sql:Name { value: "is_active" } boolean isActive;
+|};
+
+# Description for district-level election results.
+#
+# + districtCode - Unique code identifying the district (Primary Key)
+# + electionId - ID of the election associated with the result (Foreign Key)
+# + districtName - Name of the district
+# + totalVotes - Total number of votes expected or registered in the district
+# + votesProcessed - Number of votes that have been counted so far
+# + winner - Name or ID of the winning candidate in the district (optional)
+# + status - Current processing status of the district result (e.g., "in progress", "completed")
+
+
+public type DistrictResult record {|
+    @sql:Name { value: "district_code" } readonly string districtCode;
+    @sql:Name { value: "election_id" } readonly string electionId;
+    @sql:Name { value: "district_name" } string districtName;
+    @sql:Name { value: "total_votes" } int totalVotes;
+    @sql:Name { value: "votes_processed" } int votesProcessed;
+    string? winner;
+    string status;
+|};
+
+# Description for overall election summary results.
+#
+# + electionId - Unique ID of the election (Primary Key)
+# + totalRegisteredVoters - Total number of registered voters for the election
+# + totalVotesCast - Number of votes that were successfully cast
+# + totalRejectedVotes - Number of votes rejected due to errors or invalidity
+# + turnoutPercentage - Voter turnout as a percentage of registered voters
+# + winnerCandidateId - ID of the candidate who won the election (optional)
+# + electionStatus - Status of the election (e.g., "ongoing", "completed", "cancelled")
+
+
+public type ElectionSummary record {|
+    readonly string electionId;
+    @sql:Name { value: "total_registered_voters" } int totalRegisteredVoters;
+    @sql:Name { value: "total_votes_cast" } int totalVotesCast;
+    @sql:Name { value: "total_rejected_votes" } int totalRejectedVotes;
+    @sql:Name { value: "turnout_percentage" } decimal turnoutPercentage;
+    @sql:Name { value: "winner_candidate_id" } string? winnerCandidateId;
+    @sql:Name { value: "election_status" } string electionStatus;
+|};
+
+
+public type District record {|
+    @sql:Name { value: "district_id" } readonly string districtId;
+    @sql:Name { value: "province_id" } string provinceId;
+    @sql:Name { value: "district_name" } string districtName;
+    @sql:Name { value: "total_voters" } int totalVoters;
+    DistrictResult[]? results;
+|};
+
+public type ProvinceResult record {|
+    @sql:Name { value: "province_id" } readonly string provinceId;
+    @sql:Name { value: "province_name" } string provinceName;
+    @sql:Name { value: "total_districts" } int totalDistricts;
+|};
+
+public final readonly & table<District> districtsStore = table [
+    {districtId: "CMB", provinceId: "WP", districtName: "Colombo", totalVoters: 1700000},
+    {districtId: "GMP", provinceId: "WP", districtName: "Gampaha", totalVoters: 1800000},
+    {districtId: "KND", provinceId: "CP", districtName: "Kandy", totalVoters: 1100000}
+];
+
+public final readonly & table<ProvinceResult> provincesStore = table [
+    {provinceId: "WP", provinceName: "Western", totalDistricts: 3},
+    {provinceId: "CP", provinceName: "Central", totalDistricts: 3},
+    {provinceId: "SP", provinceName: "Southern", totalDistricts: 3}
+];
