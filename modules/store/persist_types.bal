@@ -221,3 +221,116 @@ public type AdminUsersUpdate record {|
     boolean isActive?;
 |};
 
+public type Candidate record {|
+    readonly string candidateId;
+    string electionId;
+    string voterId;
+    string candidateName;
+    string partyName;
+    string? partySymbol;
+    string partyColor;
+    string? candidateImage;
+    int popularVotes;
+    int electoralVotes;
+    int? position;
+    boolean isActive;
+|};
+
+public type CandidateOptionalized record {|
+    string candidateId?;
+    string electionId?;
+    string voterId?;
+    string candidateName?;
+    string partyName?;
+    string? partySymbol?;
+    string partyColor?;
+    string? candidateImage?;
+    int popularVotes?;
+    int electoralVotes?;
+    int? position?;
+    boolean isActive?;
+|};
+
+public type CandidateTargetType typedesc<CandidateOptionalized>;
+
+public type CandidateInsert Candidate;
+
+public type CandidateUpdate record {|
+    string electionId?;
+    string voterId?;
+    string candidateName?;
+    string partyName?;
+    string? partySymbol?;
+    string partyColor?;
+    string? candidateImage?;
+    int popularVotes?;
+    int electoralVotes?;
+    int? position?;
+    boolean isActive?;
+|};
+
+public type DistrictResult record {|
+    readonly string districtCode;
+    readonly string electionId;
+    string districtName;
+    int totalVotes;
+    int votesProcessed;
+    string? winner;
+    string status;
+|};
+
+public type DistrictResultOptionalized record {|
+    string districtCode?;
+    string electionId?;
+    string districtName?;
+    int totalVotes?;
+    int votesProcessed?;
+    string? winner?;
+    string status?;
+|};
+
+public type DistrictResultTargetType typedesc<DistrictResultOptionalized>;
+
+public type DistrictResultInsert DistrictResult;
+
+public type DistrictResultUpdate record {|
+    string districtName?;
+    int totalVotes?;
+    int votesProcessed?;
+    string? winner?;
+    string status?;
+|};
+
+public type ElectionSummary record {|
+    readonly string electionId;
+    int totalRegisteredVoters;
+    int totalVotesCast;
+    int totalRejectedVotes;
+    decimal turnoutPercentage;
+    string? winnerCandidateId;
+    string electionStatus;
+|};
+
+public type ElectionSummaryOptionalized record {|
+    string electionId?;
+    int totalRegisteredVoters?;
+    int totalVotesCast?;
+    int totalRejectedVotes?;
+    decimal turnoutPercentage?;
+    string? winnerCandidateId?;
+    string electionStatus?;
+|};
+
+public type ElectionSummaryTargetType typedesc<ElectionSummaryOptionalized>;
+
+public type ElectionSummaryInsert ElectionSummary;
+
+public type ElectionSummaryUpdate record {|
+    int totalRegisteredVoters?;
+    int totalVotesCast?;
+    int totalRejectedVotes?;
+    decimal turnoutPercentage?;
+    string? winnerCandidateId?;
+    string electionStatus?;
+|};
+
