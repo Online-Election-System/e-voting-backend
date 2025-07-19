@@ -8,6 +8,40 @@ listener http:Listener SharedListener = new (8080);
 
 @http:ServiceConfig {
     cors: {
+        allowOrigins: ["http://localhost:3000"],
+        allowHeaders: ["Content-Type", "Authorization"],
+        allowMethods: ["GET", "POST", "OPTIONS"],
+        allowCredentials: true
+    }
+}
+service /admin\-registration/api/v1 on SharedListener {
+
+    // Government Official Registration
+    resource function post gov\-official/register(auth:GovernmentOfficialRegistrationRequest req) returns json|error {
+        return check auth:registerGovernmentOfficial(req);
+    }
+
+    // Election Commission Registration
+    resource function post election\-commission/register(auth:ElectionCommissionRegistrationRequest req) returns json|error {
+        return check auth:registerElectionCommission(req);
+    }
+
+    // Unified logout endpoint - 204 No Content response
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["POST", "OPTIONS"]
+        }
+    }
+    resource function post logout(http:Request request) returns http:Response|error {
+        return check auth:logout(request);
+    }
+}
+
+@http:ServiceConfig {
+    cors: {
         allowOrigins: ["http://localhost:3000"]
     }
 }
@@ -39,6 +73,19 @@ returns json|http:Forbidden|error {
     resource function post login(auth:LoginRequest loginReq)
 returns auth:LoginResponse|http:Unauthorized|error {
         return check auth:postLogin(loginReq);
+    }
+
+    // Unified logout endpoint - 204 No Content response
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["POST", "OPTIONS"]
+        }
+    }
+    resource function post logout(http:Request request) returns http:Response|error {
+        return check auth:logout(request);
     }
 
     // Protected endpoint - requires authentication
@@ -90,13 +137,26 @@ service /election/api/v1 on SharedListener {
         return check election:getUpcomingElections();
     }
 
+    // Unified logout endpoint - 204 No Content response  
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["POST", "OPTIONS"]
+        }
+    }
+    resource function post logout(http:Request request) returns http:Response|error {
+        return check auth:logout(request);
+    }
+
     // Protected endpoint - admin/government officials only
     resource function post elections/create(http:Request request, election:ElectionConfig newElectionConfig)
     returns error|http:Response {
 
         // Check authorization
         auth:AuthOptions options = {
-            allowedRoles: [auth:ADMIN, auth:GOVERNMENT_OFFICIAL, auth:ELECTION_COMMISSION],
+            allowedRoles: [auth:ADMIN, auth:ELECTION_COMMISSION],
             requiredPermissions: [auth:CREATE_ELECTION]
         };
 
@@ -133,5 +193,35 @@ service /election/api/v1 on SharedListener {
         }
 
         return check election:deleteElection(electionId);
+    }
+
+    // Admin endpoint for token monitoring
+    resource function get admin/token\-stats(http:Request request) returns json|http:Response|error {
+        auth:AuthOptions options = {
+            allowedRoles: [auth:ADMIN],
+            requiredPermissions: [auth:MANAGE_USERS]
+        };
+
+        auth:AuthenticatedUser|http:Response authResult = auth:withAuth(request, options);
+        if authResult is http:Response {
+            return authResult;
+        }
+
+        return auth:getBlacklistStats();
+    }
+
+    // Admin endpoint for manual token cleanup
+    resource function post admin/cleanup\-tokens(http:Request request) returns json|http:Response|error {
+        auth:AuthOptions options = {
+            allowedRoles: [auth:ADMIN],
+            requiredPermissions: [auth:MANAGE_USERS]
+        };
+
+        auth:AuthenticatedUser|http:Response authResult = auth:withAuth(request, options);
+        if authResult is http:Response {
+            return authResult;
+        }
+
+        return auth:manualTokenCleanup();
     }
 }

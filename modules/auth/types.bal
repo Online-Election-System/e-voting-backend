@@ -76,8 +76,7 @@ public type ChangePasswordRequest record {|
 |};
 
 public type VoterRegistrationRequest record {
-    ChiefOccupantInput chiefOccupant
-;
+    ChiefOccupantInput chiefOccupant;
     HouseholdDetailsInput householdDetails;
     HouseholdMembersRequest newHouseholdMembers;
 };
@@ -94,9 +93,6 @@ public type ChiefOccupantInsert record {| // Added role, isVerified, verifiedAt,
     string email;
     string? idCopyPath;
     string role = "chief_occupant";
-    boolean isVerified = false;
-    string? verifiedAt = ();
-    string? verifiedBy = ();
 |};
 
 public type HouseholdMembersInsert record {| // Added role, isVerified, verifiedAt, verifiedBy fields
@@ -113,9 +109,34 @@ public type HouseholdMembersInsert record {| // Added role, isVerified, verified
     string passwordHash;
     boolean passwordchanged;
     string role = "household_member";
-    boolean isVerified = false;
-    string? verifiedAt = ();
-    string? verifiedBy = ();
+|};
+
+# -- Government official & election commission registration types --
+#
+# + fullName - Full Name
+# + nic - National Identity Card Number
+# + email - Email
+# + passwordHash - Account Password
+public type GovernmentOfficialInput record {|
+    string fullName;
+    string nic;
+    string email;
+    string passwordHash;
+|};
+
+public type ElectionCommissionInput record {|
+    string fullName;
+    string nic;
+    string email;
+    string passwordHash;
+|};
+
+public type GovernmentOfficialRegistrationRequest record {|
+    GovernmentOfficialInput official;
+|};
+
+public type ElectionCommissionRegistrationRequest record {|
+    ElectionCommissionInput commission;
 |};
 
 public type PasswordResetRequest record {
@@ -123,3 +144,28 @@ public type PasswordResetRequest record {
     string token;
     string newPassword;
 };
+
+// Additional types for logout functionality
+
+public type LogoutResponse record {|
+    string status;
+    string message;
+|};
+
+public type LogoutRequest record {|
+    // Token is extracted from Authorization header, no body needed
+    // But you can add additional fields if needed for audit logging
+    string? deviceInfo?;
+    string? reason?;
+|};
+
+// Enhanced LoginResponse to include token expiry info
+public type EnhancedLoginResponse record {|
+    string userId;
+    string userType;
+    string fullName;
+    string message;
+    string token;
+    int expiresAt?; // Unix timestamp
+    int expiresIn?; // Seconds until expiry
+|};

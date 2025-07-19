@@ -7,7 +7,7 @@ import ballerina/io;
 import ballerina/log;
 import ballerina/persist;
 
-final store:Client dbClient = check new ();
+public final store:Client dbClient = check new ();
 email:SmtpClient smtpClient = check new (
     "smtp.gmail.com",
     "rashminkavindya2@gmail.com",
@@ -60,10 +60,7 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
         passwordHash: hashedPassword,
         email: request.chiefOccupant.email,
         idCopyPath: null,
-        role: "chief_occupant",
-        isVerified: false,
-        verifiedAt: (),
-        verifiedBy: ()
+        role: "chief_occupant"
     };
 
     log:printInfo("Creating chief occupant with ID: " + chiefOccupantId);
@@ -137,10 +134,7 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
             idCopyPath: null, // Temporarily set to null
             passwordHash: memberHashedPassword,
             passwordchanged: false,
-            role: "household_member",
-            isVerified: false,
-            verifiedAt: (),
-            verifiedBy: ()
+            role: "household_member"
         };
 
         log:printInfo("Creating household member with ID: " + memberId);
@@ -193,9 +187,9 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
                 return http:UNAUTHORIZED;
             }
 
-            // ADD THIS LOGGING
+            // Use new JWT generation with ID tracking
             io:println("About to generate JWT for chief ID: ", chief.id);
-            string|error token = generateJwt(chief.id.toString(), "chief_occupant");
+            string|error token = generateJwtWithId(chief.id.toString(), CHIEF_OCCUPANT);
 
             if token is error {
                 io:println("JWT generation failed: ", token);
@@ -219,6 +213,7 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
     if !chiefFound {
         io:println("No chief found with NIC: ", loginReq.nic);
     }
+
     // Household members login
     stream<store:HouseholdMembers, persist:Error?> memberStream = dbClient->/householdmembers.get();
     check from store:HouseholdMembers member in memberStream
@@ -231,7 +226,7 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
                 return http:UNAUTHORIZED;
             }
 
-            string|error token = generateJwt(member.id.toString(), "household_member");
+            string|error token = generateJwtWithId(member.id.toString(), HOUSEHOLD_MEMBER);
             if token is error {
                 return http:UNAUTHORIZED;
             }
@@ -244,6 +239,43 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
             };
         };
     check memberStream.close();
+
+    // Government officials & election commission login (AdminUsers table)
+    stream<store:AdminUsers, persist:Error?> adminStream = dbClient->/adminusers.get();
+    check from store:AdminUsers admin in adminStream
+        where admin.username == loginReq.nic
+        do {
+            check adminStream.close();
+            boolean|error isVerified = verifyPassword(loginReq.password, admin.passwordHash);
+            if isVerified is error || !isVerified {
+                return http:UNAUTHORIZED;
+            }
+
+            // Map admin role to UserRole enum
+            UserRole role;
+            if admin.role == "government_official" {
+                role = GOVERNMENT_OFFICIAL;
+            } else if admin.role == "election_commission" {
+                role = ELECTION_COMMISSION;
+            } else if admin.role == "admin" {
+                role = ADMIN;
+            } else {
+                return http:UNAUTHORIZED; // Unknown role
+            }
+
+            string|error token = generateJwtWithId(admin.id.toString(), role);
+            if token is error {
+                return http:UNAUTHORIZED;
+            }
+            return {
+                userId: admin.id,
+                userType: admin.role,
+                fullName: admin.username,
+                message: "Login successful",
+                token: token
+            };
+        };
+    check adminStream.close();
 
     return http:UNAUTHORIZED;
 }

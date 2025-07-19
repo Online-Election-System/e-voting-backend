@@ -2,9 +2,9 @@
 public enum UserRole {
     ADMIN = "admin",
     CHIEF_OCCUPANT = "chief_occupant",
-    VERIFIED_CHIEF_OCCUPANT = "verified_chief_occupant",
+    // VERIFIED_CHIEF_OCCUPANT = "verified_chief_occupant",
     HOUSEHOLD_MEMBER = "household_member",
-    VERIFIED_HOUSEHOLD_MEMBER = "verified_household_member",
+    // VERIFIED_HOUSEHOLD_MEMBER = "verified_household_member",
     GOVERNMENT_OFFICIAL = "government_official",
     ELECTION_COMMISSION = "election_commission"
 }

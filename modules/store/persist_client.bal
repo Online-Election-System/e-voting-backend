@@ -13,8 +13,8 @@ import ballerinax/postgresql.driver as _;
 const CHIEF_OCCUPANT = "chiefoccupants";
 const HOUSEHOLD_DETAILS = "householddetails";
 const HOUSEHOLD_MEMBERS = "householdmembers";
-const ADMIN_USERS = "adminusers";
 const ELECTION = "elections";
+const ADMIN_USERS = "adminusers";
 
 public isolated client class Client {
     *persist:AbstractPersistClient;
@@ -38,10 +38,7 @@ public isolated client class Client {
                 passwordHash: {columnName: "password_hash"},
                 email: {columnName: "email"},
                 idCopyPath: {columnName: "id_copy_path"},
-                role: {columnName: "role"},
-                isVerified: {columnName: "is_verified"},
-                verifiedAt: {columnName: "verified_at"},
-                verifiedBy: {columnName: "verified_by"}
+                role: {columnName: "role"}
             },
             keyFields: ["id"]
         },
@@ -77,24 +74,7 @@ public isolated client class Client {
                 approvedByChief: {columnName: "approved_by_chief"},
                 passwordHash: {columnName: "Hased_password"},
                 passwordchanged: {columnName: "passwordchanged"},
-                role: {columnName: "role"},
-                isVerified: {columnName: "is_verified"},
-                verifiedAt: {columnName: "verified_at"},
-                verifiedBy: {columnName: "verified_by"}
-            },
-            keyFields: ["id"]
-        },
-        [ADMIN_USERS]: {
-            entityName: "AdminUsers",
-            tableName: "AdminUsers",
-            fieldMetadata: {
-                id: {columnName: "id"},
-                username: {columnName: "username"},
-                email: {columnName: "email"},
-                passwordHash: {columnName: "password_hash"},
-                role: {columnName: "role"},
-                createdAt: {columnName: "created_at"},
-                isActive: {columnName: "is_active"}
+                role: {columnName: "role"}
             },
             keyFields: ["id"]
         },
@@ -114,6 +94,20 @@ public isolated client class Client {
                 startTime: {columnName: "start_time"},
                 endTime: {columnName: "end_time"},
                 status: {columnName: "status"}
+            },
+            keyFields: ["id"]
+        },
+        [ADMIN_USERS]: {
+            entityName: "AdminUsers",
+            tableName: "AdminUsers",
+            fieldMetadata: {
+                id: {columnName: "id"},
+                username: {columnName: "username"},
+                email: {columnName: "email"},
+                passwordHash: {columnName: "password_hash"},
+                role: {columnName: "role"},
+                createdAt: {columnName: "created_at"},
+                isActive: {columnName: "is_active"}
             },
             keyFields: ["id"]
         }
@@ -148,8 +142,8 @@ public isolated client class Client {
             [CHIEF_OCCUPANT]: check new (dbClient, self.metadata.get(CHIEF_OCCUPANT).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [HOUSEHOLD_DETAILS]: check new (dbClient, self.metadata.get(HOUSEHOLD_DETAILS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [HOUSEHOLD_MEMBERS]: check new (dbClient, self.metadata.get(HOUSEHOLD_MEMBERS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
-            [ADMIN_USERS]: check new (dbClient, self.metadata.get(ADMIN_USERS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
-            [ELECTION]: check new (dbClient, self.metadata.get(ELECTION).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
+            [ELECTION]: check new (dbClient, self.metadata.get(ELECTION).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [ADMIN_USERS]: check new (dbClient, self.metadata.get(ADMIN_USERS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
         };
     }
 
@@ -270,45 +264,6 @@ public isolated client class Client {
         return result;
     }
 
-    isolated resource function get adminusers(AdminUsersTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
-        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
-        name: "query"
-    } external;
-
-    isolated resource function get adminusers/[string id](AdminUsersTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
-        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
-        name: "queryOne"
-    } external;
-
-    isolated resource function post adminusers(AdminUsersInsert[] data) returns string[]|persist:Error {
-        psql:SQLClient sqlClient;
-        lock {
-            sqlClient = self.persistClients.get(ADMIN_USERS);
-        }
-        _ = check sqlClient.runBatchInsertQuery(data);
-        return from AdminUsersInsert inserted in data
-            select inserted.id;
-    }
-
-    isolated resource function put adminusers/[string id](AdminUsersUpdate value) returns AdminUsers|persist:Error {
-        psql:SQLClient sqlClient;
-        lock {
-            sqlClient = self.persistClients.get(ADMIN_USERS);
-        }
-        _ = check sqlClient.runUpdateQuery(id, value);
-        return self->/adminusers/[id].get();
-    }
-
-    isolated resource function delete adminusers/[string id]() returns AdminUsers|persist:Error {
-        AdminUsers result = check self->/adminusers/[id].get();
-        psql:SQLClient sqlClient;
-        lock {
-            sqlClient = self.persistClients.get(ADMIN_USERS);
-        }
-        _ = check sqlClient.runDeleteQuery(id);
-        return result;
-    }
-
     isolated resource function get elections(ElectionTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
         'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
         name: "query"
@@ -343,6 +298,45 @@ public isolated client class Client {
         psql:SQLClient sqlClient;
         lock {
             sqlClient = self.persistClients.get(ELECTION);
+        }
+        _ = check sqlClient.runDeleteQuery(id);
+        return result;
+    }
+
+    isolated resource function get adminusers(AdminUsersTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get adminusers/[string id](AdminUsersTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post adminusers(AdminUsersInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ADMIN_USERS);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from AdminUsersInsert inserted in data
+            select inserted.id;
+    }
+
+    isolated resource function put adminusers/[string id](AdminUsersUpdate value) returns AdminUsers|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ADMIN_USERS);
+        }
+        _ = check sqlClient.runUpdateQuery(id, value);
+        return self->/adminusers/[id].get();
+    }
+
+    isolated resource function delete adminusers/[string id]() returns AdminUsers|persist:Error {
+        AdminUsers result = check self->/adminusers/[id].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ADMIN_USERS);
         }
         _ = check sqlClient.runDeleteQuery(id);
         return result;

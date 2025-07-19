@@ -17,9 +17,6 @@ public type ChiefOccupant record {|
     string email;
     string? idCopyPath;
     string role;
-    boolean isVerified;
-    time:Utc? verifiedAt;
-    string? verifiedBy;
 |};
 
 public type ChiefOccupantOptionalized record {|
@@ -34,9 +31,6 @@ public type ChiefOccupantOptionalized record {|
     string email?;
     string? idCopyPath?;
     string role?;
-    boolean isVerified?;
-    time:Utc? verifiedAt?;
-    string? verifiedBy?;
 |};
 
 public type ChiefOccupantTargetType typedesc<ChiefOccupantOptionalized>;
@@ -54,9 +48,6 @@ public type ChiefOccupantUpdate record {|
     string email?;
     string? idCopyPath?;
     string role?;
-    boolean isVerified?;
-    time:Utc? verifiedAt?;
-    string? verifiedBy?;
 |};
 
 public type HouseholdDetails record {|
@@ -112,9 +103,6 @@ public type HouseholdMembers record {|
     string passwordHash;
     boolean passwordchanged;
     string role;
-    boolean isVerified;
-    time:Utc? verifiedAt;
-    string? verifiedBy;
 |};
 
 public type HouseholdMembersOptionalized record {|
@@ -131,9 +119,6 @@ public type HouseholdMembersOptionalized record {|
     string passwordHash?;
     boolean passwordchanged?;
     string role?;
-    boolean isVerified?;
-    time:Utc? verifiedAt?;
-    string? verifiedBy?;
 |};
 
 public type HouseholdMembersTargetType typedesc<HouseholdMembersOptionalized>;
@@ -153,42 +138,6 @@ public type HouseholdMembersUpdate record {|
     string passwordHash?;
     boolean passwordchanged?;
     string role?;
-    boolean isVerified?;
-    time:Utc? verifiedAt?;
-    string? verifiedBy?;
-|};
-
-public type AdminUsers record {|
-    readonly string id;
-    string username;
-    string email;
-    string passwordHash;
-    string role;
-    time:Utc createdAt;
-    boolean isActive;
-|};
-
-public type AdminUsersOptionalized record {|
-    string id?;
-    string username?;
-    string email?;
-    string passwordHash?;
-    string role?;
-    time:Utc createdAt?;
-    boolean isActive?;
-|};
-
-public type AdminUsersTargetType typedesc<AdminUsersOptionalized>;
-
-public type AdminUsersInsert AdminUsers;
-
-public type AdminUsersUpdate record {|
-    string username?;
-    string email?;
-    string passwordHash?;
-    string role?;
-    time:Utc createdAt?;
-    boolean isActive?;
 |};
 
 public type Election record {|
@@ -237,5 +186,38 @@ public type ElectionUpdate record {|
     time:TimeOfDay startTime?;
     time:TimeOfDay endTime?;
     string status?;
+|};
+
+public type AdminUsers record {|
+    readonly string id;
+    string username;
+    string email;
+    string passwordHash;
+    string role;
+    time:Utc createdAt;
+    boolean isActive;
+|};
+
+public type AdminUsersOptionalized record {|
+    string id?;
+    string username?;
+    string email?;
+    string passwordHash?;
+    string role?;
+    time:Utc createdAt?;
+    boolean isActive?;
+|};
+
+public type AdminUsersTargetType typedesc<AdminUsersOptionalized>;
+
+public type AdminUsersInsert AdminUsers;
+
+public type AdminUsersUpdate record {|
+    string username?;
+    string email?;
+    string passwordHash?;
+    string role?;
+    time:Utc createdAt?;
+    boolean isActive?;
 |};
 
