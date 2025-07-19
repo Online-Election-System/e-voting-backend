@@ -22,10 +22,7 @@ CREATE TABLE "HouseholdMembers" (
 	"approved_by_chief" BOOLEAN NOT NULL,
 	"Hased_password" VARCHAR(191) NOT NULL,
 	"passwordchanged" BOOLEAN NOT NULL,
-	"role" VARCHAR(191) NOT NULL DEFAULT "household_member",
-	"is_verified" BOOLEAN NOT NULL DEFAULT FALSE,
-	"verified_at" TIMESTAMP,
-	"verified_by" VARCHAR(191),
+	"role" VARCHAR(191) NOT NULL,
 	PRIMARY KEY("id")
 );
 
@@ -69,10 +66,7 @@ CREATE TABLE "ChiefOccupant" (
 	"password_hash" VARCHAR(191) NOT NULL,
 	"email" VARCHAR(191) NOT NULL,
 	"id_copy_path" VARCHAR(191),
-	"role" VARCHAR(191) NOT NULL DEFAULT "chief_occupant",
-	"is_verified" BOOLEAN NOT NULL DEFAULT FALSE,
-	"verified_at" TIMESTAMP,
-	"verified_by" VARCHAR(191),
+	"role" VARCHAR(191) NOT NULL,
 	PRIMARY KEY("id")
 );
 
@@ -83,7 +77,7 @@ CREATE TABLE "AdminUsers" (
 	"password_hash" VARCHAR(191) NOT NULL,
 	"role" VARCHAR(191) NOT NULL,
 	"created_at" TIMESTAMP NOT NULL,
-	"is_active" BOOLEAN NOT NULL DEFAULT TRUE,
+	"is_active" BOOLEAN NOT NULL,
 	PRIMARY KEY("id")
 );
 
