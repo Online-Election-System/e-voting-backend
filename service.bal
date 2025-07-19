@@ -318,51 +318,80 @@ service /result/api/v1 on SharedListener {
 
     // District Management Endpoints
 
-    // Get all districts
-    resource function get districts() returns store:District[]|http:InternalServerError {
-        return store:districtsStore.toArray();
-    }
+    // District Management Endpoints
+// Get all districts
+resource function get districts() returns store:District[]|http:InternalServerError {
+    return store:districtsStore.toArray();
+}
 
-    // Get specific district by ID
-    resource function get districts/[string districtId]() returns store:District|http:NotFound|http:InternalServerError {
-        if (store:districtsStore.hasKey(districtId)) {
-            return store:districtsStore.get(districtId);
-        }
+// Get specific district by ID
+resource function get districts/[string districtId]() returns store:District|http:NotFound|http:InternalServerError {
+    if (store:districtsStore.hasKey(districtId)) {
+        return store:districtsStore.get(districtId);
+    }
+    return http:NOT_FOUND;
+}
+
+// Get district results with detailed breakdown
+resource function get districts/[string districtId]/results() returns store:DistrictResult[]|http:NotFound|http:InternalServerError {
+    if (!store:districtsStore.hasKey(districtId)) {
         return http:NOT_FOUND;
     }
+    
+    store:District district = store:districtsStore.get(districtId);
+    store:DistrictResult[]? results = district.results;
+    return results ?: [];
+}
 
-    // Get district results with detailed breakdown
-    resource function get districts/[string districtId]/results() returns store:DistrictResult[]|http:NotFound|http:InternalServerError {
-        if (!store:districtsStore.hasKey(districtId)) {
-            return http:NOT_FOUND;
-        }
-        
-        store:District district = store:districtsStore.get(districtId);
-        store:DistrictResult[]? results = district.results;
-        return results ?: [];
+// Province Management Endpoints
+// Get all provinces
+resource function get provinces() returns store:ProvinceResult[]|http:InternalServerError {
+    return store:provincesStore.toArray();
+}
+
+// Get specific province by ID
+resource function get provinces/[string provinceId]() returns store:ProvinceResult|http:NotFound|http:InternalServerError {
+    if (store:provincesStore.hasKey(provinceId)) {
+        return store:provincesStore.get(provinceId);
     }
+    return http:NOT_FOUND;
+}
 
-    // Province Management Endpoints
-
-    // Get all provinces
-    resource function get provinces() returns store:ProvinceResult[]|http:InternalServerError {
-        return store:provincesStore.toArray();
-    }
-
-    // Get specific province by ID
-    resource function get provinces/[string provinceId]() returns store:ProvinceResult|http:NotFound|http:InternalServerError {
-        if (store:provincesStore.hasKey(provinceId)) {
-            return store:provincesStore.get(provinceId);
-        }
+// Get districts by province ID
+resource function get provinces/[string provinceId]/districts() returns store:District[]|http:NotFound|http:InternalServerError {
+    // Check if province exists first
+    if (!store:provincesStore.hasKey(provinceId)) {
         return http:NOT_FOUND;
     }
-
-    // Get districts by province
-    resource function get provinces/[string provinceId]/districts() returns store:District[]|http:NotFound|http:InternalServerError {
-        store:District[]|error districts = result:getDistrictsByProvince(provinceId);
-        if districts is store:District[] {
-            return districts;
-        }
+    
+    store:District[] districts = [];
+    
+    // Use do-trap for error handling
+    do {
+        districts = check getDistrictsByProvince(provinceId);
+    } on fail error err {
+        log:printError("Error fetching districts for province: " + provinceId, err);
+        return http:INTERNAL_SERVER_ERROR;
+    }
+    
+    if (districts.length() == 0) {
         return http:NOT_FOUND;
     }
+    
+    return districts;
+}
+
+// Helper function to get districts by province (implement this according to your data store)
+function getDistrictsByProvince(string provinceId) returns store:District[]|error {
+    store:District[] matchingDistricts = [];
+    
+    // Iterate through all districts and filter by provinceId
+    foreach store:District district in store:districtsStore.toArray() {
+        if (district.provinceId == provinceId) {
+            matchingDistricts.push(district);
+        }
+    }
+    
+    return matchingDistricts;
+}
 }
