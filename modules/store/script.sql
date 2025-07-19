@@ -5,10 +5,13 @@
 
 DROP TABLE IF EXISTS "Candidate";
 DROP TABLE IF EXISTS "AdminUsers";
+DROP TABLE IF EXISTS "ProvinceResult";
+DROP TABLE IF EXISTS "Vote";
 DROP TABLE IF EXISTS "ChiefOccupant";
 DROP TABLE IF EXISTS "ElectionSummary";
 DROP TABLE IF EXISTS "HouseholdDetails";
 DROP TABLE IF EXISTS "Election";
+DROP TABLE IF EXISTS "District";
 DROP TABLE IF EXISTS "DistrictResult";
 DROP TABLE IF EXISTS "HouseholdMembers";
 
@@ -38,6 +41,14 @@ CREATE TABLE "DistrictResult" (
 	"winner" VARCHAR(191),
 	"status" VARCHAR(191) NOT NULL,
 	PRIMARY KEY("district_code","election_id")
+);
+
+CREATE TABLE "District" (
+	"district_id" VARCHAR(191) NOT NULL,
+	"province_id" VARCHAR(191) NOT NULL,
+	"district_name" VARCHAR(191) NOT NULL,
+	"total_voters" INT NOT NULL,
+	PRIMARY KEY("district_id")
 );
 
 CREATE TABLE "Election" (
@@ -95,6 +106,23 @@ CREATE TABLE "ChiefOccupant" (
 	PRIMARY KEY("id")
 );
 
+CREATE TABLE "Vote" (
+	"id" VARCHAR(191) NOT NULL,
+	"voter_id" VARCHAR(191) NOT NULL,
+	"election_id" VARCHAR(191) NOT NULL,
+	"candidate_id" VARCHAR(191) NOT NULL,
+	"district" VARCHAR(191) NOT NULL,
+	"timestamp" VARCHAR(191) NOT NULL,
+	PRIMARY KEY("id")
+);
+
+CREATE TABLE "ProvinceResult" (
+	"province_id" VARCHAR(191) NOT NULL,
+	"province_name" VARCHAR(191) NOT NULL,
+	"total_districts" INT NOT NULL,
+	PRIMARY KEY("province_id")
+);
+
 CREATE TABLE "AdminUsers" (
 	"id" VARCHAR(191) NOT NULL,
 	"username" VARCHAR(191) NOT NULL,
@@ -109,14 +137,13 @@ CREATE TABLE "AdminUsers" (
 CREATE TABLE "Candidate" (
 	"candidate_id" VARCHAR(191) NOT NULL,
 	"election_id" VARCHAR(191) NOT NULL,
-	"voter_id" VARCHAR(191) NOT NULL,
 	"candidate_name" VARCHAR(191) NOT NULL,
 	"party_name" VARCHAR(191) NOT NULL,
 	"party_symbol" VARCHAR(191),
 	"party_color" VARCHAR(191) NOT NULL,
 	"candidate_image" VARCHAR(191),
-	"popular_votes" INT NOT NULL,
-	"electoral_votes" INT NOT NULL,
+	"popular_votes" INT,
+	"electoral_votes" INT,
 	"position" INT,
 	"is_active" BOOLEAN NOT NULL,
 	PRIMARY KEY("candidate_id")

@@ -4,6 +4,8 @@ import ballerina/time;
 import ballerina/log;
 import ballerina/lang.'decimal;
 import online_election.store;
+import ballerina/lang.array;
+import ballerina/io;
 
 // Result processing and analytics functions using your database schema
 
@@ -164,26 +166,41 @@ public function calculatePopularVoteWinner(string electionId) returns store:Cand
 // Calculate margin of victory
 public function calculateVictoryMargin(string electionId) returns VictoryMargin|error {
     store:Candidate[] candidates = check getCandidatesByElection(electionId);
-    
-    if (candidates.length() < 2) {
-        return {marginType: "uncontested", margin: 100.0d, votes: 0};
+    if candidates.length() < 2 {
+        return {
+            marginType: "uncontested",
+            margin: 100.0d,
+            votes: 0
+        };
     }
     
-    // Sort by popular votes descending
-    store:Candidate[] sortedCandidates = candidates.clone().sort(key = candidate => candidate.popularVotes, direction = "descending");
+    // ✅ Clone candidates and sort using array:sort() with key function
+    store:Candidate[] sortedCandidates = candidates.clone();
+    // Sort in descending order by popularVotes
+    sortedCandidates = array:sort(sortedCandidates, array:DESCENDING, 
+        function(store:Candidate candidate) returns int {
+            return candidate.popularVotes;
+        });
     
     store:Candidate winner = sortedCandidates[0];
     store:Candidate runnerUp = sortedCandidates[1];
     
+    // Handle the return type properly - remove check if calculateTotalVotes returns int?
+    int|error totalVotesResult = calculateTotalVotes(candidates);
+    if totalVotesResult is error {
+        return totalVotesResult;
+    }
+    int totalVotes = totalVotesResult;
+    
     int popularMargin = winner.popularVotes - runnerUp.popularVotes;
-    int totalVotes = calculateTotalVotes(candidates);
-    decimal popularMarginPercentage = totalVotes > 0 ? <decimal>popularMargin / <decimal>totalVotes * 100.0d : 0.0d;
+    decimal popularMarginPercentage = totalVotes > 0 ?
+        <decimal>popularMargin / <decimal>totalVotes * 100.0d : 0.0d;
     
     string marginType = "close";
-    if (popularMarginPercentage > 10.0d) {
-        marginType = "comfortable";
-    } else if (popularMarginPercentage > 20.0d) {
+    if popularMarginPercentage > 20.0d {
         marginType = "landslide";
+    } else if popularMarginPercentage > 10.0d {
+        marginType = "comfortable";
     }
     
     return {
@@ -192,6 +209,8 @@ public function calculateVictoryMargin(string electionId) returns VictoryMargin|
         votes: popularMargin
     };
 }
+
+
 
 // Generate party summaries
 function generatePartySummaries(store:Candidate[] candidates) returns PartySummary[] {

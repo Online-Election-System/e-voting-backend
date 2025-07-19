@@ -15,9 +15,12 @@ const HOUSEHOLD_DETAILS = "householddetails";
 const HOUSEHOLD_MEMBERS = "householdmembers";
 const ELECTION = "elections";
 const ADMIN_USERS = "adminusers";
+const VOTE = "votes";
 const CANDIDATE = "candidates";
 const DISTRICT_RESULT = "districtresults";
 const ELECTION_SUMMARY = "electionsummaries";
+const DISTRICT = "districts";
+const PROVINCE_RESULT = "provinceresults";
 
 public isolated client class Client {
     *persist:AbstractPersistClient;
@@ -114,13 +117,25 @@ public isolated client class Client {
             },
             keyFields: ["id"]
         },
+        [VOTE]: {
+            entityName: "Vote",
+            tableName: "Vote",
+            fieldMetadata: {
+                id: {columnName: "id"},
+                voterId: {columnName: "voter_id"},
+                electionId: {columnName: "election_id"},
+                candidateId: {columnName: "candidate_id"},
+                district: {columnName: "district"},
+                timestamp: {columnName: "timestamp"}
+            },
+            keyFields: ["id"]
+        },
         [CANDIDATE]: {
             entityName: "Candidate",
             tableName: "Candidate",
             fieldMetadata: {
                 candidateId: {columnName: "candidate_id"},
                 electionId: {columnName: "election_id"},
-                voterId: {columnName: "voter_id"},
                 candidateName: {columnName: "candidate_name"},
                 partyName: {columnName: "party_name"},
                 partySymbol: {columnName: "party_symbol"},
@@ -160,6 +175,27 @@ public isolated client class Client {
                 electionStatus: {columnName: "election_status"}
             },
             keyFields: ["electionId"]
+        },
+        [DISTRICT]: {
+            entityName: "District",
+            tableName: "District",
+            fieldMetadata: {
+                districtId: {columnName: "district_id"},
+                provinceId: {columnName: "province_id"},
+                districtName: {columnName: "district_name"},
+                totalVoters: {columnName: "total_voters"}
+            },
+            keyFields: ["districtId"]
+        },
+        [PROVINCE_RESULT]: {
+            entityName: "ProvinceResult",
+            tableName: "ProvinceResult",
+            fieldMetadata: {
+                provinceId: {columnName: "province_id"},
+                provinceName: {columnName: "province_name"},
+                totalDistricts: {columnName: "total_districts"}
+            },
+            keyFields: ["provinceId"]
         }
     };
 
@@ -194,9 +230,12 @@ public isolated client class Client {
             [HOUSEHOLD_MEMBERS]: check new (dbClient, self.metadata.get(HOUSEHOLD_MEMBERS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [ELECTION]: check new (dbClient, self.metadata.get(ELECTION).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [ADMIN_USERS]: check new (dbClient, self.metadata.get(ADMIN_USERS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [VOTE]: check new (dbClient, self.metadata.get(VOTE).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [CANDIDATE]: check new (dbClient, self.metadata.get(CANDIDATE).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [DISTRICT_RESULT]: check new (dbClient, self.metadata.get(DISTRICT_RESULT).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
-            [ELECTION_SUMMARY]: check new (dbClient, self.metadata.get(ELECTION_SUMMARY).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
+            [ELECTION_SUMMARY]: check new (dbClient, self.metadata.get(ELECTION_SUMMARY).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [DISTRICT]: check new (dbClient, self.metadata.get(DISTRICT).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [PROVINCE_RESULT]: check new (dbClient, self.metadata.get(PROVINCE_RESULT).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
         };
     }
 
@@ -395,6 +434,45 @@ public isolated client class Client {
         return result;
     }
 
+    isolated resource function get votes(VoteTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get votes/[string id](VoteTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post votes(VoteInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(VOTE);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from VoteInsert inserted in data
+            select inserted.id;
+    }
+
+    isolated resource function put votes/[string id](VoteUpdate value) returns Vote|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(VOTE);
+        }
+        _ = check sqlClient.runUpdateQuery(id, value);
+        return self->/votes/[id].get();
+    }
+
+    isolated resource function delete votes/[string id]() returns Vote|persist:Error {
+        Vote result = check self->/votes/[id].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(VOTE);
+        }
+        _ = check sqlClient.runDeleteQuery(id);
+        return result;
+    }
+
     isolated resource function get candidates(CandidateTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
         'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
         name: "query"
@@ -509,6 +587,84 @@ public isolated client class Client {
             sqlClient = self.persistClients.get(ELECTION_SUMMARY);
         }
         _ = check sqlClient.runDeleteQuery(electionId);
+        return result;
+    }
+
+    isolated resource function get districts(DistrictTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get districts/[string districtId](DistrictTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post districts(DistrictInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(DISTRICT);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from DistrictInsert inserted in data
+            select inserted.districtId;
+    }
+
+    isolated resource function put districts/[string districtId](DistrictUpdate value) returns District|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(DISTRICT);
+        }
+        _ = check sqlClient.runUpdateQuery(districtId, value);
+        return self->/districts/[districtId].get();
+    }
+
+    isolated resource function delete districts/[string districtId]() returns District|persist:Error {
+        District result = check self->/districts/[districtId].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(DISTRICT);
+        }
+        _ = check sqlClient.runDeleteQuery(districtId);
+        return result;
+    }
+
+    isolated resource function get provinceresults(ProvinceResultTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get provinceresults/[string provinceId](ProvinceResultTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post provinceresults(ProvinceResultInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(PROVINCE_RESULT);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from ProvinceResultInsert inserted in data
+            select inserted.provinceId;
+    }
+
+    isolated resource function put provinceresults/[string provinceId](ProvinceResultUpdate value) returns ProvinceResult|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(PROVINCE_RESULT);
+        }
+        _ = check sqlClient.runUpdateQuery(provinceId, value);
+        return self->/provinceresults/[provinceId].get();
+    }
+
+    isolated resource function delete provinceresults/[string provinceId]() returns ProvinceResult|persist:Error {
+        ProvinceResult result = check self->/provinceresults/[provinceId].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(PROVINCE_RESULT);
+        }
+        _ = check sqlClient.runDeleteQuery(provinceId);
         return result;
     }
 
