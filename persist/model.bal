@@ -14,6 +14,7 @@ import ballerinax/persist.sql;
 # + passwordHash - Hashed Password
 # + idCopyPath - File Path of ID Copy
 # + email - email of chiefoccupant
+# + role - Role of the user
 
 public type ChiefOccupant record {|
     readonly string id;
@@ -31,6 +32,7 @@ public type ChiefOccupant record {|
     string email;
     @sql:Name {value: "id_copy_path"}
     string? idCopyPath;
+    string role;
 |};
 
 # HouseholdDetails Table
@@ -79,6 +81,7 @@ public type HouseholdDetails record {|
 # + approvedByChief - Chief Occupant Approval Status
 # + passwordHash - Hashed Password
 # + passwordchanged - if the password change
+# + role - Role of the user
 
 public type HouseholdMembers record {|
     readonly string id;
@@ -100,6 +103,7 @@ public type HouseholdMembers record {|
     @sql:Name {value: "Hased_password"}
     string passwordHash;
     boolean passwordchanged;
+    string role;
 |};
 
 # Description for elections to be insterted.
@@ -139,4 +143,17 @@ public type Election record {|
     @sql:Name {value: "end_time"}
     time:TimeOfDay endTime;
     string status;
+|};
+
+public type AdminUsers record {|
+    readonly string id;
+    string username;
+    string email;
+    @sql:Name {value: "password_hash"}
+    string passwordHash;
+    string role;
+    @sql:Name {value: "created_at"}
+    time:Utc createdAt;
+    @sql:Name {value: "is_active"}
+    boolean isActive;
 |};
