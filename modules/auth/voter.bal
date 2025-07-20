@@ -18,6 +18,21 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
     log:printInfo("Processing registration request");
     log:printInfo("Password received: " + request.chiefOccupant.passwordHash);
 
+    // DEBUG: Log the received idCopyPath values
+    log:printInfo("=== DEBUG: Received idCopyPath values ===");
+    log:printInfo("Chief idCopyPath: " + (request.chiefOccupant.idCopyPath ?: "NULL"));
+
+    log:printInfo("Number of household members: " + request.newHouseholdMembers.members.length().toString());
+    foreach int i in 0 ..< request.newHouseholdMembers.members.length() {
+        var member = request.newHouseholdMembers.members[i];
+        log:printInfo(string `Member ${i}: ${member.fullName}, idCopyPath: ${member.idCopyPath ?: "NULL"}`);
+    }
+
+    // Print the entire request for debugging
+    io:println("=== FULL REQUEST DEBUG ===");
+    io:println(request);
+    io:println("=== END REQUEST DEBUG ===");
+
     // Validate password policy
     string? passwordError = validatePasswordPolicy(request.chiefOccupant.passwordHash);
     if passwordError is string {
@@ -59,9 +74,14 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
         civilStatus: request.chiefOccupant.civilStatus,
         passwordHash: hashedPassword,
         email: request.chiefOccupant.email,
-        idCopyPath: null,
+        idCopyPath: request.chiefOccupant.idCopyPath,
         role: "chief_occupant"
     };
+
+    // DEBUG: Log what we're inserting
+    log:printInfo("=== DEBUG: Inserting chief occupant ===");
+    log:printInfo("Chief ID: " + chiefOccupantId);
+    log:printInfo("Chief idCopyPath being inserted: " + (chiefOccupantInsert.idCopyPath ?: "NULL"));
 
     log:printInfo("Creating chief occupant with ID: " + chiefOccupantId);
     string[]|error chiefResponse = dbClient->/chiefoccupants.post([chiefOccupantInsert]);
@@ -70,6 +90,13 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
         return error("Failed to create chief occupant: " + chiefResponse.message());
     }
     log:printInfo("Chief occupant created successfully");
+
+    // Verify what was actually inserted into the database
+    store:ChiefOccupant|persist:Error verifyChief = dbClient->/chiefoccupants/[chiefOccupantId].get();
+    if verifyChief is store:ChiefOccupant {
+        log:printInfo("=== DEBUG: Verification - Chief in DB ===");
+        log:printInfo("Verified chief idCopyPath from DB: " + (verifyChief.idCopyPath ?: "NULL"));
+    }
 
     // Send welcome email
     error? emailError = sendWelcomeEmail(request.chiefOccupant.email, request.chiefOccupant.fullName, request.chiefOccupant.passwordHash);
@@ -107,7 +134,9 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
     }
 
     string[] passwordList = [];
-    foreach var member in request.newHouseholdMembers.members {
+    foreach int i in 0 ..< request.newHouseholdMembers.members.length() {
+        var member = request.newHouseholdMembers.members[i];
+
         string|error plainPassword = generatePassword();
         if plainPassword is error {
             log:printError("Failed to generate member password: " + plainPassword.message());
@@ -131,17 +160,30 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
             gender: member.gender,
             approvedByChief: member.approvedByChief,
             civilStatus: member.civilStatus,
-            idCopyPath: null, // Temporarily set to null
+            idCopyPath: member.idCopyPath,
             passwordHash: memberHashedPassword,
             passwordchanged: false,
             role: "household_member"
         };
+
+        // DEBUG: Log what we're inserting for each member
+        log:printInfo(string `=== DEBUG: Inserting member ${i} ===`);
+        log:printInfo("Member ID: " + memberId);
+        log:printInfo("Member name: " + member.fullName);
+        log:printInfo("Member idCopyPath being inserted: " + (memberInsert.idCopyPath ?: "NULL"));
 
         log:printInfo("Creating household member with ID: " + memberId);
         string[]|error memberResp = dbClient->/householdmembers.post([memberInsert]);
         if memberResp is error {
             log:printError("Failed to create household member: " + memberResp.message());
             return error("Failed to create household member: " + memberResp.message());
+        }
+
+        // Verify what was actually inserted for this member
+        store:HouseholdMembers|persist:Error verifyMember = dbClient->/householdmembers/[memberId].get();
+        if verifyMember is store:HouseholdMembers {
+            log:printInfo(string `=== DEBUG: Verification - Member ${i} in DB ===`);
+            log:printInfo("Verified member idCopyPath from DB: " + (verifyMember.idCopyPath ?: "NULL"));
         }
 
         string nic = member.nic ?: "N/A";
