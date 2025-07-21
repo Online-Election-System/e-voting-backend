@@ -1,6 +1,6 @@
 import ballerina/persist as _;
-import ballerinax/persist.sql;
 import ballerina/time;
+import ballerinax/persist.sql;
 
 # Description.
 #
@@ -19,21 +19,21 @@ import ballerina/time;
 
 public type Voter record {|
     readonly string id;
-    @sql:Name { value: "national_id" }
+    @sql:Name {value: "national_id"}
     string nationalId;
-    @sql:Name { value: "full_name" }
+    @sql:Name {value: "full_name"}
     string fullName;
-    @sql:Name { value: "mobile_number" }
+    @sql:Name {value: "mobile_number"}
     string? mobileNumber;
     string? dob;
     string? gender;
-    @sql:Name { value: "nic_chief_occupant" }
+    @sql:Name {value: "nic_chief_occupant"}
     string? nicChiefOccupant;
     string? address;
     string? district;
-    @sql:Name { value: "household_no" }
+    @sql:Name {value: "household_no"}
     string? householdNo;
-    @sql:Name { value: "grama_niladhari" }
+    @sql:Name {value: "grama_niladhari"}
     string? gramaNiladhari;
     string password;
 |};
@@ -75,4 +75,40 @@ public type Election record {|
     @sql:Name {value: "end_time"}
     time:TimeOfDay endTime;
     string status;
+|};
+
+# + candidateId - candidateId (primary key)
+# + electionId - electionId(forign key)
+# + candidateName - candidateName
+# + partyName - partyName
+# + partySymbol - partySymbol
+# + partyColor - partyColor
+# + candidateImage - candidateImage
+# + popularVotes - popularVotes
+# + electoralVotes - electoralVotes
+# + position - position
+# + isActive - isActive
+
+public type Candidate record {|
+    @sql:Name {value: "candidate_id"}
+    readonly string candidateId;
+    @sql:Name {value: "election_id"}
+    string electionId;
+    @sql:Name {value: "candidate_name"}
+    string candidateName;
+    @sql:Name {value: "party_name"}
+    string partyName;
+    @sql:Name {value: "party_symbol"}
+    string? partySymbol;
+    @sql:Name {value: "party_color"}
+    string partyColor;
+    @sql:Name {value: "candidate_image"}
+    string? candidateImage;
+    @sql:Name {value: "popular_votes"}
+    int? popularVotes;
+    @sql:Name {value: "electoral_votes"}
+    int? electoralVotes;
+    int? position;
+    @sql:Name {value: "is_active"}
+    boolean isActive;
 |};

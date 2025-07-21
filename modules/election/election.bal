@@ -2,9 +2,8 @@ import online_election.common;
 import online_election.store;
 
 import ballerina/http;
+import ballerina/log;
 import ballerina/persist;
-import ballerina/time;
-import ballerina/sql;
 
 final store:Client dbElection = check new ();
 
@@ -15,44 +14,18 @@ public function getElections() returns store:Election[]|error {
     return elections;
 }
 
-public function getElectionCount() returns int|error {
-    store:Election[] elections = check getElections();
-    return elections.length();
-}
-
 public function getElectionById(string electionId) returns store:Election|error {
+    // Add logging
+    log:printInfo("Fetching election with ID: " + electionId);
+
     store:Election|persist:Error election = dbElection->/elections/[electionId];
     if election is persist:Error {
+        log:printError("Election not found", electionId = electionId, 'error = election);
         return error("Election not found for ID: " + electionId);
     }
+
+    log:printInfo("Election found successfully", electionId = electionId);
     return election;
-}
-
-public function getUpcomingElections() returns store:Election[]|error {
-    time:Utc today = time:utcNow();
-    
-
-    sql:ParameterizedQuery query = `SELECT 
-        id,
-        election_name as "electionName",
-        description,
-        start_date as "startDate",
-        enrol_ddl as "enrolDdl",
-        election_date as "electionDate",
-        end_date as "endDate",
-        no_of_candidates as "noOfCandidates",
-        election_type as "electionType",
-        start_time as "startTime",
-        end_time as "endTime",
-        status
-    FROM "Election" WHERE "start_date" > ${today}`;
-    
-    stream<store:Election, persist:Error?> resultStream = dbElection->queryNativeSQL(query);
-    
-    store:Election[] upcomingElections = check from store:Election election in resultStream
-        select election;
-    
-    return upcomingElections;
 }
 
 public function createElection(ElectionConfig newElectionConfig) returns error|http:Response {
@@ -68,7 +41,7 @@ public function createElection(ElectionConfig newElectionConfig) returns error|h
         id: electionInsert.id,
         ...newElectionConfig
     };
-    
+
     http:Response res = new;
     res.setPayload(createdElection);
     return res;
@@ -83,7 +56,7 @@ public function updateElection(string electionId, store:ElectionUpdate updatedEl
     if result is persist:Error {
         return error("Election not created");
     }
-    
+
     http:Response res = new;
     res.setPayload(updatedElection);
     return res;
