@@ -107,7 +107,7 @@ public type HouseholdMembersInsert record {|
     boolean approvedByChief;
     string civilStatus;
     string? idCopyPath;
-    string passwordHash;
+    string hasedPassword;
     boolean passwordchanged;
 |};
 
