@@ -16,6 +16,10 @@ public type ChiefOccupant record {|
     string passwordHash;
     string email;
     string? idCopyPath;
+<<<<<<< HEAD
+=======
+    string role;
+>>>>>>> origin/main
 |};
 
 public type ChiefOccupantOptionalized record {|
@@ -29,6 +33,10 @@ public type ChiefOccupantOptionalized record {|
     string passwordHash?;
     string email?;
     string? idCopyPath?;
+<<<<<<< HEAD
+=======
+    string role?;
+>>>>>>> origin/main
 |};
 
 public type ChiefOccupantTargetType typedesc<ChiefOccupantOptionalized>;
@@ -45,6 +53,10 @@ public type ChiefOccupantUpdate record {|
     string passwordHash?;
     string email?;
     string? idCopyPath?;
+<<<<<<< HEAD
+=======
+    string role?;
+>>>>>>> origin/main
 |};
 
 public type HouseholdDetails record {|
@@ -99,6 +111,10 @@ public type HouseholdMembers record {|
     boolean approvedByChief;
     string passwordHash;
     boolean passwordchanged;
+<<<<<<< HEAD
+=======
+    string role;
+>>>>>>> origin/main
 |};
 
 public type HouseholdMembersOptionalized record {|
@@ -114,6 +130,10 @@ public type HouseholdMembersOptionalized record {|
     boolean approvedByChief?;
     string passwordHash?;
     boolean passwordchanged?;
+<<<<<<< HEAD
+=======
+    string role?;
+>>>>>>> origin/main
 |};
 
 public type HouseholdMembersTargetType typedesc<HouseholdMembersOptionalized>;
@@ -132,6 +152,10 @@ public type HouseholdMembersUpdate record {|
     boolean approvedByChief?;
     string passwordHash?;
     boolean passwordchanged?;
+<<<<<<< HEAD
+=======
+    string role?;
+>>>>>>> origin/main
 |};
 
 public type Election record {|
@@ -182,3 +206,39 @@ public type ElectionUpdate record {|
     string status?;
 |};
 
+<<<<<<< HEAD
+=======
+public type AdminUsers record {|
+    readonly string id;
+    string username;
+    string email;
+    string passwordHash;
+    string role;
+    time:Utc createdAt;
+    boolean isActive;
+|};
+
+public type AdminUsersOptionalized record {|
+    string id?;
+    string username?;
+    string email?;
+    string passwordHash?;
+    string role?;
+    time:Utc createdAt?;
+    boolean isActive?;
+|};
+
+public type AdminUsersTargetType typedesc<AdminUsersOptionalized>;
+
+public type AdminUsersInsert AdminUsers;
+
+public type AdminUsersUpdate record {|
+    string username?;
+    string email?;
+    string passwordHash?;
+    string role?;
+    time:Utc createdAt?;
+    boolean isActive?;
+|};
+
+>>>>>>> origin/main

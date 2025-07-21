@@ -1,9 +1,13 @@
 import ballerina/crypto;
 import ballerina/email;
 import ballerina/io;
+<<<<<<< HEAD
 import ballerina/jwt;
 import ballerina/random;
 import ballerina/time;
+=======
+import ballerina/random;
+>>>>>>> origin/main
 
 function sendWelcomeEmail(string toEmail, string fullName, string plainedPassword) returns error? {
     email:Message message = {
@@ -67,6 +71,7 @@ function joinStrings(string[] values, string separator) returns string {
     return result;
 }
 
+<<<<<<< HEAD
 public function generateJwt(string userId, string userType) returns string|error {
     int seconds = time:utcNow()[0];
     int expiryTime = seconds + 3600;
@@ -89,6 +94,11 @@ public function generateJwt(string userId, string userType) returns string|error
         }
     };
     return check jwt:issue(issuerConfig);
+=======
+// Original JWT generation function (keep for backward compatibility)
+public function generateJwt(string userId, UserRole role) returns string|error {
+    return generateJwtWithId(userId, role);
+>>>>>>> origin/main
 }
 
 // Password hashing with bcrypt

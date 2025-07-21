@@ -56,7 +56,10 @@ public type ChiefOccupantQueryResult record {
 public type LoginRequest record {|
     string nic;
     string password;
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
 |};
 
 public type LoginResponse record {|
@@ -77,13 +80,21 @@ public type ChangePasswordRequest record {|
 |};
 
 public type VoterRegistrationRequest record {
+<<<<<<< HEAD
     ChiefOccupantInput chiefOccupant
 ;
+=======
+    ChiefOccupantInput chiefOccupant;
+>>>>>>> origin/main
     HouseholdDetailsInput householdDetails;
     HouseholdMembersRequest newHouseholdMembers;
 };
 
+<<<<<<< HEAD
 public type ChiefOccupantInsert record {|
+=======
+public type ChiefOccupantInsert record {| // Added role, isVerified, verifiedAt, verifiedBy fields
+>>>>>>> origin/main
     string id;
     string fullName;
     string nic;
@@ -94,9 +105,16 @@ public type ChiefOccupantInsert record {|
     string passwordHash;
     string email;
     string? idCopyPath;
+<<<<<<< HEAD
 |};
 
 public type HouseholdMembersInsert record {|
+=======
+    string role = "chief_occupant";
+|};
+
+public type HouseholdMembersInsert record {| // Added role, isVerified, verifiedAt, verifiedBy fields
+>>>>>>> origin/main
     string id;
     string chiefOccupantId;
     string fullName;
@@ -107,8 +125,42 @@ public type HouseholdMembersInsert record {|
     boolean approvedByChief;
     string civilStatus;
     string? idCopyPath;
+<<<<<<< HEAD
     string hasedPassword;
     boolean passwordchanged;
+=======
+    string passwordHash;
+    boolean passwordchanged;
+    string role = "household_member";
+|};
+
+# -- Government official & election commission registration types --
+#
+# + fullName - Full Name
+# + nic - National Identity Card Number
+# + email - Email
+# + passwordHash - Account Password
+public type GovernmentOfficialInput record {|
+    string fullName;
+    string nic;
+    string email;
+    string passwordHash;
+|};
+
+public type ElectionCommissionInput record {|
+    string fullName;
+    string nic;
+    string email;
+    string passwordHash;
+|};
+
+public type GovernmentOfficialRegistrationRequest record {|
+    GovernmentOfficialInput official;
+|};
+
+public type ElectionCommissionRegistrationRequest record {|
+    ElectionCommissionInput commission;
+>>>>>>> origin/main
 |};
 
 public type PasswordResetRequest record {
@@ -116,3 +168,31 @@ public type PasswordResetRequest record {
     string token;
     string newPassword;
 };
+<<<<<<< HEAD
+=======
+
+// Additional types for logout functionality
+
+public type LogoutResponse record {|
+    string status;
+    string message;
+|};
+
+public type LogoutRequest record {|
+    // Token is extracted from Authorization header, no body needed
+    // But you can add additional fields if needed for audit logging
+    string? deviceInfo?;
+    string? reason?;
+|};
+
+// Enhanced LoginResponse to include token expiry info
+public type EnhancedLoginResponse record {|
+    string userId;
+    string userType;
+    string fullName;
+    string message;
+    string token;
+    int expiresAt?; // Unix timestamp
+    int expiresIn?; // Seconds until expiry
+|};
+>>>>>>> origin/main

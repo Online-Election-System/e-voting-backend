@@ -7,7 +7,11 @@ import ballerina/io;
 import ballerina/log;
 import ballerina/persist;
 
+<<<<<<< HEAD
 final store:Client dbClient = check new ();
+=======
+public final store:Client dbClient = check new ();
+>>>>>>> origin/main
 email:SmtpClient smtpClient = check new (
     "smtp.gmail.com",
     "rashminkavindya2@gmail.com",
@@ -18,6 +22,24 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
     log:printInfo("Processing registration request");
     log:printInfo("Password received: " + request.chiefOccupant.passwordHash);
 
+<<<<<<< HEAD
+=======
+    // DEBUG: Log the received idCopyPath values
+    log:printInfo("=== DEBUG: Received idCopyPath values ===");
+    log:printInfo("Chief idCopyPath: " + (request.chiefOccupant.idCopyPath ?: "NULL"));
+
+    log:printInfo("Number of household members: " + request.newHouseholdMembers.members.length().toString());
+    foreach int i in 0 ..< request.newHouseholdMembers.members.length() {
+        var member = request.newHouseholdMembers.members[i];
+        log:printInfo(string `Member ${i}: ${member.fullName}, idCopyPath: ${member.idCopyPath ?: "NULL"}`);
+    }
+
+    // Print the entire request for debugging
+    io:println("=== FULL REQUEST DEBUG ===");
+    io:println(request);
+    io:println("=== END REQUEST DEBUG ===");
+
+>>>>>>> origin/main
     // Validate password policy
     string? passwordError = validatePasswordPolicy(request.chiefOccupant.passwordHash);
     if passwordError is string {
@@ -59,9 +81,21 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
         civilStatus: request.chiefOccupant.civilStatus,
         passwordHash: hashedPassword,
         email: request.chiefOccupant.email,
+<<<<<<< HEAD
         idCopyPath: null // Temporarily set to null
     };
 
+=======
+        idCopyPath: request.chiefOccupant.idCopyPath,
+        role: "chief_occupant"
+    };
+
+    // DEBUG: Log what we're inserting
+    log:printInfo("=== DEBUG: Inserting chief occupant ===");
+    log:printInfo("Chief ID: " + chiefOccupantId);
+    log:printInfo("Chief idCopyPath being inserted: " + (chiefOccupantInsert.idCopyPath ?: "NULL"));
+
+>>>>>>> origin/main
     log:printInfo("Creating chief occupant with ID: " + chiefOccupantId);
     string[]|error chiefResponse = dbClient->/chiefoccupants.post([chiefOccupantInsert]);
     if chiefResponse is error {
@@ -70,6 +104,16 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
     }
     log:printInfo("Chief occupant created successfully");
 
+<<<<<<< HEAD
+=======
+    // Verify what was actually inserted into the database
+    store:ChiefOccupant|persist:Error verifyChief = dbClient->/chiefoccupants/[chiefOccupantId].get();
+    if verifyChief is store:ChiefOccupant {
+        log:printInfo("=== DEBUG: Verification - Chief in DB ===");
+        log:printInfo("Verified chief idCopyPath from DB: " + (verifyChief.idCopyPath ?: "NULL"));
+    }
+
+>>>>>>> origin/main
     // Send welcome email
     error? emailError = sendWelcomeEmail(request.chiefOccupant.email, request.chiefOccupant.fullName, request.chiefOccupant.passwordHash);
     if emailError is error {
@@ -106,7 +150,13 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
     }
 
     string[] passwordList = [];
+<<<<<<< HEAD
     foreach var member in request.newHouseholdMembers.members {
+=======
+    foreach int i in 0 ..< request.newHouseholdMembers.members.length() {
+        var member = request.newHouseholdMembers.members[i];
+
+>>>>>>> origin/main
         string|error plainPassword = generatePassword();
         if plainPassword is error {
             log:printError("Failed to generate member password: " + plainPassword.message());
@@ -130,11 +180,26 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
             gender: member.gender,
             approvedByChief: member.approvedByChief,
             civilStatus: member.civilStatus,
+<<<<<<< HEAD
             idCopyPath: null, // Temporarily set to null
             passwordHash: memberHashedPassword,
             passwordchanged: false
         };
 
+=======
+            idCopyPath: member.idCopyPath,
+            passwordHash: memberHashedPassword,
+            passwordchanged: false,
+            role: "household_member"
+        };
+
+        // DEBUG: Log what we're inserting for each member
+        log:printInfo(string `=== DEBUG: Inserting member ${i} ===`);
+        log:printInfo("Member ID: " + memberId);
+        log:printInfo("Member name: " + member.fullName);
+        log:printInfo("Member idCopyPath being inserted: " + (memberInsert.idCopyPath ?: "NULL"));
+
+>>>>>>> origin/main
         log:printInfo("Creating household member with ID: " + memberId);
         string[]|error memberResp = dbClient->/householdmembers.post([memberInsert]);
         if memberResp is error {
@@ -142,6 +207,16 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
             return error("Failed to create household member: " + memberResp.message());
         }
 
+<<<<<<< HEAD
+=======
+        // Verify what was actually inserted for this member
+        store:HouseholdMembers|persist:Error verifyMember = dbClient->/householdmembers/[memberId].get();
+        if verifyMember is store:HouseholdMembers {
+            log:printInfo(string `=== DEBUG: Verification - Member ${i} in DB ===`);
+            log:printInfo("Verified member idCopyPath from DB: " + (verifyMember.idCopyPath ?: "NULL"));
+        }
+
+>>>>>>> origin/main
         string nic = member.nic ?: "N/A";
         passwordList.push(string `${member.fullName} (${nic}): ${plainPassword}`);
     }
@@ -185,9 +260,15 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
                 return http:UNAUTHORIZED;
             }
 
+<<<<<<< HEAD
             // ADD THIS LOGGING
             io:println("About to generate JWT for chief ID: ", chief.id);
             string|error token = generateJwt(chief.id.toString(), "chief");
+=======
+            // Use new JWT generation with ID tracking
+            io:println("About to generate JWT for chief ID: ", chief.id);
+            string|error token = generateJwtWithId(chief.id.toString(), CHIEF_OCCUPANT);
+>>>>>>> origin/main
 
             if token is error {
                 io:println("JWT generation failed: ", token);
@@ -201,7 +282,11 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
             check chiefStream.close();
             return {
                 userId: chief.id,
+<<<<<<< HEAD
                 userType: "chief",
+=======
+                userType: "chief_occupant",
+>>>>>>> origin/main
                 fullName: chief.fullName,
                 message: "Login successful",
                 token: token
@@ -211,6 +296,10 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
     if !chiefFound {
         io:println("No chief found with NIC: ", loginReq.nic);
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
     // Household members login
     stream<store:HouseholdMembers, persist:Error?> memberStream = dbClient->/householdmembers.get();
     check from store:HouseholdMembers member in memberStream
@@ -223,13 +312,21 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
                 return http:UNAUTHORIZED;
             }
 
+<<<<<<< HEAD
             string|error token = generateJwt(member.id.toString(), "householdMember");
+=======
+            string|error token = generateJwtWithId(member.id.toString(), HOUSEHOLD_MEMBER);
+>>>>>>> origin/main
             if token is error {
                 return http:UNAUTHORIZED;
             }
             return {
                 userId: member.id,
+<<<<<<< HEAD
                 userType: "householdMember",
+=======
+                userType: "household_member",
+>>>>>>> origin/main
                 fullName: member.fullName,
                 message: member.passwordchanged ? "Login successful" : "First-time login. Please change your password.",
                 token: token
@@ -237,6 +334,46 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
         };
     check memberStream.close();
 
+<<<<<<< HEAD
+=======
+    // Government officials & election commission login (AdminUsers table)
+    stream<store:AdminUsers, persist:Error?> adminStream = dbClient->/adminusers.get();
+    check from store:AdminUsers admin in adminStream
+        where admin.username == loginReq.nic
+        do {
+            check adminStream.close();
+            boolean|error isVerified = verifyPassword(loginReq.password, admin.passwordHash);
+            if isVerified is error || !isVerified {
+                return http:UNAUTHORIZED;
+            }
+
+            // Map admin role to UserRole enum
+            UserRole role;
+            if admin.role == "government_official" {
+                role = GOVERNMENT_OFFICIAL;
+            } else if admin.role == "election_commission" {
+                role = ELECTION_COMMISSION;
+            } else if admin.role == "admin" {
+                role = ADMIN;
+            } else {
+                return http:UNAUTHORIZED; // Unknown role
+            }
+
+            string|error token = generateJwtWithId(admin.id.toString(), role);
+            if token is error {
+                return http:UNAUTHORIZED;
+            }
+            return {
+                userId: admin.id,
+                userType: admin.role,
+                fullName: admin.username,
+                message: "Login successful",
+                token: token
+            };
+        };
+    check adminStream.close();
+
+>>>>>>> origin/main
     return http:UNAUTHORIZED;
 }
 
@@ -281,7 +418,11 @@ public function putChangePassword(ChangePasswordRequest req) returns http:Ok|htt
             passwordHash: newHashed
         };
         _ = check dbClient->/chiefoccupants/[req.userId].put(chiefUpdate);
+<<<<<<< HEAD
     } else if req.userType == "householdMember" {
+=======
+    } else if req.userType == "household_member" {
+>>>>>>> origin/main
         store:HouseholdMembers member = check dbClient->/householdmembers/[req.userId].get();
 
         boolean|error isVerified = verifyPassword(req.oldPassword, member.passwordHash);

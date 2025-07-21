@@ -3,6 +3,10 @@
 -- This file is an auto-generated file by Ballerina persistence layer for model.
 -- Please verify the generated scripts and execute them against the target DB server.
 
+<<<<<<< HEAD
+=======
+DROP TABLE IF EXISTS "AdminUsers";
+>>>>>>> origin/main
 DROP TABLE IF EXISTS "ChiefOccupant";
 DROP TABLE IF EXISTS "HouseholdDetails";
 DROP TABLE IF EXISTS "Election";
@@ -21,6 +25,10 @@ CREATE TABLE "HouseholdMembers" (
 	"approved_by_chief" BOOLEAN NOT NULL,
 	"Hased_password" VARCHAR(191) NOT NULL,
 	"passwordchanged" BOOLEAN NOT NULL,
+<<<<<<< HEAD
+=======
+	"role" VARCHAR(191) NOT NULL,
+>>>>>>> origin/main
 	PRIMARY KEY("id")
 );
 
@@ -64,6 +72,21 @@ CREATE TABLE "ChiefOccupant" (
 	"password_hash" VARCHAR(191) NOT NULL,
 	"email" VARCHAR(191) NOT NULL,
 	"id_copy_path" VARCHAR(191),
+<<<<<<< HEAD
+=======
+	"role" VARCHAR(191) NOT NULL,
+	PRIMARY KEY("id")
+);
+
+CREATE TABLE "AdminUsers" (
+	"id" VARCHAR(191) NOT NULL,
+	"username" VARCHAR(191) NOT NULL,
+	"email" VARCHAR(191) NOT NULL,
+	"password_hash" VARCHAR(191) NOT NULL,
+	"role" VARCHAR(191) NOT NULL,
+	"created_at" TIMESTAMP NOT NULL,
+	"is_active" BOOLEAN NOT NULL,
+>>>>>>> origin/main
 	PRIMARY KEY("id")
 );
 

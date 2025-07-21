@@ -14,6 +14,10 @@ const CHIEF_OCCUPANT = "chiefoccupants";
 const HOUSEHOLD_DETAILS = "householddetails";
 const HOUSEHOLD_MEMBERS = "householdmembers";
 const ELECTION = "elections";
+<<<<<<< HEAD
+=======
+const ADMIN_USERS = "adminusers";
+>>>>>>> origin/main
 
 public isolated client class Client {
     *persist:AbstractPersistClient;
@@ -36,7 +40,12 @@ public isolated client class Client {
                 civilStatus: {columnName: "civil_status"},
                 passwordHash: {columnName: "password_hash"},
                 email: {columnName: "email"},
+<<<<<<< HEAD
                 idCopyPath: {columnName: "id_copy_path"}
+=======
+                idCopyPath: {columnName: "id_copy_path"},
+                role: {columnName: "role"}
+>>>>>>> origin/main
             },
             keyFields: ["id"]
         },
@@ -71,7 +80,12 @@ public isolated client class Client {
                 idCopyPath: {columnName: "id_copy_path"},
                 approvedByChief: {columnName: "approved_by_chief"},
                 passwordHash: {columnName: "Hased_password"},
+<<<<<<< HEAD
                 passwordchanged: {columnName: "passwordchanged"}
+=======
+                passwordchanged: {columnName: "passwordchanged"},
+                role: {columnName: "role"}
+>>>>>>> origin/main
             },
             keyFields: ["id"]
         },
@@ -93,6 +107,23 @@ public isolated client class Client {
                 status: {columnName: "status"}
             },
             keyFields: ["id"]
+<<<<<<< HEAD
+=======
+        },
+        [ADMIN_USERS]: {
+            entityName: "AdminUsers",
+            tableName: "AdminUsers",
+            fieldMetadata: {
+                id: {columnName: "id"},
+                username: {columnName: "username"},
+                email: {columnName: "email"},
+                passwordHash: {columnName: "password_hash"},
+                role: {columnName: "role"},
+                createdAt: {columnName: "created_at"},
+                isActive: {columnName: "is_active"}
+            },
+            keyFields: ["id"]
+>>>>>>> origin/main
         }
     };
 
@@ -125,7 +156,12 @@ public isolated client class Client {
             [CHIEF_OCCUPANT]: check new (dbClient, self.metadata.get(CHIEF_OCCUPANT).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [HOUSEHOLD_DETAILS]: check new (dbClient, self.metadata.get(HOUSEHOLD_DETAILS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [HOUSEHOLD_MEMBERS]: check new (dbClient, self.metadata.get(HOUSEHOLD_MEMBERS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+<<<<<<< HEAD
             [ELECTION]: check new (dbClient, self.metadata.get(ELECTION).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
+=======
+            [ELECTION]: check new (dbClient, self.metadata.get(ELECTION).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [ADMIN_USERS]: check new (dbClient, self.metadata.get(ADMIN_USERS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
+>>>>>>> origin/main
         };
     }
 
@@ -285,6 +321,48 @@ public isolated client class Client {
         return result;
     }
 
+<<<<<<< HEAD
+=======
+    isolated resource function get adminusers(AdminUsersTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get adminusers/[string id](AdminUsersTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post adminusers(AdminUsersInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ADMIN_USERS);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from AdminUsersInsert inserted in data
+            select inserted.id;
+    }
+
+    isolated resource function put adminusers/[string id](AdminUsersUpdate value) returns AdminUsers|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ADMIN_USERS);
+        }
+        _ = check sqlClient.runUpdateQuery(id, value);
+        return self->/adminusers/[id].get();
+    }
+
+    isolated resource function delete adminusers/[string id]() returns AdminUsers|persist:Error {
+        AdminUsers result = check self->/adminusers/[id].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ADMIN_USERS);
+        }
+        _ = check sqlClient.runDeleteQuery(id);
+        return result;
+    }
+
+>>>>>>> origin/main
     remote isolated function queryNativeSQL(sql:ParameterizedQuery sqlQuery, typedesc<record {}> rowType = <>) returns stream<rowType, persist:Error?> = @java:Method {
         'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor"
     } external;
