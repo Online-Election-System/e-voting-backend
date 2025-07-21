@@ -1,88 +1,144 @@
+import online_election.auth;
 import online_election.election;
 import online_election.store;
-import online_election.candidate;
+
 import ballerina/http;
 import online_election.vote;
-import ballerina/persist;
-
+import online_election.candidate;
 
 listener http:Listener SharedListener = new (8080);
 
 @http:ServiceConfig {
     cors: {
         allowOrigins: ["http://localhost:3000"],
-        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowHeaders: ["Content-Type", "Authorization"],
+        allowMethods: ["GET", "POST", "OPTIONS"],
         allowCredentials: true
     }
 }
-service /voter\-registration/api/v1 on SharedListener {
-    // Register a new voter (if you have this functionality)
-    resource function post voters/register(store:Voter newVoter)
-    returns http:Created|http:Forbidden|error {
-        // Your registration logic here
-        return http:CREATED;
+service /admin\-registration/api/v1 on SharedListener {
+
+    // Government Official Registration
+    resource function post gov\-official/register(auth:GovernmentOfficialRegistrationRequest req) returns json|error {
+        return check auth:registerGovernmentOfficial(req);
     }
 
-    // Voter Login - FIXED VERSION
-    resource function post voters/login(VoterLoginRequest loginDetails)
-    returns VoterResponse|http:Unauthorized|error {
-        
-        // Use the authentication function from vote module
-        store:Voter|http:Unauthorized|error authResult = vote:authenticateVoter(loginDetails.nationalId, loginDetails.password);
-        
-        if authResult is http:Unauthorized {
-            return http:UNAUTHORIZED; // Wrong credentials
+    // Election Commission Registration
+    resource function post election\-commission/register(auth:ElectionCommissionRegistrationRequest req) returns json|error {
+        return check auth:registerElectionCommission(req);
+    }
+
+    // Unified logout endpoint - 204 No Content response
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["POST", "OPTIONS"]
         }
-        
-        if authResult is error {
-            return error("Authentication failed: " + authResult.message());
-        }
-        
-        // Authentication successful - return voter data
-        store:Voter voter = authResult;
-        
-        VoterResponse response = {
-            id: voter.id,
-            nationalId: voter.nationalId,
-            fullName: voter.fullName,
-            district: voter.district,
-            mobileNumber: voter.mobileNumber,
-            dob: voter.dob,
-            gender: voter.gender,
-            address: voter.address,
-            gramaNiladhari: voter.gramaNiladhari,
-            householdNo: voter.householdNo,
-            nicChiefOccupant: voter.nicChiefOccupant,
-            status: "eligible" // You can add logic to determine this
-        };
-        
-        return response;
+    }
+    resource function post logout(http:Request request) returns http:Response|error {
+        return check auth:logout(request);
     }
 }
 
-// Add these types
-public type VoterLoginRequest record {|
-    string nationalId;
-    string password;
-|};
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["http://localhost:3000"]
+    }
+}
+service /voter\-registration/api/v1 on SharedListener {
+    // Public endpoints (no auth required)
+    // Register a new voter
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        }
+    }
+    resource function post register(auth:VoterRegistrationRequest request)
+returns json|http:Forbidden|error {
+        return check auth:postRegistration(request);
+    }
 
-public type VoterResponse record {|
-    string id;
-    string nationalId;
-    string fullName;
-    string district;
-    string? mobileNumber;
-    string? dob;
-    string? gender;
-    string? address;
-    string? gramaNiladhari;
-    string? householdNo;
-    string? nicChiefOccupant;
-    string status;
-|};
+    // Voter Login
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        }
+    }
+    resource function post login(auth:LoginRequest loginReq)
+returns auth:LoginResponse|http:Unauthorized|error {
+        return check auth:postLogin(loginReq);
+    }
 
-// Add CORS to election service as well
+    // Get complete voter profile with household details - NEW ENDPOINT
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["GET", "OPTIONS"]
+        }
+    }
+    resource function get profile/[string voterId]() returns json|error {
+        return check vote:getCompleteVoterProfile(voterId);
+    }
+
+    // Get elections where voter is enrolled - NEW ENDPOINT
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["GET", "OPTIONS"]
+        }
+    }
+    resource function get voter/[string voterId]/elections() returns store:Election[]|error {
+        return check vote:getVoterEnrolledElections(voterId);
+    }
+
+    // Unified logout endpoint - 204 No Content response
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["POST", "OPTIONS"]
+        }
+    }
+    resource function post logout(http:Request request) returns http:Response|error {
+        return check auth:logout(request);
+    }
+
+    // Protected endpoint - requires authentication
+    // Change Password
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        }
+    }
+    resource function put change\-password(http:Request request, auth:ChangePasswordRequest req)
+    returns http:Ok|http:Unauthorized|json|error|http:Response {
+
+        // Check authentication
+        auth:AuthenticatedUser|http:Response authResult = auth:withAuth(request);
+        if authResult is http:Response {
+            return authResult; // Return error response
+        }
+
+        return check auth:putChangePassword(req);
+    }
+}
+
 @http:ServiceConfig {
     cors: {
         allowOrigins: ["http://localhost:3000"],
@@ -92,27 +148,124 @@ public type VoterResponse record {|
     }
 }
 service /election/api/v1 on SharedListener {
+    // Public endpoints
     resource function get elections() returns store:Election[]|error {
         return check election:getElections();
+    }
+
+    resource function get count() returns int|error {
+        return check election:getElectionCount();
     }
 
     resource function get elections/[string electionId]() returns store:Election|error {
         return check election:getElectionById(electionId);
     }
 
-    resource function post elections/create(@http:Header string authorization, election:ElectionConfig newElectionConfig)
-    returns http:Created|http:Forbidden|error {
+    resource function get elections/upcoming() returns store:Election[]|error {
+        return check election:getUpcomingElections();
+    }
+
+    // Check if voter is enrolled in specific election - NEW ENDPOINT
+    resource function get voter/[string voterId]/election/[string electionId]/enrolled() returns json|error {
+        boolean|error isEnrolled = vote:isVoterEnrolledInElection(voterId, electionId);
+        
+        if isEnrolled is error {
+            return error("Failed to check enrollment status: " + isEnrolled.message());
+        }
+        
+        return {
+            "voterId": voterId,
+            "electionId": electionId,
+            "isEnrolled": isEnrolled
+        };
+    }
+
+    // Get elections for a specific voter (enrolled elections only) - NEW ENDPOINT
+    resource function get voter/[string voterId]/elections() returns store:Election[]|error {
+        return check vote:getVoterEnrolledElections(voterId);
+    }
+
+    // Unified logout endpoint - 204 No Content response  
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["POST", "OPTIONS"]
+        }
+    }
+    resource function post logout(http:Request request) returns http:Response|error {
+        return check auth:logout(request);
+    }
+
+    // Protected endpoint - admin/government officials only
+    resource function post elections/create(http:Request request, election:ElectionConfig newElectionConfig)
+    returns error|http:Response {
+
+        // Check authorization
+        auth:AuthOptions options = {
+            allowedRoles: [auth:ADMIN, auth:ELECTION_COMMISSION],
+            requiredPermissions: [auth:CREATE_ELECTION]
+        };
+
+        auth:AuthenticatedUser|http:Response authResult = auth:withAuth(request, options);
+        if authResult is http:Response {
+            return authResult;
+        }
+
         return check election:createElection(newElectionConfig);
     }
 
     resource function put elections/[string electionId]/update(@http:Header string authorization, store:ElectionUpdate updatedElection)
-    returns http:Ok|http:Forbidden|error {
+    returns error|http:Response {
         return check election:updateElection(electionId, updatedElection);
     }
 
-    resource function delete elections/[string electionId]/delete(@http:Header string authorization)
-    returns http:NoContent|http:Forbidden|error {
+    // Protected endpoint - admin only
+    resource function delete elections/[string electionId]/delete(http:Request request)
+    returns http:NoContent|http:Forbidden|error|http:Response {
+
+        auth:AuthOptions options = {
+            allowedRoles: [auth:ADMIN],
+            requiredPermissions: [auth:DELETE_ELECTION]
+        };
+
+        auth:AuthenticatedUser|http:Response authResult = auth:withAuth(request, options);
+        if authResult is http:Response {
+            return authResult;
+        }
+
         return check election:deleteElection(electionId);
+    }
+
+    // Admin endpoint for token monitoring
+    resource function get admin/token\-stats(http:Request request) returns json|http:Response|error {
+        auth:AuthOptions options = {
+            allowedRoles: [auth:ADMIN],
+            requiredPermissions: [auth:MANAGE_USERS]
+        };
+
+        auth:AuthenticatedUser|http:Response authResult = auth:withAuth(request, options);
+        if authResult is http:Response {
+            return authResult;
+        }
+
+        return auth:getBlacklistStats();
+    }
+
+    // Admin endpoint for manual token cleanup
+    resource function post admin/cleanup\-tokens(http:Request request) returns json|http:Response|error {
+        auth:AuthOptions options = {
+            allowedRoles: [auth:ADMIN],
+            requiredPermissions: [auth:MANAGE_USERS]
+        };
+
+        auth:AuthenticatedUser|http:Response authResult = auth:withAuth(request, options);
+        if authResult is http:Response {
+            return authResult;
+        }
+
+        return auth:manualTokenCleanup();
     }
 }
 
@@ -129,6 +282,36 @@ service /vote/api/v1 on SharedListener {
     resource function post votes/cast(vote:Vote newVote)
     returns http:Created|http:Forbidden|error {
         return check vote:castVote(newVote);
+    }
+
+    // Check voting eligibility (enrollment + not already voted) - NEW ENDPOINT
+    resource function get eligibility/[string voterId]/election/[string electionId]() returns json|error {
+        // Check enrollment
+        boolean|error isEnrolled = vote:isVoterEnrolledInElection(voterId, electionId);
+        if isEnrolled is error {
+            return error("Failed to check enrollment status: " + isEnrolled.message());
+        }
+
+        // Check if already voted
+        store:Vote[]|error existingVotes = vote:getVotesByVoter(voterId);
+        boolean alreadyVoted = false;
+        
+        if existingVotes is store:Vote[] {
+            foreach store:Vote vote in existingVotes {
+                if vote.electionId == electionId {
+                    alreadyVoted = true;
+                    break;
+                }
+            }
+        }
+
+        return {
+            "voterId": voterId,
+            "electionId": electionId,
+            "isEnrolled": isEnrolled,
+            "alreadyVoted": alreadyVoted,
+            "eligible": isEnrolled && !alreadyVoted
+        };
     }
 
     // Get votes by election
@@ -148,11 +331,13 @@ service /vote/api/v1 on SharedListener {
     returns store:Vote[]|error {
         return check vote:getVotesByElectionAndDistrict(electionId, district);
     }
+
+    // Get votes by household (new functionality)
+    resource function get votes/household/[string chiefOccupantId]/election/[string electionId]()
+    returns store:Vote[]|error {
+        return check vote:getVotesByHousehold(chiefOccupantId, electionId);
+    }
 }
-
-
-
-
 
 @http:ServiceConfig {
     cors: {
@@ -163,35 +348,137 @@ service /vote/api/v1 on SharedListener {
     }
 }
 service /candidate/api/v1 on SharedListener {
-    
-    // Get candidates by election ID from database
+
+    // Create new candidate
+    resource function post candidates/create(@http:Header string authorization, store:Candidate newCandidate)
+    returns http:Created|http:Forbidden|error {
+        return check candidate:createCandidate(newCandidate);
+    }
+
+    // Get all candidates
+    resource function get candidates() returns store:Candidate[]|error {
+        return check candidate:getCandidates();
+    }
+
+    // Get candidates by election ID
     resource function get elections/[string electionId]/candidates() returns store:Candidate[]|error {
         return check candidate:getCandidatesByElection(electionId);
     }
-    
-    // Get all active candidates from database
-    resource function get candidates() returns store:Candidate[]|error {
-        return check candidate:getAllActiveCandidates();
+
+    // Get active candidates by election
+    resource function get elections/[string electionId]/candidates/active() returns store:Candidate[]|error {
+        return check candidate:getActiveCandidatesByElection(electionId);
     }
-    
-    // Get candidate by ID from database
-    resource function get candidates/[string candidateId]() returns store:Candidate|http:NotFound|error {
-        store:Candidate|persist:Error candidate = candidate:getCandidateById(candidateId);
+
+    // Get candidates for elections where voter is enrolled - NEW ENDPOINT
+    resource function get voter/[string voterId]/candidates() returns store:Candidate[]|error {
+        // Get voter's enrolled elections
+        store:Election[]|error enrolledElections = vote:getVoterEnrolledElections(voterId);
         
-        if candidate is persist:Error {
-            return http:NOT_FOUND;
+        if enrolledElections is error {
+            return error("Failed to get voter's enrolled elections: " + enrolledElections.message());
         }
         
-        return candidate;
+        // Get candidates for all enrolled elections
+        store:Candidate[] allCandidates = [];
+        foreach store:Election election in enrolledElections {
+            store:Candidate[]|error electionCandidates = candidate:getActiveCandidatesByElection(election.id);
+            if electionCandidates is store:Candidate[] {
+                foreach store:Candidate cand in electionCandidates {
+                    allCandidates.push(cand);
+                }
+            }
+        }
+        
+        return allCandidates;
     }
-    
-    // Get candidates by election and party
-    resource function get elections/[string electionId]/candidates/party/[string partyName]() returns store:Candidate[]|error {
-        return check candidate:getCandidatesByElectionAndParty(electionId, partyName);
+
+    // Get candidates for a specific election if voter is enrolled - NEW ENDPOINT
+    resource function get voter/[string voterId]/election/[string electionId]/candidates() returns store:Candidate[]|error {
+        // Check if voter is enrolled in this election
+        boolean|error isEnrolled = vote:isVoterEnrolledInElection(voterId, electionId);
+        
+        if isEnrolled is error {
+            return error("Failed to check enrollment: " + isEnrolled.message());
+        }
+        
+        if !isEnrolled {
+            return error("Voter is not enrolled in this election");
+        }
+        
+        // Get candidates for this election
+        return check candidate:getActiveCandidatesByElection(electionId);
     }
-    
-    // Check if candidate is active
-    resource function get candidates/[string candidateId]/active() returns boolean|error {
-        return check candidate:isCandidateActive(candidateId);
+
+    // Get candidate by ID
+    resource function get candidates/[string candidateId]() returns store:Candidate|http:NotFound|error {
+        store:Candidate|error candidateData = candidate:getCandidateById(candidateId);
+
+        if candidateData is error {
+            return http:NOT_FOUND;
+        }
+
+        return candidateData;
+    }
+
+    // Get candidates by party
+    resource function get candidates/party/[string partyName]() returns store:Candidate[]|error {
+        return check candidate:getCandidatesByParty(partyName);
+    }
+
+    // Get candidates ranked by popular votes
+    resource function get elections/[string electionId]/candidates/ranked/popular() returns store:Candidate[]|error {
+        return check candidate:getCandidatesByPopularVotes(electionId);
+    }
+
+    // Get candidates ranked by electoral votes
+    resource function get elections/[string electionId]/candidates/ranked/electoral() returns store:Candidate[]|error {
+        return check candidate:getCandidatesByElectoralVotes(electionId);
+    }
+
+    // Get winning candidate
+    resource function get elections/[string electionId]/winner() returns store:Candidate|error {
+        return check candidate:getWinningCandidate(electionId);
+    }
+
+    // Get election results summary
+    resource function get elections/[string electionId]/results() returns json|error {
+        return check candidate:getElectionResults(electionId);
+    }
+
+    // Update candidate
+    resource function put candidates/[string candidateId]/update(@http:Header string authorization, store:CandidateUpdate updatedCandidate)
+    returns http:Ok|http:Forbidden|error {
+        return check candidate:updateCandidate(candidateId, updatedCandidate);
+    }
+
+    // Update candidate votes
+    resource function put candidates/[string candidateId]/votes(@http:Header string authorization, int? popularVotes, int? electoralVotes)
+    returns http:Ok|http:Forbidden|error {
+        return check candidate:updateCandidateVotes(candidateId, popularVotes, electoralVotes);
+    }
+
+    // Update candidate position
+    resource function put candidates/[string candidateId]/position(@http:Header string authorization, int position)
+    returns http:Ok|http:Forbidden|error {
+        return check candidate:updateCandidatePosition(candidateId, position);
+    }
+
+    // Toggle candidate status
+    resource function put candidates/[string candidateId]/status(@http:Header string authorization, boolean isActive)
+    returns http:Ok|http:Forbidden|error {
+        return check candidate:toggleCandidateStatus(candidateId, isActive);
+    }
+
+    // Update all candidate rankings for an election
+    resource function put elections/[string electionId]/rankings/update(@http:Header string authorization)
+    returns http:Ok|error {
+        return check candidate:updateCandidateRankings(electionId);
+    }
+
+    // Delete candidate
+    resource function delete candidates/[string candidateId](@http:Header string authorization)
+    returns http:NoContent|http:Forbidden|error {
+        return check candidate:deleteCandidate(candidateId);
     }
 }
