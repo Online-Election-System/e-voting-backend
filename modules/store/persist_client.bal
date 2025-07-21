@@ -166,7 +166,7 @@ public isolated client class Client {
             entityName: "ElectionSummary",
             tableName: "ElectionSummary",
             fieldMetadata: {
-                electionId: {columnName: "electionId"},
+                electionId: {columnName: "election_id"},
                 totalRegisteredVoters: {columnName: "total_registered_voters"},
                 totalVotesCast: {columnName: "total_votes_cast"},
                 totalRejectedVotes: {columnName: "total_rejected_votes"},

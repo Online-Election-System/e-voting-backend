@@ -250,7 +250,7 @@ public type DistrictResult record {|
 
 
 public type ElectionSummary record {|
-    readonly string electionId;
+    @sql:Name { value: "election_id" }readonly string electionId;
     @sql:Name { value: "total_registered_voters" } int totalRegisteredVoters;
     @sql:Name { value: "total_votes_cast" } int totalVotesCast;
     @sql:Name { value: "total_rejected_votes" } int totalRejectedVotes;

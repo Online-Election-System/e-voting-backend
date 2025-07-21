@@ -81,14 +81,14 @@ CREATE TABLE "HouseholdDetails" (
 );
 
 CREATE TABLE "ElectionSummary" (
-	"electionId" VARCHAR(191) NOT NULL,
+	"election_id" VARCHAR(191) NOT NULL,
 	"total_registered_voters" INT NOT NULL,
 	"total_votes_cast" INT NOT NULL,
 	"total_rejected_votes" INT NOT NULL,
 	"turnout_percentage" DECIMAL(65,30) NOT NULL,
 	"winner_candidate_id" VARCHAR(191),
 	"election_status" VARCHAR(191) NOT NULL,
-	PRIMARY KEY("electionId")
+	PRIMARY KEY("election_id")
 );
 
 CREATE TABLE "ChiefOccupant" (
