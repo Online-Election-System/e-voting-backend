@@ -2,40 +2,133 @@ import ballerina/persist as _;
 import ballerina/time;
 import ballerinax/persist.sql;
 
-# Description.
-#
-# + id - Voter ID (Auto-incrementing Primary Key)
-# + nationalId - National Identity Card Number (Unique Identifier)
-# + fullName - Full Name of the voter
-# + mobileNumber - Contact Number (Nullable)
-# + dob - Date of Birth (Stored as String MM/DD/YYYY)
-# + gender - Gender (Male/Female - Nullable)
-# + nicChiefOccupant - NIC of Chief Occupant (Nullable)
-# + address - Registered Address of the voter
-# + district - Voter's District
-# + householdNo - Household Number (Nullable)
-# + gramaNiladhari - Grama Niladhari Division (Nullable)
-# + password - Hashed Password for Authentication
+# + candidateId - candidateId (primary key)
+# + candidateName - candidateName
+# + partyName - partyName
+# + partySymbol - partySymbol
+# + partyColor - partyColor
+# + candidateImage - candidateImage
+# + isActive - isActive
 
-public type Voter record {|
+public type Candidate record {|
+    @sql:Name {value: "candidate_id"}
+    readonly string candidateId;
+    @sql:Name {value: "candidate_name"}
+    string candidateName;
+    @sql:Name {value: "party_name"}
+    string partyName;
+    @sql:Name {value: "party_symbol"}
+    string? partySymbol;
+    @sql:Name {value: "party_color"}
+    string partyColor;
+    @sql:Name {value: "candidate_image"}
+    string? candidateImage;
+    @sql:Name {value: "is_active"}
+    boolean isActive;
+|};
+
+# ChiefOccupant Table
+#
+# + id - Auto-incrementing Primary Key
+# + fullName - Full Name of Chief Occupant
+# + nic - National Identity Card (Unique)
+# + phoneNumber - Contact Number
+# + dob - Date of Birth (MM/DD/YYYY)
+# + gender - Gender (Male/Female)
+# + civilStatus - Marital Status
+# + passwordHash - Hashed Password
+# + idCopyPath - File Path of ID Copy
+# + email - email of chiefoccupant
+# + role - Role of the user
+
+public type ChiefOccupant record {|
     readonly string id;
-    @sql:Name {value: "national_id"}
-    string nationalId;
     @sql:Name {value: "full_name"}
     string fullName;
-    @sql:Name {value: "mobile_number"}
-    string? mobileNumber;
-    string? dob;
-    string? gender;
-    @sql:Name {value: "nic_chief_occupant"}
-    string? nicChiefOccupant;
-    string? address;
-    string? district;
-    @sql:Name {value: "household_no"}
-    string? householdNo;
-    @sql:Name {value: "grama_niladhari"}
-    string? gramaNiladhari;
-    string password;
+    string nic;
+    @sql:Name {value: "phone_number"}
+    string? phoneNumber;
+    string dob;
+    string gender;
+    @sql:Name {value: "civil_status"}
+    string civilStatus;
+    @sql:Name {value: "password_hash"}
+    string passwordHash;
+    string email;
+    @sql:Name {value: "id_copy_path"}
+    string? idCopyPath;
+    string role;
+|};
+
+# HouseholdDetails Table
+#
+# + id - Auto-incrementing Primary Key
+# + chiefOccupantId - Foreign Key (ChiefOccupant)
+# + electoralDistrict - District of Registration
+# + pollingDivision - Polling Division Name
+# + pollingDistrictNumber - Polling District Number
+# + gramaNiladhariDivision - GN Division
+# + villageStreetEstate - Location Information
+# + houseNumber - Registered House Number
+# + householdMemberCount - Number of Members (excluding Chief)
+
+public type HouseholdDetails record {|
+    readonly string id;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId;
+    @sql:Name {value: "electoral_district"}
+    string electoralDistrict;
+    @sql:Name {value: "polling_division"}
+    string pollingDivision;
+    @sql:Name {value: "polling_district_number"}
+    string pollingDistrictNumber;
+    @sql:Name {value: "grama_niladhari_division"}
+    string? gramaNiladhariDivision;
+    @sql:Name {value: "village_street_estate"}
+    string? villageStreetEstate;
+    @sql:Name {value: "house_number"}
+    string? houseNumber;
+    @sql:Name {value: "household_member_count"}
+    int householdMemberCount;
+|};
+
+# HouseholdMembers Table
+#
+# + id - Auto-incrementing Primary Key
+# + chiefOccupantId - Foreign Key (ChiefOccupant)
+# + fullName - Full Name of Household Member
+# + nic - National Identity Card (Nullable)
+# + dob - Date of Birth (MM/DD/YYYY)
+# + gender - Gender (Male/Female)
+# + civilStatus - Marital Status
+# + relationshipWithChiefOccupant - Relationship with Chief Occupant
+# + idCopyPath - File Path of ID Copy
+# + approvedByChief - Chief Occupant Approval Status
+# + passwordHash - Hashed Password
+# + passwordchanged - if the password change
+# + role - Role of the user
+
+public type HouseholdMembers record {|
+    readonly string id;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId;
+    @sql:Name {value: "full_name"}
+    string fullName;
+    string? nic;
+    string dob;
+    string gender;
+    @sql:Name {value: "civil_status"}
+    string civilStatus;
+    @sql:Name {value: "relationship_with_chief_occupant"}
+    string relationshipWithChiefOccupant;
+    @sql:Name {value: "id_copy_path"}
+    string? idCopyPath;
+    @sql:Name {value: "approved_by_chief"}
+    boolean approvedByChief;
+    @sql:Name {value: "Hased_password"}
+    string passwordHash;
+    boolean passwordchanged;
+    string role;
 |};
 
 # Description for elections to be insterted.
@@ -77,38 +170,38 @@ public type Election record {|
     string status;
 |};
 
-# + candidateId - candidateId (primary key)
-# + electionId - electionId(forign key)
-# + candidateName - candidateName
-# + partyName - partyName
-# + partySymbol - partySymbol
-# + partyColor - partyColor
-# + candidateImage - candidateImage
-# + popularVotes - popularVotes
-# + electoralVotes - electoralVotes
-# + position - position
-# + isActive - isActive
-
-public type Candidate record {|
-    @sql:Name {value: "candidate_id"}
-    readonly string candidateId;
-    @sql:Name {value: "election_id"}
-    string electionId;
-    @sql:Name {value: "candidate_name"}
-    string candidateName;
-    @sql:Name {value: "party_name"}
-    string partyName;
-    @sql:Name {value: "party_symbol"}
-    string? partySymbol;
-    @sql:Name {value: "party_color"}
-    string partyColor;
-    @sql:Name {value: "candidate_image"}
-    string? candidateImage;
-    @sql:Name {value: "popular_votes"}
-    int? popularVotes;
-    @sql:Name {value: "electoral_votes"}
-    int? electoralVotes;
-    int? position;
+# Description.
+#
+# + id - field description  
+# + username - field description  
+# + email - field description  
+# + passwordHash - field description  
+# + role - field description  
+# + createdAt - field description  
+# + isActive - field description
+public type AdminUsers record {|
+    readonly string id;
+    string username;
+    string email;
+    @sql:Name {value: "password_hash"}
+    string passwordHash;
+    string role;
+    @sql:Name {value: "created_at"}
+    time:Utc createdAt;
     @sql:Name {value: "is_active"}
     boolean isActive;
+|};
+
+# Description.
+#
+# + electionId - election id
+# + candidateId - candidate id
+# + numberOfVotes - number of votes the candidate got for the specific election
+public type EnrolCandidates record {|
+    @sql:Name {value: "election_id"}
+    readonly string electionId;
+    @sql:Name {value: "candidate_id"}
+    readonly string candidateId;
+    @sql:Name {value: "number_of_votes"}
+    int numberOfVotes;
 |};

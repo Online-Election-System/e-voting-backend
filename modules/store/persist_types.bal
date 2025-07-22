@@ -5,52 +5,172 @@
 
 import ballerina/time;
 
-public type Voter record {|
+public type Candidate record {|
+    readonly string candidateId;
+    string candidateName;
+    string partyName;
+    string? partySymbol;
+    string partyColor;
+    string? candidateImage;
+    boolean isActive;
+|};
+
+public type CandidateOptionalized record {|
+    string candidateId?;
+    string candidateName?;
+    string partyName?;
+    string? partySymbol?;
+    string partyColor?;
+    string? candidateImage?;
+    boolean isActive?;
+|};
+
+public type CandidateTargetType typedesc<CandidateOptionalized>;
+
+public type CandidateInsert Candidate;
+
+public type CandidateUpdate record {|
+    string candidateName?;
+    string partyName?;
+    string? partySymbol?;
+    string partyColor?;
+    string? candidateImage?;
+    boolean isActive?;
+|};
+
+public type ChiefOccupant record {|
     readonly string id;
-    string nationalId;
     string fullName;
-    string? mobileNumber;
-    string? dob;
-    string? gender;
-    string? nicChiefOccupant;
-    string? address;
-    string? district;
-    string? householdNo;
-    string? gramaNiladhari;
-    string password;
+    string nic;
+    string? phoneNumber;
+    string dob;
+    string gender;
+    string civilStatus;
+    string passwordHash;
+    string email;
+    string? idCopyPath;
+    string role;
 |};
 
-public type VoterOptionalized record {|
+public type ChiefOccupantOptionalized record {|
     string id?;
-    string nationalId?;
     string fullName?;
-    string? mobileNumber?;
-    string? dob?;
-    string? gender?;
-    string? nicChiefOccupant?;
-    string? address?;
-    string? district?;
-    string? householdNo?;
-    string? gramaNiladhari?;
-    string password?;
+    string nic?;
+    string? phoneNumber?;
+    string dob?;
+    string gender?;
+    string civilStatus?;
+    string passwordHash?;
+    string email?;
+    string? idCopyPath?;
+    string role?;
 |};
 
-public type VoterTargetType typedesc<VoterOptionalized>;
+public type ChiefOccupantTargetType typedesc<ChiefOccupantOptionalized>;
 
-public type VoterInsert Voter;
+public type ChiefOccupantInsert ChiefOccupant;
 
-public type VoterUpdate record {|
-    string nationalId?;
+public type ChiefOccupantUpdate record {|
     string fullName?;
-    string? mobileNumber?;
-    string? dob?;
-    string? gender?;
-    string? nicChiefOccupant?;
-    string? address?;
-    string? district?;
-    string? householdNo?;
-    string? gramaNiladhari?;
-    string password?;
+    string nic?;
+    string? phoneNumber?;
+    string dob?;
+    string gender?;
+    string civilStatus?;
+    string passwordHash?;
+    string email?;
+    string? idCopyPath?;
+    string role?;
+|};
+
+public type HouseholdDetails record {|
+    readonly string id;
+    string chiefOccupantId;
+    string electoralDistrict;
+    string pollingDivision;
+    string pollingDistrictNumber;
+    string? gramaNiladhariDivision;
+    string? villageStreetEstate;
+    string? houseNumber;
+    int householdMemberCount;
+|};
+
+public type HouseholdDetailsOptionalized record {|
+    string id?;
+    string chiefOccupantId?;
+    string electoralDistrict?;
+    string pollingDivision?;
+    string pollingDistrictNumber?;
+    string? gramaNiladhariDivision?;
+    string? villageStreetEstate?;
+    string? houseNumber?;
+    int householdMemberCount?;
+|};
+
+public type HouseholdDetailsTargetType typedesc<HouseholdDetailsOptionalized>;
+
+public type HouseholdDetailsInsert HouseholdDetails;
+
+public type HouseholdDetailsUpdate record {|
+    string chiefOccupantId?;
+    string electoralDistrict?;
+    string pollingDivision?;
+    string pollingDistrictNumber?;
+    string? gramaNiladhariDivision?;
+    string? villageStreetEstate?;
+    string? houseNumber?;
+    int householdMemberCount?;
+|};
+
+public type HouseholdMembers record {|
+    readonly string id;
+    string chiefOccupantId;
+    string fullName;
+    string? nic;
+    string dob;
+    string gender;
+    string civilStatus;
+    string relationshipWithChiefOccupant;
+    string? idCopyPath;
+    boolean approvedByChief;
+    string passwordHash;
+    boolean passwordchanged;
+    string role;
+|};
+
+public type HouseholdMembersOptionalized record {|
+    string id?;
+    string chiefOccupantId?;
+    string fullName?;
+    string? nic?;
+    string dob?;
+    string gender?;
+    string civilStatus?;
+    string relationshipWithChiefOccupant?;
+    string? idCopyPath?;
+    boolean approvedByChief?;
+    string passwordHash?;
+    boolean passwordchanged?;
+    string role?;
+|};
+
+public type HouseholdMembersTargetType typedesc<HouseholdMembersOptionalized>;
+
+public type HouseholdMembersInsert HouseholdMembers;
+
+public type HouseholdMembersUpdate record {|
+    string chiefOccupantId?;
+    string fullName?;
+    string? nic?;
+    string dob?;
+    string gender?;
+    string civilStatus?;
+    string relationshipWithChiefOccupant?;
+    string? idCopyPath?;
+    boolean approvedByChief?;
+    string passwordHash?;
+    boolean passwordchanged?;
+    string role?;
 |};
 
 public type Election record {|
@@ -101,48 +221,56 @@ public type ElectionUpdate record {|
     string status?;
 |};
 
-public type Candidate record {|
-    readonly string candidateId;
-    string electionId;
-    string candidateName;
-    string partyName;
-    string? partySymbol;
-    string partyColor;
-    string? candidateImage;
-    int? popularVotes;
-    int? electoralVotes;
-    int? position;
+public type AdminUsers record {|
+    readonly string id;
+    string username;
+    string email;
+    string passwordHash;
+    string role;
+    time:Utc createdAt;
     boolean isActive;
 |};
 
-public type CandidateOptionalized record {|
-    string candidateId?;
-    string electionId?;
-    string candidateName?;
-    string partyName?;
-    string? partySymbol?;
-    string partyColor?;
-    string? candidateImage?;
-    int? popularVotes?;
-    int? electoralVotes?;
-    int? position?;
+public type AdminUsersOptionalized record {|
+    string id?;
+    string username?;
+    string email?;
+    string passwordHash?;
+    string role?;
+    time:Utc createdAt?;
     boolean isActive?;
 |};
 
-public type CandidateTargetType typedesc<CandidateOptionalized>;
+public type AdminUsersTargetType typedesc<AdminUsersOptionalized>;
 
-public type CandidateInsert Candidate;
+public type AdminUsersInsert AdminUsers;
 
-public type CandidateUpdate record {|
-    string electionId?;
-    string candidateName?;
-    string partyName?;
-    string? partySymbol?;
-    string partyColor?;
-    string? candidateImage?;
-    int? popularVotes?;
-    int? electoralVotes?;
-    int? position?;
+public type AdminUsersUpdate record {|
+    string username?;
+    string email?;
+    string passwordHash?;
+    string role?;
+    time:Utc createdAt?;
     boolean isActive?;
+|};
+
+public type EnrolCandidates record {|
+    readonly string electionId;
+    readonly string candidateId;
+    int numberOfVotes;
+|};
+
+public type EnrolCandidatesOptionalized record {|
+    string electionId?;
+    string candidateId?;
+    int numberOfVotes?;
+|};
+
+public type EnrolCandidatesTargetType typedesc<EnrolCandidatesOptionalized>;
+
+public type EnrolCandidatesInsert EnrolCandidates;
+
+public type EnrolCandidatesUpdate record {|
+    int numberOfVotes?;
 |};
 
