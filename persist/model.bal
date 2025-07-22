@@ -182,22 +182,16 @@ public type Vote record {|
 # Description for candidates
 #
 # + candidateId - Candidate ID (primary key)
-# + electionId - Election ID (foreign key)
 # + candidateName - Candidate name
 # + partyName - Party name
 # + partySymbol - Party symbol
 # + partyColor - Party color
 # + candidateImage - Candidate image
-# + popularVotes - Popular votes
-# + electoralVotes - Electoral votes
-# + position - Position
 # + isActive - Whether candidate is active
 
 public type Candidate record {|
     @sql:Name { value: "candidate_id" } 
     readonly string candidateId;
-    @sql:Name { value: "election_id" } 
-    string electionId;
     @sql:Name { value: "candidate_name" } 
     string candidateName;
     @sql:Name { value: "party_name" } 
@@ -208,22 +202,15 @@ public type Candidate record {|
     string partyColor;
     @sql:Name { value: "candidate_image" } 
     string? candidateImage;
-    @sql:Name { value: "popular_votes" } 
-    int? popularVotes;
-    @sql:Name { value: "electoral_votes" } 
-    int? electoralVotes;
-    int? position;
     @sql:Name { value: "is_active" } 
     boolean isActive;
 |};
 
 # Description for enrol to be inserted.
-#
 
 # + voterId - Voter ID (foreign key) - can reference either ChiefOccupant or HouseholdMembers
 # + electionId - Election ID (foreign key)
 # + enrollementDate - Date of enrolment
-
 
 public type Enrolment record {|
 
@@ -233,4 +220,21 @@ public type Enrolment record {|
     readonly string electionId;
     @sql:Name {value: "enrollement_date"}
     time:Utc enrollementDate;
+|};
+
+# Description for enrolment candidates.
+#
+# + electionId - election id
+# + candidateId - candidate id
+# + numberOfVotes - number of votes the candidate got for the specific election
+
+public type EnrolCandidates record {|
+    @sql:Name { value: "election_id" }
+    readonly string electionId;
+    @sql:Name { value: "candidate_id" }
+    readonly string candidateId;
+    @sql:Name {
+        value: "number_of_votes"
+    }
+    int? numberOfVotes;
 |};

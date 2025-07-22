@@ -349,28 +349,24 @@ service /vote/api/v1 on SharedListener {
 }
 service /candidate/api/v1 on SharedListener {
 
-    // Create new candidate
-    resource function post candidates/create(@http:Header string authorization, store:Candidate newCandidate)
-    returns http:Created|http:Forbidden|error {
-        return check candidate:createCandidate(newCandidate);
-    }
 
-    // Get all candidates
+
+    // Get all candidates - No change needed
     resource function get candidates() returns store:Candidate[]|error {
         return check candidate:getCandidates();
     }
 
-    // Get candidates by election ID
+    // Get candidates by election ID - Updated to use new enrollment system
     resource function get elections/[string electionId]/candidates() returns store:Candidate[]|error {
-        return check candidate:getCandidatesByElection(electionId);
+        return check candidate:getCandidatesByElection(electionId, ()); // Pass null for activeOnly to get all
     }
 
-    // Get active candidates by election
+    // Get active candidates by election - Updated to use new enrollment system
     resource function get elections/[string electionId]/candidates/active() returns store:Candidate[]|error {
-        return check candidate:getActiveCandidatesByElection(electionId);
+        return check candidate:getCandidatesByElection(electionId, true); // Pass true for activeOnly
     }
 
-    // Get candidates for elections where voter is enrolled - NEW ENDPOINT
+    // Get candidates for elections where voter is enrolled - Updated logic
     resource function get voter/[string voterId]/candidates() returns store:Candidate[]|error {
         // Get voter's enrolled elections
         store:Election[]|error enrolledElections = vote:getVoterEnrolledElections(voterId);
@@ -379,10 +375,10 @@ service /candidate/api/v1 on SharedListener {
             return error("Failed to get voter's enrolled elections: " + enrolledElections.message());
         }
         
-        // Get candidates for all enrolled elections
+        // Get candidates for all enrolled elections (active only)
         store:Candidate[] allCandidates = [];
         foreach store:Election election in enrolledElections {
-            store:Candidate[]|error electionCandidates = candidate:getActiveCandidatesByElection(election.id);
+            store:Candidate[]|error electionCandidates = candidate:getCandidatesByElection(election.id, true);
             if electionCandidates is store:Candidate[] {
                 foreach store:Candidate cand in electionCandidates {
                     allCandidates.push(cand);
@@ -393,7 +389,7 @@ service /candidate/api/v1 on SharedListener {
         return allCandidates;
     }
 
-    // Get candidates for a specific election if voter is enrolled - NEW ENDPOINT
+    // Get candidates for a specific election if voter is enrolled - Updated logic
     resource function get voter/[string voterId]/election/[string electionId]/candidates() returns store:Candidate[]|error {
         // Check if voter is enrolled in this election
         boolean|error isEnrolled = vote:isVoterEnrolledInElection(voterId, electionId);
@@ -406,11 +402,11 @@ service /candidate/api/v1 on SharedListener {
             return error("Voter is not enrolled in this election");
         }
         
-        // Get candidates for this election
-        return check candidate:getActiveCandidatesByElection(electionId);
+        // Get active candidates for this election
+        return check candidate:getCandidatesByElection(electionId, true);
     }
 
-    // Get candidate by ID
+    // Get candidate by ID - No change needed
     resource function get candidates/[string candidateId]() returns store:Candidate|http:NotFound|error {
         store:Candidate|error candidateData = candidate:getCandidateById(candidateId);
 
@@ -421,64 +417,13 @@ service /candidate/api/v1 on SharedListener {
         return candidateData;
     }
 
-    // Get candidates by party
+    // Get candidates by party - Updated to use new structure
     resource function get candidates/party/[string partyName]() returns store:Candidate[]|error {
-        return check candidate:getCandidatesByParty(partyName);
+        return check candidate:getCandidatesByParty(partyName, true); // Get active candidates only
     }
 
-    // Get candidates ranked by popular votes
-    resource function get elections/[string electionId]/candidates/ranked/popular() returns store:Candidate[]|error {
-        return check candidate:getCandidatesByPopularVotes(electionId);
-    }
+   
+   
 
-    // Get candidates ranked by electoral votes
-    resource function get elections/[string electionId]/candidates/ranked/electoral() returns store:Candidate[]|error {
-        return check candidate:getCandidatesByElectoralVotes(electionId);
-    }
 
-    // Get winning candidate
-    resource function get elections/[string electionId]/winner() returns store:Candidate|error {
-        return check candidate:getWinningCandidate(electionId);
-    }
-
-    // Get election results summary
-    resource function get elections/[string electionId]/results() returns json|error {
-        return check candidate:getElectionResults(electionId);
-    }
-
-    // Update candidate
-    resource function put candidates/[string candidateId]/update(@http:Header string authorization, store:CandidateUpdate updatedCandidate)
-    returns http:Ok|http:Forbidden|error {
-        return check candidate:updateCandidate(candidateId, updatedCandidate);
-    }
-
-    // Update candidate votes
-    resource function put candidates/[string candidateId]/votes(@http:Header string authorization, int? popularVotes, int? electoralVotes)
-    returns http:Ok|http:Forbidden|error {
-        return check candidate:updateCandidateVotes(candidateId, popularVotes, electoralVotes);
-    }
-
-    // Update candidate position
-    resource function put candidates/[string candidateId]/position(@http:Header string authorization, int position)
-    returns http:Ok|http:Forbidden|error {
-        return check candidate:updateCandidatePosition(candidateId, position);
-    }
-
-    // Toggle candidate status
-    resource function put candidates/[string candidateId]/status(@http:Header string authorization, boolean isActive)
-    returns http:Ok|http:Forbidden|error {
-        return check candidate:toggleCandidateStatus(candidateId, isActive);
-    }
-
-    // Update all candidate rankings for an election
-    resource function put elections/[string electionId]/rankings/update(@http:Header string authorization)
-    returns http:Ok|error {
-        return check candidate:updateCandidateRankings(electionId);
-    }
-
-    // Delete candidate
-    resource function delete candidates/[string candidateId](@http:Header string authorization)
-    returns http:NoContent|http:Forbidden|error {
-        return check candidate:deleteCandidate(candidateId);
-    }
 }

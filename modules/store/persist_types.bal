@@ -253,29 +253,21 @@ public type VoteUpdate record {|
 
 public type Candidate record {|
     readonly string candidateId;
-    string electionId;
     string candidateName;
     string partyName;
     string? partySymbol;
     string partyColor;
     string? candidateImage;
-    int? popularVotes;
-    int? electoralVotes;
-    int? position;
     boolean isActive;
 |};
 
 public type CandidateOptionalized record {|
     string candidateId?;
-    string electionId?;
     string candidateName?;
     string partyName?;
     string? partySymbol?;
     string partyColor?;
     string? candidateImage?;
-    int? popularVotes?;
-    int? electoralVotes?;
-    int? position?;
     boolean isActive?;
 |};
 
@@ -284,15 +276,11 @@ public type CandidateTargetType typedesc<CandidateOptionalized>;
 public type CandidateInsert Candidate;
 
 public type CandidateUpdate record {|
-    string electionId?;
     string candidateName?;
     string partyName?;
     string? partySymbol?;
     string partyColor?;
     string? candidateImage?;
-    int? popularVotes?;
-    int? electoralVotes?;
-    int? position?;
     boolean isActive?;
 |};
 
@@ -314,5 +302,25 @@ public type EnrolmentInsert Enrolment;
 
 public type EnrolmentUpdate record {|
     time:Utc enrollementDate?;
+|};
+
+public type EnrolCandidates record {|
+    readonly string electionId;
+    readonly string candidateId;
+    int? numberOfVotes;
+|};
+
+public type EnrolCandidatesOptionalized record {|
+    string electionId?;
+    string candidateId?;
+    int? numberOfVotes?;
+|};
+
+public type EnrolCandidatesTargetType typedesc<EnrolCandidatesOptionalized>;
+
+public type EnrolCandidatesInsert EnrolCandidates;
+
+public type EnrolCandidatesUpdate record {|
+    int? numberOfVotes?;
 |};
 

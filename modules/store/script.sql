@@ -6,6 +6,7 @@
 DROP TABLE IF EXISTS "Candidate";
 DROP TABLE IF EXISTS "AdminUsers";
 DROP TABLE IF EXISTS "Vote";
+DROP TABLE IF EXISTS "EnrolCandidates";
 DROP TABLE IF EXISTS "ChiefOccupant";
 DROP TABLE IF EXISTS "HouseholdDetails";
 DROP TABLE IF EXISTS "Enrolment";
@@ -80,6 +81,13 @@ CREATE TABLE "ChiefOccupant" (
 	PRIMARY KEY("id")
 );
 
+CREATE TABLE "EnrolCandidates" (
+	"election_id" VARCHAR(191) NOT NULL,
+	"candidate_id" VARCHAR(191) NOT NULL,
+	"number_of_votes" INT,
+	PRIMARY KEY("election_id","candidate_id")
+);
+
 CREATE TABLE "Vote" (
 	"id" VARCHAR(191) NOT NULL,
 	"voter_id" VARCHAR(191) NOT NULL,
@@ -103,15 +111,11 @@ CREATE TABLE "AdminUsers" (
 
 CREATE TABLE "Candidate" (
 	"candidate_id" VARCHAR(191) NOT NULL,
-	"election_id" VARCHAR(191) NOT NULL,
 	"candidate_name" VARCHAR(191) NOT NULL,
 	"party_name" VARCHAR(191) NOT NULL,
 	"party_symbol" VARCHAR(191),
 	"party_color" VARCHAR(191) NOT NULL,
 	"candidate_image" VARCHAR(191),
-	"popular_votes" INT,
-	"electoral_votes" INT,
-	"position" INT,
 	"is_active" BOOLEAN NOT NULL,
 	PRIMARY KEY("candidate_id")
 );
