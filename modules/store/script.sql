@@ -3,7 +3,9 @@
 -- This file is an auto-generated file by Ballerina persistence layer for model.
 -- Please verify the generated scripts and execute them against the target DB server.
 
+DROP TABLE IF EXISTS "Candidate";
 DROP TABLE IF EXISTS "AdminUsers";
+DROP TABLE IF EXISTS "EnrolCandidates";
 DROP TABLE IF EXISTS "ChiefOccupant";
 DROP TABLE IF EXISTS "HouseholdDetails";
 DROP TABLE IF EXISTS "Election";
@@ -70,6 +72,13 @@ CREATE TABLE "ChiefOccupant" (
 	PRIMARY KEY("id")
 );
 
+CREATE TABLE "EnrolCandidates" (
+	"election_id" VARCHAR(191) NOT NULL,
+	"candidate_id" VARCHAR(191) NOT NULL,
+	"number_of_votes" INT NOT NULL,
+	PRIMARY KEY("election_id","candidate_id")
+);
+
 CREATE TABLE "AdminUsers" (
 	"id" VARCHAR(191) NOT NULL,
 	"username" VARCHAR(191) NOT NULL,
@@ -79,6 +88,17 @@ CREATE TABLE "AdminUsers" (
 	"created_at" TIMESTAMP NOT NULL,
 	"is_active" BOOLEAN NOT NULL,
 	PRIMARY KEY("id")
+);
+
+CREATE TABLE "Candidate" (
+	"candidate_id" VARCHAR(191) NOT NULL,
+	"candidate_name" VARCHAR(191) NOT NULL,
+	"party_name" VARCHAR(191) NOT NULL,
+	"party_symbol" VARCHAR(191),
+	"party_color" VARCHAR(191) NOT NULL,
+	"candidate_image" VARCHAR(191),
+	"is_active" BOOLEAN NOT NULL,
+	PRIMARY KEY("candidate_id")
 );
 
 

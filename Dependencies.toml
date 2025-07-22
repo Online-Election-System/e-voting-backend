@@ -381,6 +381,17 @@ modules = [
 
 [[package]]
 org = "ballerinax"
+name = "cdc"
+version = "1.0.3"
+dependencies = [
+	{org = "ballerina", name = "crypto"},
+	{org = "ballerina", name = "data.jsondata"},
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerinai", name = "observe"}
+]
+
+[[package]]
+org = "ballerinax"
 name = "persist.sql"
 version = "1.6.0"
 dependencies = [
@@ -397,13 +408,14 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "postgresql"
-version = "1.15.0"
+version = "1.16.1"
 dependencies = [
 	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "sql"},
-	{org = "ballerina", name = "time"}
+	{org = "ballerina", name = "time"},
+	{org = "ballerinax", name = "cdc"}
 ]
 modules = [
 	{org = "ballerinax", packageName = "postgresql", moduleName = "postgresql"}
@@ -443,6 +455,7 @@ dependencies = [
 modules = [
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election"},
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.auth"},
+	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.candidate"},
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.common"},
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.election"},
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.store"}

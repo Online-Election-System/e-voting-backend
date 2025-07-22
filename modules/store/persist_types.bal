@@ -5,6 +5,39 @@
 
 import ballerina/time;
 
+public type Candidate record {|
+    readonly string candidateId;
+    string candidateName;
+    string partyName;
+    string? partySymbol;
+    string partyColor;
+    string? candidateImage;
+    boolean isActive;
+|};
+
+public type CandidateOptionalized record {|
+    string candidateId?;
+    string candidateName?;
+    string partyName?;
+    string? partySymbol?;
+    string partyColor?;
+    string? candidateImage?;
+    boolean isActive?;
+|};
+
+public type CandidateTargetType typedesc<CandidateOptionalized>;
+
+public type CandidateInsert Candidate;
+
+public type CandidateUpdate record {|
+    string candidateName?;
+    string partyName?;
+    string? partySymbol?;
+    string partyColor?;
+    string? candidateImage?;
+    boolean isActive?;
+|};
+
 public type ChiefOccupant record {|
     readonly string id;
     string fullName;
@@ -219,5 +252,25 @@ public type AdminUsersUpdate record {|
     string role?;
     time:Utc createdAt?;
     boolean isActive?;
+|};
+
+public type EnrolCandidates record {|
+    readonly string electionId;
+    readonly string candidateId;
+    int numberOfVotes;
+|};
+
+public type EnrolCandidatesOptionalized record {|
+    string electionId?;
+    string candidateId?;
+    int numberOfVotes?;
+|};
+
+public type EnrolCandidatesTargetType typedesc<EnrolCandidatesOptionalized>;
+
+public type EnrolCandidatesInsert EnrolCandidates;
+
+public type EnrolCandidatesUpdate record {|
+    int numberOfVotes?;
 |};
 

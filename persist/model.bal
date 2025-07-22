@@ -2,6 +2,31 @@ import ballerina/persist as _;
 import ballerina/time;
 import ballerinax/persist.sql;
 
+# + candidateId - candidateId (primary key)
+# + candidateName - candidateName
+# + partyName - partyName
+# + partySymbol - partySymbol
+# + partyColor - partyColor
+# + candidateImage - candidateImage
+# + isActive - isActive
+
+public type Candidate record {|
+    @sql:Name {value: "candidate_id"}
+    readonly string candidateId;
+    @sql:Name {value: "candidate_name"}
+    string candidateName;
+    @sql:Name {value: "party_name"}
+    string partyName;
+    @sql:Name {value: "party_symbol"}
+    string? partySymbol;
+    @sql:Name {value: "party_color"}
+    string partyColor;
+    @sql:Name {value: "candidate_image"}
+    string? candidateImage;
+    @sql:Name {value: "is_active"}
+    boolean isActive;
+|};
+
 # ChiefOccupant Table
 #
 # + id - Auto-incrementing Primary Key
@@ -145,6 +170,15 @@ public type Election record {|
     string status;
 |};
 
+# Description.
+#
+# + id - field description  
+# + username - field description  
+# + email - field description  
+# + passwordHash - field description  
+# + role - field description  
+# + createdAt - field description  
+# + isActive - field description
 public type AdminUsers record {|
     readonly string id;
     string username;
@@ -156,4 +190,18 @@ public type AdminUsers record {|
     time:Utc createdAt;
     @sql:Name {value: "is_active"}
     boolean isActive;
+|};
+
+# Description.
+#
+# + electionId - election id
+# + candidateId - candidate id
+# + numberOfVotes - number of votes the candidate got for the specific election
+public type EnrolCandidates record {|
+    @sql:Name {value: "election_id"}
+    readonly string electionId;
+    @sql:Name {value: "candidate_id"}
+    readonly string candidateId;
+    @sql:Name {value: "number_of_votes"}
+    int numberOfVotes;
 |};
