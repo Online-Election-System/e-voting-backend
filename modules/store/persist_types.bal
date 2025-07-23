@@ -257,13 +257,13 @@ public type AdminUsersUpdate record {|
 public type EnrolCandidates record {|
     readonly string electionId;
     readonly string candidateId;
-    int numberOfVotes;
+    int? numberOfVotes;
 |};
 
 public type EnrolCandidatesOptionalized record {|
     string electionId?;
     string candidateId?;
-    int numberOfVotes?;
+    int? numberOfVotes?;
 |};
 
 public type EnrolCandidatesTargetType typedesc<EnrolCandidatesOptionalized>;
@@ -271,7 +271,7 @@ public type EnrolCandidatesTargetType typedesc<EnrolCandidatesOptionalized>;
 public type EnrolCandidatesInsert EnrolCandidates;
 
 public type EnrolCandidatesUpdate record {|
-    int numberOfVotes?;
+    int? numberOfVotes?;
 |};
 
 public type Vote record {|

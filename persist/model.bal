@@ -203,7 +203,7 @@ public type EnrolCandidates record {|
     @sql:Name {value: "candidate_id"}
     readonly string candidateId;
     @sql:Name {value: "number_of_votes"}
-    int numberOfVotes;
+    int? numberOfVotes;
 |};
 
 # Description for votes to be inserted.

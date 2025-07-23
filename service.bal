@@ -160,19 +160,9 @@ service /election/api/v1 on SharedListener {
     }
 
        // Check if voter is enrolled in specific election - NEW ENDPOINT
-    resource function get voter/[string voterId]/election/[string electionId]/enrolled() returns json|error {
-        boolean|error isEnrolled = vote:isVoterEnrolledInElection(voterId, electionId);
-        
-        if isEnrolled is error {
-            return error("Failed to check enrollment status: " + isEnrolled.message());
-        }
-        
-        return {
-            "voterId": voterId,
-            "electionId": electionId,
-            "isEnrolled": isEnrolled
-        };
-    }
+resource function get voter/[string voterId]/election/[string electionId]/enrolled() returns json|error {
+    return vote:checkVoterEnrollment(voterId, electionId);
+}
 
     // Get elections for a specific voter (enrolled elections only) - NEW ENDPOINT
     resource function get voter/[string voterId]/elections() returns store:Election[]|error {
@@ -351,44 +341,15 @@ service /candidate/api/v1 on SharedListener {
     }
 
     // Get candidates for elections where voter is enrolled - Updated logic
-    resource function get voter/[string voterId]/candidates() returns store:Candidate[]|error {
-        // Get voter's enrolled elections
-        store:Election[]|error enrolledElections = vote:getVoterEnrolledElections(voterId);
-        
-        if enrolledElections is error {
-            return error("Failed to get voter's enrolled elections: " + enrolledElections.message());
-        }
-        
-        // Get candidates for all enrolled elections (active only)
-        store:Candidate[] allCandidates = [];
-        foreach store:Election election in enrolledElections {
-            store:Candidate[]|error electionCandidates = candidate:getCandidatesByElection(election.id, true);
-            if electionCandidates is store:Candidate[] {
-                foreach store:Candidate cand in electionCandidates {
-                    allCandidates.push(cand);
-                }
-            }
-        }
-        
-        return allCandidates;
-    }
+  resource function get voter/[string voterId]/candidates() returns store:Candidate[]|error {
+    return vote:getCandidatesForVoter(voterId);
+}
+
 
     // Get candidates for a specific election if voter is enrolled - Updated logic
-    resource function get voter/[string voterId]/election/[string electionId]/candidates() returns store:Candidate[]|error {
-        // Check if voter is enrolled in this election
-        boolean|error isEnrolled = vote:isVoterEnrolledInElection(voterId, electionId);
-        
-        if isEnrolled is error {
-            return error("Failed to check enrollment: " + isEnrolled.message());
-        }
-        
-        if !isEnrolled {
-            return error("Voter is not enrolled in this election");
-        }
-        
-        // Get active candidates for this election
-        return check candidate:getCandidatesByElection(electionId, true);
-    }
+resource function get voter/[string voterId]/election/[string electionId]/candidates() returns store:Candidate[]|error {
+    return vote:getEligibleCandidatesForElection(voterId, electionId);
+}
 
         // Get candidates by party - Updated to use new structure
     resource function get candidates/party/[string partyName]() returns store:Candidate[]|error {
@@ -436,33 +397,8 @@ service /vote/api/v1 on SharedListener {
 
     // Check voting eligibility (enrollment + not already voted) - NEW ENDPOINT
     resource function get eligibility/[string voterId]/election/[string electionId]() returns json|error {
-        // Check enrollment
-        boolean|error isEnrolled = vote:isVoterEnrolledInElection(voterId, electionId);
-        if isEnrolled is error {
-            return error("Failed to check enrollment status: " + isEnrolled.message());
-        }
-
-        // Check if already voted
-        store:Vote[]|error existingVotes = vote:getVotesByVoter(voterId);
-        boolean alreadyVoted = false;
-        
-        if existingVotes is store:Vote[] {
-            foreach store:Vote vote in existingVotes {
-                if vote.electionId == electionId {
-                    alreadyVoted = true;
-                    break;
-                }
-            }
-        }
-
-        return {
-            "voterId": voterId,
-            "electionId": electionId,
-            "isEnrolled": isEnrolled,
-            "alreadyVoted": alreadyVoted,
-            "eligible": isEnrolled && !alreadyVoted
-        };
-    }
+    return vote:checkVotingEligibility(voterId, electionId);
+}
 
     // Get votes by election
     resource function get votes/election/[string electionId]()

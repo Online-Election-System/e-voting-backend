@@ -6,6 +6,7 @@ import ballerina/http;
 import ballerina/persist;
 import ballerina/crypto;
 import ballerina/io;
+import online_election.candidate;
 
 final store:Client dbVote = check new ();
 
@@ -351,3 +352,86 @@ public function getVotesByHousehold(string chiefOccupantId, string electionId) r
     
     return householdVotes;
 }
+
+public function checkVotingEligibility(string voterId, string electionId) returns json|error {
+    // Check enrollment
+    boolean|error isEnrolled = isVoterEnrolledInElection(voterId, electionId);
+    if isEnrolled is error {
+        return error("Failed to check enrollment status: " + isEnrolled.message());
+    }
+
+    // Check if already voted
+    store:Vote[]|error existingVotes = getVotesByVoter(voterId);
+    boolean alreadyVoted = false;
+
+    if existingVotes is store:Vote[] {
+        foreach store:Vote vote in existingVotes {
+            if vote.electionId == electionId {
+                alreadyVoted = true;
+                break;
+            }
+        }
+    }
+
+    return {
+        "voterId": voterId,
+        "electionId": electionId,
+        "isEnrolled": isEnrolled,
+        "alreadyVoted": alreadyVoted,
+        "eligible": isEnrolled && !alreadyVoted
+    };
+}
+
+public function checkVoterEnrollment(string voterId, string electionId) returns json|error {
+    boolean|error isEnrolled = isVoterEnrolledInElection(voterId, electionId);
+
+    if isEnrolled is error {
+        return error("Failed to check enrollment status: " + isEnrolled.message());
+    }
+
+    return {
+        "voterId": voterId,
+        "electionId": electionId,
+        "isEnrolled": isEnrolled
+    };
+}
+
+public function getEligibleCandidatesForElection(string voterId, string electionId) returns store:Candidate[]|error {
+    // Check if voter is enrolled
+    boolean|error isEnrolled = isVoterEnrolledInElection(voterId, electionId);
+    
+    if isEnrolled is error {
+        return error("Failed to check enrollment: " + isEnrolled.message());
+    }
+
+    if !isEnrolled {
+        return error("Voter is not enrolled in this election");
+    }
+
+    // Get active candidates
+    return candidate:getCandidatesByElection(electionId, true);
+}
+
+public function getCandidatesForVoter(string voterId) returns store:Candidate[]|error {
+    // Get voter's enrolled elections
+    store:Election[]|error enrolledElections = getVoterEnrolledElections(voterId);
+    
+    if enrolledElections is error {
+        return error("Failed to get voter's enrolled elections: " + enrolledElections.message());
+    }
+    
+    // Get candidates for all enrolled elections (active only)
+    store:Candidate[] allCandidates = [];
+    foreach store:Election election in enrolledElections {
+        store:Candidate[]|error electionCandidates = candidate:getCandidatesByElection(election.id, true);
+        if electionCandidates is store:Candidate[] {
+            foreach store:Candidate cand in electionCandidates {
+                allCandidates.push(cand);
+            }
+        }
+    }
+
+    return allCandidates;
+}
+
+

@@ -84,7 +84,7 @@ CREATE TABLE "ChiefOccupant" (
 CREATE TABLE "EnrolCandidates" (
 	"election_id" VARCHAR(191) NOT NULL,
 	"candidate_id" VARCHAR(191) NOT NULL,
-	"number_of_votes" INT NOT NULL,
+	"number_of_votes" INT,
 	PRIMARY KEY("election_id","candidate_id")
 );
 
