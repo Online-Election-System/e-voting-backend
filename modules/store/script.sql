@@ -5,9 +5,11 @@
 
 DROP TABLE IF EXISTS "Candidate";
 DROP TABLE IF EXISTS "AdminUsers";
+DROP TABLE IF EXISTS "Vote";
 DROP TABLE IF EXISTS "EnrolCandidates";
 DROP TABLE IF EXISTS "ChiefOccupant";
 DROP TABLE IF EXISTS "HouseholdDetails";
+DROP TABLE IF EXISTS "Enrolment";
 DROP TABLE IF EXISTS "Election";
 DROP TABLE IF EXISTS "HouseholdMembers";
 
@@ -44,6 +46,13 @@ CREATE TABLE "Election" (
 	PRIMARY KEY("id")
 );
 
+CREATE TABLE "Enrolment" (
+	"voter_id" VARCHAR(191) NOT NULL,
+	"election_id" VARCHAR(191) NOT NULL,
+	"enrollement_date" TIMESTAMP NOT NULL,
+	PRIMARY KEY("voter_id","election_id")
+);
+
 CREATE TABLE "HouseholdDetails" (
 	"id" VARCHAR(191) NOT NULL,
 	"chief_occupant_id" VARCHAR(191) NOT NULL,
@@ -77,6 +86,16 @@ CREATE TABLE "EnrolCandidates" (
 	"candidate_id" VARCHAR(191) NOT NULL,
 	"number_of_votes" INT NOT NULL,
 	PRIMARY KEY("election_id","candidate_id")
+);
+
+CREATE TABLE "Vote" (
+	"id" VARCHAR(191) NOT NULL,
+	"voter_id" VARCHAR(191) NOT NULL,
+	"election_id" VARCHAR(191) NOT NULL,
+	"candidate_id" VARCHAR(191) NOT NULL,
+	"district" VARCHAR(191) NOT NULL,
+	"timestamp" VARCHAR(191) NOT NULL,
+	PRIMARY KEY("id")
 );
 
 CREATE TABLE "AdminUsers" (

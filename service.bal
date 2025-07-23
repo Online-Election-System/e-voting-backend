@@ -1,6 +1,7 @@
 import online_election.auth;
 import online_election.candidate;
 import online_election.election;
+import online_election.vote;
 import online_election.store;
 
 import ballerina/http;
@@ -77,6 +78,33 @@ returns auth:LoginResponse|http:Unauthorized|error {
         return check auth:postLogin(loginReq);
     }
 
+        // Get complete voter profile with household details - NEW ENDPOINT
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["GET", "OPTIONS"]
+        }
+    }
+    resource function get profile/[string voterId]() returns json|error {
+        return check vote:getCompleteVoterProfile(voterId);
+    }
+
+    // Get elections where voter is enrolled - NEW ENDPOINT
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["GET", "OPTIONS"]
+        }
+    }
+    resource function get voter/[string voterId]/elections() returns store:Election[]|error {
+        return check vote:getVoterEnrolledElections(voterId);
+    }
+
+
     // Unified logout endpoint - 204 No Content response
     @http:ResourceConfig {
         cors: {
@@ -129,6 +157,26 @@ service /election/api/v1 on SharedListener {
 
     resource function get elections/[string electionId]() returns election:ElectionWithCandidates|error {
         return check election:getElectionById(electionId);
+    }
+
+       // Check if voter is enrolled in specific election - NEW ENDPOINT
+    resource function get voter/[string voterId]/election/[string electionId]/enrolled() returns json|error {
+        boolean|error isEnrolled = vote:isVoterEnrolledInElection(voterId, electionId);
+        
+        if isEnrolled is error {
+            return error("Failed to check enrollment status: " + isEnrolled.message());
+        }
+        
+        return {
+            "voterId": voterId,
+            "electionId": electionId,
+            "isEnrolled": isEnrolled
+        };
+    }
+
+    // Get elections for a specific voter (enrolled elections only) - NEW ENDPOINT
+    resource function get voter/[string voterId]/elections() returns store:Election[]|error {
+        return check vote:getVoterEnrolledElections(voterId);
     }
 
     // Protected endpoint - admin/government officials only
@@ -297,6 +345,57 @@ service /candidate/api/v1 on SharedListener {
         return check candidate:deleteCandidate(candidateId);
     }
 
+    // Get active candidates by election - Updated to use new enrollment system
+    resource function get elections/[string electionId]/candidates/active() returns store:Candidate[]|error {
+        return check candidate:getCandidatesByElection(electionId, true); // Pass true for activeOnly
+    }
+
+    // Get candidates for elections where voter is enrolled - Updated logic
+    resource function get voter/[string voterId]/candidates() returns store:Candidate[]|error {
+        // Get voter's enrolled elections
+        store:Election[]|error enrolledElections = vote:getVoterEnrolledElections(voterId);
+        
+        if enrolledElections is error {
+            return error("Failed to get voter's enrolled elections: " + enrolledElections.message());
+        }
+        
+        // Get candidates for all enrolled elections (active only)
+        store:Candidate[] allCandidates = [];
+        foreach store:Election election in enrolledElections {
+            store:Candidate[]|error electionCandidates = candidate:getCandidatesByElection(election.id, true);
+            if electionCandidates is store:Candidate[] {
+                foreach store:Candidate cand in electionCandidates {
+                    allCandidates.push(cand);
+                }
+            }
+        }
+        
+        return allCandidates;
+    }
+
+    // Get candidates for a specific election if voter is enrolled - Updated logic
+    resource function get voter/[string voterId]/election/[string electionId]/candidates() returns store:Candidate[]|error {
+        // Check if voter is enrolled in this election
+        boolean|error isEnrolled = vote:isVoterEnrolledInElection(voterId, electionId);
+        
+        if isEnrolled is error {
+            return error("Failed to check enrollment: " + isEnrolled.message());
+        }
+        
+        if !isEnrolled {
+            return error("Voter is not enrolled in this election");
+        }
+        
+        // Get active candidates for this election
+        return check candidate:getCandidatesByElection(electionId, true);
+    }
+
+        // Get candidates by party - Updated to use new structure
+    resource function get candidates/party/[string partyName]() returns store:Candidate[]|error {
+        return check candidate:getCandidatesByParty(partyName, true); // Get active candidates only
+    }
+
+
     // Admin endpoint for updating candidate statuses
     resource function post admin/update\-candidate\-statuses(http:Request request) returns json|http:Response|error {
         // auth:AuthOptions options = {
@@ -317,5 +416,75 @@ service /candidate/api/v1 on SharedListener {
         return {
             "message": "Candidate statuses updated successfully based on current elections"
         };
+    }
+}
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["http://localhost:3000"],
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowHeaders: ["Content-Type", "Authorization"],
+        allowCredentials: true
+    }
+}
+service /vote/api/v1 on SharedListener {
+    // Cast vote endpoint
+    resource function post votes/cast(vote:Vote newVote)
+    returns http:Created|http:Forbidden|error {
+        return check vote:castVote(newVote);
+    }
+
+    // Check voting eligibility (enrollment + not already voted) - NEW ENDPOINT
+    resource function get eligibility/[string voterId]/election/[string electionId]() returns json|error {
+        // Check enrollment
+        boolean|error isEnrolled = vote:isVoterEnrolledInElection(voterId, electionId);
+        if isEnrolled is error {
+            return error("Failed to check enrollment status: " + isEnrolled.message());
+        }
+
+        // Check if already voted
+        store:Vote[]|error existingVotes = vote:getVotesByVoter(voterId);
+        boolean alreadyVoted = false;
+        
+        if existingVotes is store:Vote[] {
+            foreach store:Vote vote in existingVotes {
+                if vote.electionId == electionId {
+                    alreadyVoted = true;
+                    break;
+                }
+            }
+        }
+
+        return {
+            "voterId": voterId,
+            "electionId": electionId,
+            "isEnrolled": isEnrolled,
+            "alreadyVoted": alreadyVoted,
+            "eligible": isEnrolled && !alreadyVoted
+        };
+    }
+
+    // Get votes by election
+    resource function get votes/election/[string electionId]()
+    returns store:Vote[]|error {
+        return check vote:getVotesByElection(electionId);
+    }
+
+    // Get voter's voting history
+    resource function get votes/voter/[string voterId]()
+    returns store:Vote[]|error {
+        return check vote:getVotesByVoter(voterId);
+    }
+
+    // Get votes by election and district
+    resource function get votes/election/[string electionId]/district/[string district]()
+    returns store:Vote[]|error {
+        return check vote:getVotesByElectionAndDistrict(electionId, district);
+    }
+
+    // Get votes by household (new functionality)
+    resource function get votes/household/[string chiefOccupantId]/election/[string electionId]()
+    returns store:Vote[]|error {
+        return check vote:getVotesByHousehold(chiefOccupantId, electionId);
     }
 }

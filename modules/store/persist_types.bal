@@ -274,3 +274,53 @@ public type EnrolCandidatesUpdate record {|
     int numberOfVotes?;
 |};
 
+public type Vote record {|
+    readonly string id;
+    string voterId;
+    string electionId;
+    string candidateId;
+    string district;
+    string timestamp;
+|};
+
+public type VoteOptionalized record {|
+    string id?;
+    string voterId?;
+    string electionId?;
+    string candidateId?;
+    string district?;
+    string timestamp?;
+|};
+
+public type VoteTargetType typedesc<VoteOptionalized>;
+
+public type VoteInsert Vote;
+
+public type VoteUpdate record {|
+    string voterId?;
+    string electionId?;
+    string candidateId?;
+    string district?;
+    string timestamp?;
+|};
+
+public type Enrolment record {|
+    readonly string voterId;
+    readonly string electionId;
+    time:Utc enrollementDate;
+|};
+
+public type EnrolmentOptionalized record {|
+    string voterId?;
+    string electionId?;
+    time:Utc enrollementDate?;
+|};
+
+public type EnrolmentTargetType typedesc<EnrolmentOptionalized>;
+
+public type EnrolmentInsert Enrolment;
+
+public type EnrolmentUpdate record {|
+    time:Utc enrollementDate?;
+|};
+
