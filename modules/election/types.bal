@@ -48,7 +48,7 @@ public type ElectionWithCandidates record {|
 public type EnrolledCandidateWithDetails record {|
     string electionId;
     string candidateId;
-    int numberOfVotes;
+    int numberOfVotes?;
     string? candidateName?;
     string? partyName?;
 |};

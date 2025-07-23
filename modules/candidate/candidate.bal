@@ -5,6 +5,7 @@ import ballerina/log;
 import ballerina/persist;
 import ballerina/time;
 
+
 final store:Client dbCandidate = check new ();
 
 // Create a new candidate - defaults to inactive
@@ -341,3 +342,7 @@ public function getCandidatesByParty(string partyName, boolean? activeOnly = tru
         where candidate.partyName == partyName
         select candidate;
 }
+
+
+
+
