@@ -1,13 +1,8 @@
 import online_election.auth;
 import online_election.election;
 import online_election.store;
-
 import ballerina/http;
 import ballerina/log;
-import ballerina/persist;
-import online_election.result;
-import ballerina/lang.array;
-import ballerina/sql;
 import ballerina/time;
 
 listener http:Listener SharedListener = new (8080);
@@ -235,9 +230,57 @@ service /election/api/v1 on SharedListener {
 // election_results_service.bal - Complete Election Results API Service
 
 
-type LiveElectionStatus record {|
-    
+
+
+// Response types for API endpoints
+public type ElectionSummaryResponse record {|
+    string electionId;
+    string electionName;
+    int totalVotes;
+    string lastUpdated;
+    store:Candidate[] candidates;
+    DistrictInfo[] districts;
+    store:ElectionSummary statistics;
+    ProvinceAnalysis[]? provinces?;
+    PartySummary[]? partySummaries?;
 |};
+
+// Fixed district info type for frontend compatibility
+public type DistrictInfo record {|
+    string districtId;
+    string districtName;
+    string winningCandidateId;
+    int totalVotes;
+|};
+
+public type ProvinceAnalysis record {|
+    string provinceName;
+    int totalVotes;
+    int registeredVoters;
+    decimal turnoutPercentage;
+    string winningCandidateId;
+    store:DistrictResult[] districts;
+|};
+
+public type PartySummary record {|
+    string partyName;
+    string partyColor;
+    store:Candidate[] candidates;
+    int totalElectoralVotes;
+    int totalPopularVotes;
+    decimal popularVotePercentage;
+    int districtsWon;
+|};
+
+// Isolated function for sorting by electoral votes
+isolated function getElectoralVotes(store:Candidate candidate) returns int {
+    return candidate.electoralVotes ?: 0;
+}
+
+// Isolated function for sorting by popular votes
+isolated function getPopularVotes(store:Candidate candidate) returns int {
+    return candidate.popularVotes ?: 0;
+}
 
 @http:ServiceConfig {
     cors: {
@@ -249,30 +292,58 @@ type LiveElectionStatus record {|
 }
 service /result/api/v1 on SharedListener {
 
-    // Initialize database client as a service-level resource
     private final store:Client dbClient;
 
     function init() returns error? {
         self.dbClient = check new();
+        log:printInfo("Election Results API service started successfully");
     }
 
-    // Core Election Data Endpoints
-
-    // Get complete election summary - Main endpoint for frontend
-    resource function get election/[string electionId]/summary() returns result:ElectionSummaryResponse|http:NotFound|http:InternalServerError {
+    // MAIN ENDPOINT: Get complete election summary
+    resource function get election/[string electionId]/summary() returns ElectionSummaryResponse|http:NotFound|http:InternalServerError {
         do {
-            result:ElectionSummaryResponse summary = check result:getCompleteElectionResults(self.dbClient, electionId);
-            return summary;
+            log:printInfo("Fetching election summary", electionId = electionId);
+            
+            store:Election election = check self.getElectionById(electionId);
+            store:Candidate[] candidates = check self.getCandidatesByElection(electionId);
+            store:DistrictResult[] districtResults = check self.getDistrictResultsByElection(electionId);
+            store:ElectionSummary statistics = check self.getElectionSummaryById(electionId);
+            
+            DistrictInfo[] districts = districtResults.map(function(store:DistrictResult dr) returns DistrictInfo {
+                return {
+                    districtId: dr.districtCode,
+                    districtName: dr.districtName,
+                    winningCandidateId: dr.winner ?: "",
+                    totalVotes: dr.totalVotes
+                };
+            });
+            
+            int totalVotes = candidates.reduce(function(int acc, store:Candidate c) returns int {
+                return acc + (c.popularVotes ?: 0);
+            }, 0);
+            
+            ElectionSummaryResponse response = {
+                electionId: election.id,
+                electionName: election.electionName,
+                totalVotes: totalVotes,
+                lastUpdated: time:utcToString(time:utcNow()),
+                candidates: candidates,
+                districts: districts,
+                statistics: statistics
+            };
+            
+            log:printInfo("Successfully fetched election summary", electionId = electionId);
+            return response;
+            
         } on fail error e {
             log:printError("Failed to get election summary", electionId = electionId, 'error = e);
             return http:INTERNAL_SERVER_ERROR;
         }
     }
 
-    // Get election details
     resource function get election/[string electionId]() returns store:Election|http:NotFound|http:InternalServerError {
         do {
-            store:Election election = check result:getElectionById(self.dbClient, electionId);
+            store:Election election = check self.getElectionById(electionId);
             return election;
         } on fail error e {
             log:printError("Election not found", electionId = electionId, 'error = e);
@@ -280,7 +351,16 @@ service /result/api/v1 on SharedListener {
         }
     }
 
-    // Get election winner (candidate with most electoral votes)
+    resource function get election/[string electionId]/candidates() returns store:Candidate[]|http:NotFound|http:InternalServerError {
+        do {
+            store:Candidate[] candidates = check self.getCandidatesByElection(electionId);
+            return candidates;
+        } on fail error e {
+            log:printError("Failed to get candidates", electionId = electionId, 'error = e);
+            return http:NOT_FOUND;
+        }
+    }
+
     resource function get election/[string electionId]/winner() returns store:Candidate|http:NotFound|http:InternalServerError {
         do {
             store:Candidate winner = check self.calculateElectoralWinner(electionId);
@@ -291,102 +371,26 @@ service /result/api/v1 on SharedListener {
         }
     }
 
-    // Get popular vote winner
-    resource function get election/[string electionId]/popular\-winner() returns store:Candidate|http:NotFound|http:InternalServerError {
+    resource function get election/[string electionId]/districts() returns store:DistrictResult[]|http:NotFound|http:InternalServerError {
         do {
-            store:Candidate winner = check self.calculatePopularVoteWinner(electionId);
-            return winner;
+            store:DistrictResult[] districts = check self.getDistrictResultsByElection(electionId);
+            return districts;
         } on fail error e {
-            log:printError("Failed to calculate popular vote winner", electionId = electionId, 'error = e);
+            log:printError("Failed to get district results for election", electionId = electionId, 'error = e);
             return http:NOT_FOUND;
         }
     }
 
-    // Get election status with live updates
-    
-
-    // Get victory margin analysis
-    resource function get election/[string electionId]/margin() returns result:VictoryMargin|http:NotFound|http:InternalServerError {
+    resource function get election/[string electionId]/summary\-stats() returns store:ElectionSummary|http:NotFound|http:InternalServerError {
         do {
-            result:VictoryMargin margin = check self.calculateVictoryMargin(electionId);
-            return margin;
+            store:ElectionSummary summary = check self.getElectionSummaryById(electionId);
+            return summary;
         } on fail error e {
-            log:printError("Failed to calculate victory margin", electionId = electionId, 'error = e);
+            log:printError("Failed to get election summary stats", electionId = electionId, 'error = e);
             return http:NOT_FOUND;
         }
     }
 
-    // Get party summaries for election
-    resource function get election/[string electionId]/parties() returns result:PartySummary[]|http:NotFound|http:InternalServerError {
-        do {
-            store:Candidate[] candidates = check result:getCandidatesByElection(self.dbClient, electionId);
-            store:DistrictResult[] districts = check result:getDistrictResultsByElection(self.dbClient, electionId);
-            result:PartySummary[] partySummaries = check result:generatePartySummaries(candidates, districts);
-            return partySummaries;
-        } on fail error e {
-            log:printError("Failed to get party summaries", electionId = electionId, 'error = e);
-            return http:INTERNAL_SERVER_ERROR;
-        }
-    }
-
-    // Candidate Management Endpoints
-
-    // Get all candidates for a specific election
-    resource function get election/[string electionId]/candidates() returns store:Candidate[]|http:NotFound|http:InternalServerError {
-        do {
-            store:Candidate[] candidates = check result:getCandidatesByElection(self.dbClient, electionId);
-            return candidates;
-        } on fail error e {
-            log:printError("Failed to get candidates", electionId = electionId, 'error = e);
-            return http:NOT_FOUND;
-        }
-    }
-
-    // Get specific candidate by ID
-    resource function get candidates/[string candidateId]() returns store:Candidate|http:NotFound|http:InternalServerError {
-        do {
-            store:Candidate candidate = check result:getCandidateById(self.dbClient, candidateId);
-            return candidate;
-        } on fail error e {
-            log:printWarn("Candidate not found", candidateId = candidateId, 'error = e);
-            return http:NOT_FOUND;
-        }
-    }
-
-    // Get candidate metrics and analytics
-    resource function get candidates/[string candidateId]/metrics() returns result:CandidateMetrics|http:NotFound|http:InternalServerError {
-        do {
-            result:CandidateMetrics metrics = check result:getCandidateMetrics(self.dbClient, candidateId);
-            return metrics;
-        } on fail error e {
-            log:printError("Failed to get candidate metrics", candidateId = candidateId, 'error = e);
-            return http:NOT_FOUND;
-        }
-    }
-
-    // Update candidate votes (POST endpoint for vote processing)
-    //weda ne
-    resource function post candidates/[string candidateId]/votes(@http:Payload json voteData) returns http:Ok|http:BadRequest|http:InternalServerError {
-        do {
-            json additionalVotesJson = check voteData.additionalVotes;
-            int additionalVotes = check additionalVotesJson.ensureType(int);
-            
-            check result:updateCandidateVotes(self.dbClient, candidateId, additionalVotes);
-            
-            // Update election summary after vote update
-            store:Candidate candidate = check result:getCandidateById(self.dbClient, candidateId);
-            check result:updateElectionSummary(self.dbClient, candidate.electionId);
-            
-            return http:OK;
-        } on fail error e {
-            log:printError("Failed to update candidate votes", candidateId = candidateId, 'error = e);
-            return http:INTERNAL_SERVER_ERROR;
-        }
-    }
-
-    // District Management Endpoints
-
-    // Get all districts
     resource function get districts() returns store:District[]|http:InternalServerError {
         do {
             store:District[] districts = check self.getDistrictsFromDB();
@@ -397,109 +401,84 @@ service /result/api/v1 on SharedListener {
         }
     }
 
-    // Get specific district by ID
-    resource function get districts/[string districtId]() returns store:District|http:NotFound|http:InternalServerError {
-        do {
-            store:District district = check self.getDistrictByIdFromDB(districtId);
-            return district;
-        } on fail error e {
-            log:printError("District not found", districtId = districtId, 'error = e);
-            return http:NOT_FOUND;
-        }
+    resource function options [string... path]() returns http:Ok {
+        return http:OK;
     }
 
-    // Get district results with detailed breakdown
-    //weda ne
-    resource function get districts/[string districtId]/results() returns store:DistrictResult[]|http:NotFound|http:InternalServerError {
-        do {
-            store:DistrictResult[] results = check self.getDistrictResultsFromDB(districtId);
-            return results;
-        } on fail error e {
-            log:printError("Failed to get district results", districtId = districtId, 'error = e);
-            return http:NOT_FOUND;
-        }
+    resource function get health() returns json {
+        return {
+            "status": "healthy",
+            "service": "election-results-api",
+            "timestamp": time:utcToString(time:utcNow())
+        };
     }
 
-    // Get district results for specific election
-    //weda ne
-    resource function get election/[string electionId]/districts() returns store:DistrictResult[]|http:NotFound|http:InternalServerError {
-        do {
-            store:DistrictResult[] districts = check result:getDistrictResultsByElection(self.dbClient, electionId);
-            return districts;
-        } on fail error e {
-            log:printError("Failed to get district results for election", electionId = electionId, 'error = e);
-            return http:NOT_FOUND;
-        }
+    // Helper methods
+
+    private function getElectionById(string electionId) returns store:Election|error {
+        return self.dbClient->/elections/[electionId].get();
     }
 
-    // Province Management Endpoints
-
-    // Get all provinces
-    resource function get provinces() returns store:ProvinceResult[]|http:InternalServerError {
-        do {
-            store:ProvinceResult[] provinces = check self.getProvincesFromDB();
-            return provinces;
-        } on fail error e {
-            log:printError("Error fetching provinces", 'error = e);
-            return http:INTERNAL_SERVER_ERROR;
-        }
-    }
-
-    // Get specific province by ID
-    resource function get provinces/[string provinceId]() returns store:ProvinceResult|http:NotFound|http:InternalServerError {
-        do {
-            store:ProvinceResult province = check self.getProvinceByIdFromDB(provinceId);
-            return province;
-        } on fail error e {
-            log:printError("Province not found", provinceId = provinceId, 'error = e);
-            return http:NOT_FOUND;
-        }
-    }
-
-    // Get districts by province ID
-    resource function get provinces/[string provinceId]/districts() returns store:District[]|http:NotFound|http:InternalServerError {
-        do {
-            store:District[] districts = check self.getDistrictsByProvinceFromDB(provinceId);
-            if districts.length() == 0 {
-                return http:NOT_FOUND;
+    private function getCandidatesByElection(string electionId) returns store:Candidate[]|error {
+        stream<store:Candidate, error?> candidateStream = self.dbClient->/candidates.get();
+        
+        store:Candidate[] candidates = [];
+        check from store:Candidate candidate in candidateStream
+            where candidate.electionId == electionId && candidate.isActive == true
+            do {
+                candidates.push(candidate);
+            };
+        
+        // Try using isolated function - if this doesn't work, use the manual sorting version
+        store:Candidate[] sortedCandidates = candidates.clone();
+        
+        // Manual sorting by electoral votes (descending)
+        int n = sortedCandidates.length();
+        foreach int i in 0 ..< n - 1 {
+            foreach int j in 0 ..< n - i - 1 {
+                int currentVotes = sortedCandidates[j].electoralVotes ?: 0;
+                int nextVotes = sortedCandidates[j + 1].electoralVotes ?: 0;
+                
+                if currentVotes < nextVotes {
+                    store:Candidate temp = sortedCandidates[j];
+                    sortedCandidates[j] = sortedCandidates[j + 1];
+                    sortedCandidates[j + 1] = temp;
+                }
             }
-            return districts;
-        } on fail error e {
-            log:printError("Error fetching districts for province", provinceId = provinceId, 'error = e);
-            return http:INTERNAL_SERVER_ERROR;
         }
+        
+        return sortedCandidates;
     }
 
-    // Election Summary Management
-
-    // Get election summary by ID
-    resource function get election/[string electionId]/summary\-stats() returns store:ElectionSummary|http:NotFound|http:InternalServerError {
-        do {
-            store:ElectionSummary summary = check result:getElectionSummaryById(self.dbClient, electionId);
-            return summary;
-        } on fail error e {
-            log:printError("Failed to get election summary stats", electionId = electionId, 'error = e);
-            return http:NOT_FOUND;
-        }
+    private function getDistrictResultsByElection(string electionId) returns store:DistrictResult[]|error {
+        stream<store:DistrictResult, error?> districtStream = self.dbClient->/districtresults.get();
+        
+        store:DistrictResult[] districts = [];
+        check from store:DistrictResult district in districtStream
+            where district.electionId == electionId
+            do {
+                districts.push(district);
+            };
+        
+        return districts;
     }
 
-    // Update election summary (POST endpoint)
-    //weda ne
-    resource function post election/[string electionId]/summary\-stats() returns http:Ok|http:InternalServerError {
-        do {
-            check result:updateElectionSummary(self.dbClient, electionId);
-            return http:OK;
-        } on fail error e {
-            log:printError("Failed to update election summary", electionId = electionId, 'error = e);
-            return http:INTERNAL_SERVER_ERROR;
-        }
+    private function getElectionSummaryById(string electionId) returns store:ElectionSummary|error {
+        return self.dbClient->/electionsummaries/[electionId].get();
     }
 
-    // Helper methods for election calculations
+    private function getDistrictsFromDB() returns store:District[]|error {
+        stream<store:District, error?> districtStream = self.dbClient->/districts.get();
+        store:District[] districts = [];
+        check from store:District district in districtStream
+            do {
+                districts.push(district);
+            };
+        return districts;
+    }
 
-    // Calculate electoral winner (candidate with most electoral votes)
     private function calculateElectoralWinner(string electionId) returns store:Candidate|error {
-        store:Candidate[] candidates = check result:getCandidatesByElection(self.dbClient, electionId);
+        store:Candidate[] candidates = check self.getCandidatesByElection(electionId);
         
         store:Candidate? winner = candidates.reduce(function(store:Candidate? acc, store:Candidate c) returns store:Candidate? {
             if acc == () {
@@ -513,126 +492,4 @@ service /result/api/v1 on SharedListener {
         }
         return winner;
     }
-
-    // Calculate popular vote winner
-    private function calculatePopularVoteWinner(string electionId) returns store:Candidate|error {
-        store:Candidate[] candidates = check result:getCandidatesByElection(self.dbClient, electionId);
-        
-        store:Candidate? winner = candidates.reduce(function(store:Candidate? acc, store:Candidate c) returns store:Candidate? {
-            if acc == () {
-                return c;
-            }
-            return (c.popularVotes ?: 0) > (acc.popularVotes ?: 0) ? c : acc;
-        }, ());
-        
-        if winner == () {
-            return error("No winner found");
-        }
-        return winner;
-    }
-
-
-
-
-    // Calculate victory margin
-    private function calculateVictoryMargin(string electionId) returns result:VictoryMargin|error {
-        store:Candidate[] candidates = check result:getCandidatesByElection(self.dbClient, electionId);
-        
-        if candidates.length() < 2 {
-            return {
-                marginType: "INSUFFICIENT_DATA",
-                margin: 0.0,
-                votes: 0
-            };
-        }
-        
-        // Sort by popular votes descending
-        store:Candidate[] sortedCandidates = candidates.sort(array:DESCENDING, isolated function(store:Candidate c) returns int {
-    return c.popularVotes ?: 0;
-});
-
-        
-        int firstPlaceVotes = sortedCandidates[0].popularVotes ?: 0;
-        int secondPlaceVotes = sortedCandidates[1].popularVotes ?: 0;
-        int voteDifference = firstPlaceVotes - secondPlaceVotes;
-        
-        int totalVotes = candidates.reduce(function(int acc, store:Candidate c) returns int {
-            return acc + (c.popularVotes ?: 0);
-        }, 0);
-        
-        decimal marginPercentage = totalVotes > 0 ? <decimal>voteDifference / <decimal>totalVotes * 100.0 : 0.0;
-        
-        return {
-            marginType: "POPULAR_VOTE",
-            margin: marginPercentage,
-            votes: voteDifference
-        };
-    }
-
-    // Helper functions for database operations
-
-    private function getDistrictsFromDB() returns store:District[]|error {
-        stream<store:District, persist:Error?> districtStream = self.dbClient->/districts.get();
-        store:District[] districts = [];
-        check from store:District district in districtStream
-            do {
-                districts.push(district);
-            };
-        return districts;
-    }
-
-    private function getDistrictByIdFromDB(string districtId) returns store:District|error {
-        return self.dbClient->/districts/[districtId].get();
-    }
-
-    private function getDistrictResultsFromDB(string districtCode) returns store:DistrictResult[]|error {
-    sql:ParameterizedQuery whereClause = `WHERE district_code = ${districtCode}`;
-    
-    stream<store:DistrictResult, persist:Error?> resultStream = 
-        self.dbClient->/districtresults.get(whereClause = whereClause);
-    
-    store:DistrictResult[] results = [];
-    check from store:DistrictResult result in resultStream
-        do {
-            results.push(result);
-        };
-        
-    return results;
-}
-
-
-    private function getProvincesFromDB() returns store:ProvinceResult[]|error {
-        stream<store:ProvinceResult, persist:Error?> provinceStream = self.dbClient->/provinceresults.get();
-        store:ProvinceResult[] provinces = [];
-        check from store:ProvinceResult province in provinceStream
-            do {
-                provinces.push(province);
-            };
-        return provinces;
-    }
-
-    private function getProvinceByIdFromDB(string provinceId) returns store:ProvinceResult|error {
-        return self.dbClient->/provinceresults/[provinceId].get();
-    }
-
-    private function getDistrictsByProvinceFromDB(string provinceId) returns store:District[]|error {
-    sql:ParameterizedQuery whereClause = `WHERE province_id = ${provinceId}`;
-    
-    stream<store:District, persist:Error?> districtStream = 
-        self.dbClient->/districts.get(whereClause = whereClause);
-    
-    store:District[] districts = [];
-    check from store:District district in districtStream
-        do {
-            districts.push(district);
-        };
-    
-    return districts;
-}
-
-
-    private function getCurrentTimestamp() returns string|error {
-      
-        return time:utcToString(time:utcNow());
-}
 }
