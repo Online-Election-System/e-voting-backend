@@ -4,53 +4,29 @@
 -- Please verify the generated scripts and execute them against the target DB server.
 
 DROP TABLE IF EXISTS "Candidate";
-DROP TABLE IF EXISTS "AdminUsers";
 DROP TABLE IF EXISTS "Vote";
 DROP TABLE IF EXISTS "EnrolCandidates";
-DROP TABLE IF EXISTS "ChiefOccupant";
-DROP TABLE IF EXISTS "HouseholdDetails";
 DROP TABLE IF EXISTS "Enrolment";
 DROP TABLE IF EXISTS "Election";
+DROP TABLE IF EXISTS "Notification";
 DROP TABLE IF EXISTS "HouseholdMembers";
+DROP TABLE IF EXISTS "AdminUsers";
+DROP TABLE IF EXISTS "RemovalRequest";
+DROP TABLE IF EXISTS "GramaNiladhari";
+DROP TABLE IF EXISTS "RemovalRequestReview";
+DROP TABLE IF EXISTS "Voter";
+DROP TABLE IF EXISTS "ChiefOccupant";
+DROP TABLE IF EXISTS "HouseholdDetails";
+DROP TABLE IF EXISTS "RegistrationReview";
 
-CREATE TABLE "HouseholdMembers" (
-	"id" VARCHAR(191) NOT NULL,
-	"chief_occupant_id" VARCHAR(191) NOT NULL,
-	"full_name" VARCHAR(191) NOT NULL,
-	"nic" VARCHAR(191),
-	"dob" VARCHAR(191) NOT NULL,
-	"gender" VARCHAR(191) NOT NULL,
-	"civil_status" VARCHAR(191) NOT NULL,
-	"relationship_with_chief_occupant" VARCHAR(191) NOT NULL,
-	"id_copy_path" VARCHAR(191),
-	"approved_by_chief" BOOLEAN NOT NULL,
-	"Hased_password" VARCHAR(191) NOT NULL,
-	"passwordchanged" BOOLEAN NOT NULL,
-	"role" VARCHAR(191) NOT NULL,
-	PRIMARY KEY("id")
-);
-
-CREATE TABLE "Election" (
-	"id" VARCHAR(191) NOT NULL,
-	"election_name" VARCHAR(191) NOT NULL,
-	"description" VARCHAR(191) NOT NULL,
-	"start_date" DATE NOT NULL,
-	"enrol_ddl" DATE NOT NULL,
-	"election_date" DATE NOT NULL,
-	"end_date" DATE NOT NULL,
-	"no_of_candidates" INT NOT NULL,
-	"election_type" VARCHAR(191) NOT NULL,
-	"start_time" TIME NOT NULL,
-	"end_time" TIME NOT NULL,
+CREATE TABLE "RegistrationReview" (
+	"id" INT NOT NULL,
+	"member_nic" VARCHAR(191) NOT NULL,
+	"reviewed_by" VARCHAR(191) NOT NULL,
 	"status" VARCHAR(191) NOT NULL,
+	"comments" VARCHAR(191),
+	"reviewed_at" TIMESTAMP,
 	PRIMARY KEY("id")
-);
-
-CREATE TABLE "Enrolment" (
-	"voter_id" VARCHAR(191) NOT NULL,
-	"election_id" VARCHAR(191) NOT NULL,
-	"enrollement_date" TIMESTAMP NOT NULL,
-	PRIMARY KEY("voter_id","election_id")
 );
 
 CREATE TABLE "HouseholdDetails" (
@@ -77,8 +53,126 @@ CREATE TABLE "ChiefOccupant" (
 	"password_hash" VARCHAR(191) NOT NULL,
 	"email" VARCHAR(191) NOT NULL,
 	"id_copy_path" VARCHAR(191),
+	"image_path" VARCHAR(191),
 	"role" VARCHAR(191) NOT NULL,
 	PRIMARY KEY("id")
+);
+
+CREATE TABLE "Voter" (
+	"id"  SERIAL,
+	"national_id" VARCHAR(191) NOT NULL,
+	"name" VARCHAR(191) NOT NULL,
+	"password" VARCHAR(191) NOT NULL,
+	"district" VARCHAR(191) NOT NULL,
+	"polling_station" VARCHAR(191) NOT NULL,
+	"registration_date" DATE NOT NULL,
+	"status" VARCHAR(191) NOT NULL,
+	PRIMARY KEY("id")
+);
+
+CREATE TABLE "RemovalRequestReview" (
+	"id" INT NOT NULL,
+	"removal_request_id" INT NOT NULL,
+	"reviewed_by" VARCHAR(191) NOT NULL,
+	"status" VARCHAR(191) NOT NULL,
+	"comments" VARCHAR(191),
+	"reviewed_at" TIMESTAMP,
+	PRIMARY KEY("id")
+);
+
+CREATE TABLE "GramaNiladhari" (
+	"id" VARCHAR(191) NOT NULL,
+	"full_name" VARCHAR(191) NOT NULL,
+	"nic" VARCHAR(191) NOT NULL,
+	"date_of_birth" VARCHAR(191) NOT NULL,
+	"email" VARCHAR(191) NOT NULL,
+	"office_phone" VARCHAR(191) NOT NULL,
+	"mobile_number" VARCHAR(191) NOT NULL,
+	"residential_address" VARCHAR(191) NOT NULL,
+	"official_title" VARCHAR(191) NOT NULL,
+	"employee_id" VARCHAR(191) NOT NULL,
+	"appointment_date" VARCHAR(191) NOT NULL,
+	"gn_division" VARCHAR(191) NOT NULL,
+	"district" VARCHAR(191) NOT NULL,
+	"province" VARCHAR(191) NOT NULL,
+	"office_address" VARCHAR(191) NOT NULL,
+	"qualifications" VARCHAR(191) NOT NULL,
+	"experience" VARCHAR(191) NOT NULL,
+	PRIMARY KEY("id")
+);
+
+CREATE TABLE "RemovalRequest" (
+	"id" INT NOT NULL,
+	"member_name" VARCHAR(191) NOT NULL,
+	"nic" VARCHAR(191) NOT NULL,
+	"requested_by" VARCHAR(191) NOT NULL,
+	"reason" VARCHAR(191) NOT NULL,
+	"proof_document" VARCHAR(191) NOT NULL,
+	"status" VARCHAR(191) NOT NULL,
+	PRIMARY KEY("id")
+);
+
+CREATE TABLE "AdminUsers" (
+	"id" VARCHAR(191) NOT NULL,
+	"username" VARCHAR(191) NOT NULL,
+	"email" VARCHAR(191) NOT NULL,
+	"password_hash" VARCHAR(191) NOT NULL,
+	"role" VARCHAR(191) NOT NULL,
+	"created_at" TIMESTAMP NOT NULL,
+	"is_active" BOOLEAN NOT NULL,
+	PRIMARY KEY("id")
+);
+
+CREATE TABLE "HouseholdMembers" (
+	"id" VARCHAR(191) NOT NULL,
+	"chief_occupant_id" VARCHAR(191) NOT NULL,
+	"full_name" VARCHAR(191) NOT NULL,
+	"nic" VARCHAR(191),
+	"dob" VARCHAR(191) NOT NULL,
+	"gender" VARCHAR(191) NOT NULL,
+	"civil_status" VARCHAR(191) NOT NULL,
+	"relationship_with_chief_occupant" VARCHAR(191) NOT NULL,
+	"id_copy_path" VARCHAR(191),
+	"image_path" VARCHAR(191),
+	"approved_by_chief" BOOLEAN NOT NULL,
+	"Hased_password" VARCHAR(191) NOT NULL,
+	"passwordchanged" BOOLEAN NOT NULL,
+	"role" VARCHAR(191) NOT NULL,
+	PRIMARY KEY("id")
+);
+
+CREATE TABLE "Notification" (
+	"id" INT NOT NULL,
+	"title" VARCHAR(191) NOT NULL,
+	"message" VARCHAR(191) NOT NULL,
+	"link" VARCHAR(191),
+	"created_at" TIMESTAMP NOT NULL,
+	"status" VARCHAR(191) NOT NULL,
+	"recipient_nic" VARCHAR(191) NOT NULL,
+	PRIMARY KEY("id")
+);
+
+CREATE TABLE "Election" (
+	"id" VARCHAR(191) NOT NULL,
+	"election_name" VARCHAR(191) NOT NULL,
+	"description" VARCHAR(191) NOT NULL,
+	"start_date" DATE NOT NULL,
+	"enrol_ddl" DATE NOT NULL,
+	"election_date" DATE NOT NULL,
+	"end_date" DATE NOT NULL,
+	"no_of_candidates" INT NOT NULL,
+	"election_type" VARCHAR(191) NOT NULL,
+	"start_time" TIME NOT NULL,
+	"end_time" TIME NOT NULL,
+	"status" VARCHAR(191) NOT NULL,
+	PRIMARY KEY("id")
+);
+
+CREATE TABLE "Enrolment" (
+	"voter_id" VARCHAR(191) NOT NULL,
+	"election_id" VARCHAR(191) NOT NULL,
+	"enrollement_date" TIMESTAMP NOT NULL,
+	PRIMARY KEY("voter_id","election_id")
 );
 
 CREATE TABLE "EnrolCandidates" (
@@ -95,17 +189,6 @@ CREATE TABLE "Vote" (
 	"candidate_id" VARCHAR(191) NOT NULL,
 	"district" VARCHAR(191) NOT NULL,
 	"timestamp" VARCHAR(191) NOT NULL,
-	PRIMARY KEY("id")
-);
-
-CREATE TABLE "AdminUsers" (
-	"id" VARCHAR(191) NOT NULL,
-	"username" VARCHAR(191) NOT NULL,
-	"email" VARCHAR(191) NOT NULL,
-	"password_hash" VARCHAR(191) NOT NULL,
-	"role" VARCHAR(191) NOT NULL,
-	"created_at" TIMESTAMP NOT NULL,
-	"is_active" BOOLEAN NOT NULL,
 	PRIMARY KEY("id")
 );
 

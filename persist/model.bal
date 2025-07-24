@@ -38,6 +38,7 @@ public type Candidate record {|
 # + civilStatus - Marital Status
 # + passwordHash - Hashed Password
 # + idCopyPath - File Path of ID Copy
+# + imagePath - File Path of Image
 # + email - email of chiefoccupant
 # + role - Role of the user
 
@@ -57,6 +58,8 @@ public type ChiefOccupant record {|
     string email;
     @sql:Name {value: "id_copy_path"}
     string? idCopyPath;
+    @sql:Name {value: "image_path"}
+    string? imagePath;
     string role;
 |};
 
@@ -103,6 +106,7 @@ public type HouseholdDetails record {|
 # + civilStatus - Marital Status
 # + relationshipWithChiefOccupant - Relationship with Chief Occupant
 # + idCopyPath - File Path of ID Copy
+# + imagePath - File Path of Image
 # + approvedByChief - Chief Occupant Approval Status
 # + passwordHash - Hashed Password
 # + passwordchanged - if the password change
@@ -123,6 +127,8 @@ public type HouseholdMembers record {|
     string relationshipWithChiefOccupant;
     @sql:Name {value: "id_copy_path"}
     string? idCopyPath;
+    @sql:Name {value: "image_path"}
+    string? imagePath;
     @sql:Name {value: "approved_by_chief"}
     boolean approvedByChief;
     @sql:Name {value: "Hased_password"}
@@ -241,4 +247,113 @@ public type Enrolment record {|
     readonly string electionId;
     @sql:Name {value: "enrollement_date"}
     time:Utc enrollementDate;
+|};
+
+// -- Removal Requests Table --
+public type RemovalRequest record {|
+    readonly int id;
+    @sql:Name { value: "member_name" }
+    string memberName;
+    string nic;
+    @sql:Name { value: "requested_by" }
+    string requestedBy;
+    string reason;
+    @sql:Name { value: "proof_document" }
+    string proofDocument;
+    string status; // pending, approved, rejected
+|};
+
+// -- Registration Reviews Table --
+public type RegistrationReview record {|
+    readonly int id;
+    @sql:Name { value: "member_nic" }
+    string memberNic;
+    @sql:Name { value: "reviewed_by" }
+    string reviewedBy;
+    string status; // pending, approved, rejected
+    string? comments;
+    @sql:Name { value: "reviewed_at" }
+    time:Utc? reviewedAt;
+|};
+
+// -- Removal Request Reviews Table --
+public type RemovalRequestReview record {|
+    readonly int id;
+    @sql:Name { value: "removal_request_id" }
+    int removalRequestId;
+    @sql:Name { value: "reviewed_by" }
+    string reviewedBy;
+    string status; // approved, rejected
+    string? comments;
+    @sql:Name { value: "reviewed_at" }
+    time:Utc? reviewedAt;
+|};
+
+// -- Grama Niladhari Table --
+public type GramaNiladhari record {|
+    readonly string id;
+    @sql:Name { value: "full_name" }
+    string fullName;
+    string nic;
+    @sql:Name { value: "date_of_birth" }
+    string dateOfBirth;
+    string email;
+    @sql:Name { value: "office_phone" }
+    string officePhone;
+    @sql:Name { value: "mobile_number" }
+    string mobileNumber;
+    @sql:Name { value: "residential_address" }
+    string residentialAddress;
+    @sql:Name { value: "official_title" }
+    string officialTitle;
+    @sql:Name { value: "employee_id" }
+    string employeeId;
+    @sql:Name { value: "appointment_date" }
+    string appointmentDate;
+    @sql:Name { value: "gn_division" }
+    string gnDivision;
+    string district;
+    string province;
+    @sql:Name { value: "office_address" }
+    string officeAddress;
+    string qualifications;
+    string experience;
+|};
+
+// -- Notifications Table --
+public type Notification record {|
+    readonly int id;
+    string title;
+    string message;
+    string? link; // e.g., to view the action
+    @sql:Name { value: "created_at" }
+    time:Utc createdAt;
+    string status; // unread, read
+    @sql:Name { value: "recipient_nic" }
+    string recipientNic;
+|};
+
+# Voter entity.
+#
+# + id - Voter ID (Auto-incrementing Primary Key)
+# + nationalId - National Identity Card Number (Unique Identifier)
+# + name - Full name of the voter
+# + password - Login password (hashed)
+# + district - Voter's district
+# + pollingStation - Voter's polling station
+# + registrationDate - Registration date
+# + status - ACTIVE / INACTIVE
+public type Voter record {|
+    @sql:Generated
+    readonly int id;
+    @sql:Name { value: "national_id" }
+    string nationalId;
+    string name;
+    string password;
+    string district;
+    @sql:Name { value: "polling_station" }
+    string pollingStation;
+    @sql:Name { value: "registration_date" }
+    time:Date registrationDate;
+    string status;
 |};

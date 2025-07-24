@@ -3,9 +3,10 @@ import online_election.candidate;
 import online_election.election;
 import online_election.vote;
 import online_election.store;
-
 import ballerina/http;
 import ballerina/persist;
+import online_election.verification;
+import online_election.enrollment;
 
 listener http:Listener SharedListener = new (8080);
 
@@ -422,5 +423,71 @@ service /vote/api/v1 on SharedListener {
     resource function get votes/household/[string chiefOccupantId]/election/[string electionId]()
     returns store:Vote[]|error {
         return check vote:getVotesByHousehold(chiefOccupantId, electionId);
+    }
+}
+
+
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["http://localhost:3000"], // Your frontend URL
+        allowMethods: ["GET", "POST", "PUT", "DELETE"],
+        allowHeaders: ["Content-Type", "Authorization"]
+    }
+}
+service /api/v1 on SharedListener {
+
+    // == REGISTRATION REVIEW ENDPOINTS ==
+
+    // CORRECTED: All function calls now use the 'verification:' prefix.
+    resource function get registrations/applications(string? nameOrNic, string? statusFilter) 
+    returns verification:RegistrationApplication[]|error {
+        return verification:getRegistrationApplications(nameOrNic, statusFilter);
+    }
+
+    resource function get registrations/counts() 
+    returns verification:StatusCounts|error {
+        return verification:getApplicationCounts();
+    }
+
+    resource function get registrations/applications/[string nic]() 
+    returns verification:RegistrationDetails|http:NotFound|error {
+        return verification:getRegistrationDetails(nic);
+    }
+
+    resource function post registrations/applications/[string nic]/review(verification:ReviewRequest reviewData) 
+    returns http:Ok|http:Forbidden|error {
+        return verification:reviewApplication(nic, reviewData);
+    }
+
+    // === VOTER ENDPOINTS ===
+
+    resource function post voter/login(@http:Payload enrollment:LoginRequest payload) 
+    returns enrollment:ApiResponse|error {
+        return enrollment:loginVoter(payload);
+    }
+
+    resource function get voter/profile/[int voterId]() 
+    returns enrollment:VoterProfile|http:NotFound|error {
+        return enrollment:getVoterProfile(voterId);
+    }
+
+    // === ELECTION & ENROLLMENT ENDPOINTS ===
+
+    resource function get elections(@http:Query int voterId) 
+    returns enrollment:ElectionWithEnrollment[]|error {
+        return enrollment:getAllElections(voterId);
+    }
+
+    resource function get elections/[string electionId]/candidates() 
+    returns enrollment:ElectionDetailsWithCandidates|http:NotFound|error {
+        return enrollment:getElectionWithCandidates(electionId);
+    }
+    
+    // The verification and enrollment endpoint
+    resource function post elections/[string electionId]/enroll(
+            @http:Payload enrollment:VoterVerificationRequest verificationPayload
+    ) returns http:Created|enrollment:ApiResponse|error {
+        return enrollment:enrollInElection(electionId, verificationPayload);
     }
 }

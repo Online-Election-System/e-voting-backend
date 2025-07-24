@@ -76,7 +76,7 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
         email: request.chiefOccupant.email,
         idCopyPath: request.chiefOccupant.idCopyPath,
         role: "chief_occupant"
-    };
+    ,imagePath: ()};
 
     // DEBUG: Log what we're inserting
     log:printInfo("=== DEBUG: Inserting chief occupant ===");
@@ -164,7 +164,7 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
             passwordHash: memberHashedPassword,
             passwordchanged: false,
             role: "household_member"
-        };
+        ,imagePath: ()};
 
         // DEBUG: Log what we're inserting for each member
         log:printInfo(string `=== DEBUG: Inserting member ${i} ===`);
