@@ -158,3 +158,57 @@ public type AdminUsers record {|
     @sql:Name {value: "is_active"}
     boolean isActive;
 |};
+
+public type AddMemberRequest record {|
+    @sql:Name {value: "add_request_id"}
+    readonly string addRequestId;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId;
+    @sql:Name {value: "nic_number"}
+    string nicNumber;
+    @sql:Name {value: "full_name"}
+    string fullName;
+    @sql:Name {value: "date_of_birth"}
+    string dateOfBirth;
+    string gender; 
+    @sql:Name {value: "civil_status"}
+    string civilStatus;
+    @sql:Name {value: "relationship_to_chief"}
+    string relationshipToChief;
+    @sql:Name {value: "chief_occupant_approval"}
+    string chiefOccupantApproval; 
+    @sql:Name {value: "request_status"}
+    string requestStatus;
+    @sql:Name {value: "nic_or_birth_certificate_path"}
+    string? nicOrBirthCertificatePath;
+|};
+
+public type UpdateMemberRequest record {|
+    @sql:Name {value: "update_request_id"}
+    readonly string updateRequestId;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId;
+    @sql:Name {value: "household_member_id"}
+    string householdMemberId;
+    @sql:Name {value: "new_full_name"}
+    string? newFullName;
+    @sql:Name {value: "new_resident_area"}
+    string? newResidentArea;
+    @sql:Name {value: "request_status"}
+    string requestStatus;
+    @sql:Name {value: "relevant_certificate_path"}
+    string? relevantCertificatePath;
+|};
+
+public type DeleteMemberRequest record {|
+    @sql:Name {value: "delete_request_id"}
+    readonly string deleteRequestId;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId; 
+    @sql:Name {value: "household_member_id"}
+    string householdMemberId; 
+    @sql:Name {value: "request_status"}
+    string requestStatus; 
+    @sql:Name {value: "required_document_path"}
+    string? requiredDocumentPath;
+|};

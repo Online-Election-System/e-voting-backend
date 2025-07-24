@@ -14,10 +14,10 @@ const CHIEF_OCCUPANT = "chiefoccupants";
 const HOUSEHOLD_DETAILS = "householddetails";
 const HOUSEHOLD_MEMBERS = "householdmembers";
 const ELECTION = "elections";
-<<<<<<< HEAD
-=======
 const ADMIN_USERS = "adminusers";
->>>>>>> origin/main
+const ADD_MEMBER_REQUEST = "addmemberrequests";
+const UPDATE_MEMBER_REQUEST = "updatememberrequests";
+const DELETE_MEMBER_REQUEST = "deletememberrequests";
 
 public isolated client class Client {
     *persist:AbstractPersistClient;
@@ -40,12 +40,8 @@ public isolated client class Client {
                 civilStatus: {columnName: "civil_status"},
                 passwordHash: {columnName: "password_hash"},
                 email: {columnName: "email"},
-<<<<<<< HEAD
-                idCopyPath: {columnName: "id_copy_path"}
-=======
                 idCopyPath: {columnName: "id_copy_path"},
                 role: {columnName: "role"}
->>>>>>> origin/main
             },
             keyFields: ["id"]
         },
@@ -80,12 +76,8 @@ public isolated client class Client {
                 idCopyPath: {columnName: "id_copy_path"},
                 approvedByChief: {columnName: "approved_by_chief"},
                 passwordHash: {columnName: "Hased_password"},
-<<<<<<< HEAD
-                passwordchanged: {columnName: "passwordchanged"}
-=======
                 passwordchanged: {columnName: "passwordchanged"},
                 role: {columnName: "role"}
->>>>>>> origin/main
             },
             keyFields: ["id"]
         },
@@ -107,8 +99,6 @@ public isolated client class Client {
                 status: {columnName: "status"}
             },
             keyFields: ["id"]
-<<<<<<< HEAD
-=======
         },
         [ADMIN_USERS]: {
             entityName: "AdminUsers",
@@ -123,7 +113,50 @@ public isolated client class Client {
                 isActive: {columnName: "is_active"}
             },
             keyFields: ["id"]
->>>>>>> origin/main
+        },
+        [ADD_MEMBER_REQUEST]: {
+            entityName: "AddMemberRequest",
+            tableName: "AddMemberRequest",
+            fieldMetadata: {
+                addRequestId: {columnName: "add_request_id"},
+                chiefOccupantId: {columnName: "chief_occupant_id"},
+                nicNumber: {columnName: "nic_number"},
+                fullName: {columnName: "full_name"},
+                dateOfBirth: {columnName: "date_of_birth"},
+                gender: {columnName: "gender"},
+                civilStatus: {columnName: "civil_status"},
+                relationshipToChief: {columnName: "relationship_to_chief"},
+                chiefOccupantApproval: {columnName: "chief_occupant_approval"},
+                requestStatus: {columnName: "request_status"},
+                nicOrBirthCertificatePath: {columnName: "nic_or_birth_certificate_path"}
+            },
+            keyFields: ["addRequestId"]
+        },
+        [UPDATE_MEMBER_REQUEST]: {
+            entityName: "UpdateMemberRequest",
+            tableName: "UpdateMemberRequest",
+            fieldMetadata: {
+                updateRequestId: {columnName: "update_request_id"},
+                chiefOccupantId: {columnName: "chief_occupant_id"},
+                householdMemberId: {columnName: "household_member_id"},
+                newFullName: {columnName: "new_full_name"},
+                newResidentArea: {columnName: "new_resident_area"},
+                requestStatus: {columnName: "request_status"},
+                relevantCertificatePath: {columnName: "relevant_certificate_path"}
+            },
+            keyFields: ["updateRequestId"]
+        },
+        [DELETE_MEMBER_REQUEST]: {
+            entityName: "DeleteMemberRequest",
+            tableName: "DeleteMemberRequest",
+            fieldMetadata: {
+                deleteRequestId: {columnName: "delete_request_id"},
+                chiefOccupantId: {columnName: "chief_occupant_id"},
+                householdMemberId: {columnName: "household_member_id"},
+                requestStatus: {columnName: "request_status"},
+                requiredDocumentPath: {columnName: "required_document_path"}
+            },
+            keyFields: ["deleteRequestId"]
         }
     };
 
@@ -156,12 +189,11 @@ public isolated client class Client {
             [CHIEF_OCCUPANT]: check new (dbClient, self.metadata.get(CHIEF_OCCUPANT).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [HOUSEHOLD_DETAILS]: check new (dbClient, self.metadata.get(HOUSEHOLD_DETAILS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [HOUSEHOLD_MEMBERS]: check new (dbClient, self.metadata.get(HOUSEHOLD_MEMBERS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
-<<<<<<< HEAD
-            [ELECTION]: check new (dbClient, self.metadata.get(ELECTION).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
-=======
             [ELECTION]: check new (dbClient, self.metadata.get(ELECTION).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
-            [ADMIN_USERS]: check new (dbClient, self.metadata.get(ADMIN_USERS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
->>>>>>> origin/main
+            [ADMIN_USERS]: check new (dbClient, self.metadata.get(ADMIN_USERS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [ADD_MEMBER_REQUEST]: check new (dbClient, self.metadata.get(ADD_MEMBER_REQUEST).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [UPDATE_MEMBER_REQUEST]: check new (dbClient, self.metadata.get(UPDATE_MEMBER_REQUEST).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [DELETE_MEMBER_REQUEST]: check new (dbClient, self.metadata.get(DELETE_MEMBER_REQUEST).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
         };
     }
 
@@ -321,8 +353,6 @@ public isolated client class Client {
         return result;
     }
 
-<<<<<<< HEAD
-=======
     isolated resource function get adminusers(AdminUsersTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
         'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
         name: "query"
@@ -362,7 +392,123 @@ public isolated client class Client {
         return result;
     }
 
->>>>>>> origin/main
+    isolated resource function get addmemberrequests(AddMemberRequestTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get addmemberrequests/[string addRequestId](AddMemberRequestTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post addmemberrequests(AddMemberRequestInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ADD_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from AddMemberRequestInsert inserted in data
+            select inserted.addRequestId;
+    }
+
+    isolated resource function put addmemberrequests/[string addRequestId](AddMemberRequestUpdate value) returns AddMemberRequest|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ADD_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runUpdateQuery(addRequestId, value);
+        return self->/addmemberrequests/[addRequestId].get();
+    }
+
+    isolated resource function delete addmemberrequests/[string addRequestId]() returns AddMemberRequest|persist:Error {
+        AddMemberRequest result = check self->/addmemberrequests/[addRequestId].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ADD_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runDeleteQuery(addRequestId);
+        return result;
+    }
+
+    isolated resource function get updatememberrequests(UpdateMemberRequestTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get updatememberrequests/[string updateRequestId](UpdateMemberRequestTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post updatememberrequests(UpdateMemberRequestInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(UPDATE_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from UpdateMemberRequestInsert inserted in data
+            select inserted.updateRequestId;
+    }
+
+    isolated resource function put updatememberrequests/[string updateRequestId](UpdateMemberRequestUpdate value) returns UpdateMemberRequest|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(UPDATE_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runUpdateQuery(updateRequestId, value);
+        return self->/updatememberrequests/[updateRequestId].get();
+    }
+
+    isolated resource function delete updatememberrequests/[string updateRequestId]() returns UpdateMemberRequest|persist:Error {
+        UpdateMemberRequest result = check self->/updatememberrequests/[updateRequestId].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(UPDATE_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runDeleteQuery(updateRequestId);
+        return result;
+    }
+
+    isolated resource function get deletememberrequests(DeleteMemberRequestTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get deletememberrequests/[string deleteRequestId](DeleteMemberRequestTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post deletememberrequests(DeleteMemberRequestInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(DELETE_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from DeleteMemberRequestInsert inserted in data
+            select inserted.deleteRequestId;
+    }
+
+    isolated resource function put deletememberrequests/[string deleteRequestId](DeleteMemberRequestUpdate value) returns DeleteMemberRequest|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(DELETE_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runUpdateQuery(deleteRequestId, value);
+        return self->/deletememberrequests/[deleteRequestId].get();
+    }
+
+    isolated resource function delete deletememberrequests/[string deleteRequestId]() returns DeleteMemberRequest|persist:Error {
+        DeleteMemberRequest result = check self->/deletememberrequests/[deleteRequestId].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(DELETE_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runDeleteQuery(deleteRequestId);
+        return result;
+    }
+
     remote isolated function queryNativeSQL(sql:ParameterizedQuery sqlQuery, typedesc<record {}> rowType = <>) returns stream<rowType, persist:Error?> = @java:Method {
         'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor"
     } external;

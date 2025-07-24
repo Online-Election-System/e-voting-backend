@@ -33,7 +33,7 @@ function getUserFromDatabase(string userId, string userType) returns Authenticat
         // You can add logic here to check if user is verified
         // if (chief.isVerified) { role = VERIFIED_CHIEF_OCCUPANT; }
 
-        return {
+        return  {
             id: chief.id,
             fullName: chief.fullName,
             userType: "chief",

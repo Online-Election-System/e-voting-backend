@@ -56,10 +56,6 @@ public type ChiefOccupantQueryResult record {
 public type LoginRequest record {|
     string nic;
     string password;
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main
 |};
 
 public type LoginResponse record {|
@@ -80,21 +76,12 @@ public type ChangePasswordRequest record {|
 |};
 
 public type VoterRegistrationRequest record {
-<<<<<<< HEAD
-    ChiefOccupantInput chiefOccupant
-;
-=======
     ChiefOccupantInput chiefOccupant;
->>>>>>> origin/main
     HouseholdDetailsInput householdDetails;
     HouseholdMembersRequest newHouseholdMembers;
 };
 
-<<<<<<< HEAD
-public type ChiefOccupantInsert record {|
-=======
 public type ChiefOccupantInsert record {| // Added role, isVerified, verifiedAt, verifiedBy fields
->>>>>>> origin/main
     string id;
     string fullName;
     string nic;
@@ -105,16 +92,10 @@ public type ChiefOccupantInsert record {| // Added role, isVerified, verifiedAt,
     string passwordHash;
     string email;
     string? idCopyPath;
-<<<<<<< HEAD
-|};
-
-public type HouseholdMembersInsert record {|
-=======
     string role = "chief_occupant";
 |};
 
 public type HouseholdMembersInsert record {| // Added role, isVerified, verifiedAt, verifiedBy fields
->>>>>>> origin/main
     string id;
     string chiefOccupantId;
     string fullName;
@@ -125,10 +106,6 @@ public type HouseholdMembersInsert record {| // Added role, isVerified, verified
     boolean approvedByChief;
     string civilStatus;
     string? idCopyPath;
-<<<<<<< HEAD
-    string hasedPassword;
-    boolean passwordchanged;
-=======
     string passwordHash;
     boolean passwordchanged;
     string role = "household_member";
@@ -160,7 +137,6 @@ public type GovernmentOfficialRegistrationRequest record {|
 
 public type ElectionCommissionRegistrationRequest record {|
     ElectionCommissionInput commission;
->>>>>>> origin/main
 |};
 
 public type PasswordResetRequest record {
@@ -168,8 +144,6 @@ public type PasswordResetRequest record {
     string token;
     string newPassword;
 };
-<<<<<<< HEAD
-=======
 
 // Additional types for logout functionality
 
@@ -195,4 +169,4 @@ public type EnhancedLoginResponse record {|
     int expiresAt?; // Unix timestamp
     int expiresIn?; // Seconds until expiry
 |};
->>>>>>> origin/main
+
