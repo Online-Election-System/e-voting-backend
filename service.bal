@@ -1,8 +1,8 @@
 import online_election.auth;
 import online_election.candidate;
 import online_election.election;
-import online_election.vote;
 import online_election.store;
+import online_election.vote;
 
 import ballerina/http;
 import ballerina/persist;
@@ -83,9 +83,42 @@ service /voter\-registration/api/v1 on SharedListener {
     }
 
     // Public login endpoint
-    resource function post login(auth:LoginRequest loginReq)
-    returns auth:LoginResponse|http:Unauthorized|error {
-        return check auth:postLogin(loginReq);
+    resource function post login(auth:LoginRequest loginReq, http:Request request)
+    returns http:Response|http:Unauthorized|error {
+
+        auth:LoginResponse|http:Unauthorized loginResult = check auth:postLogin(loginReq);
+
+        if loginResult is http:Unauthorized {
+            return loginResult;
+        }
+
+        // Create response with cookies
+        http:Response response = new;
+        response.statusCode = 200;
+
+        // Set authentication cookie (httpOnly)
+        string|error token = auth:generateJwtWithId(loginResult.userId, auth:getUserRoleFromUserType(loginResult.userType));
+
+        if token is error {
+            return http:UNAUTHORIZED;
+        }
+
+        auth:setAuthCookie(response, token);
+
+        // Set session info cookie (readable by frontend)
+        auth:setSessionInfoCookie(response, loginResult.userId,
+                loginResult.userType, loginResult.fullName);
+
+        // Set response body without token
+        response.setJsonPayload({
+            "status": "success",
+            "message": loginResult.message,
+            "userId": loginResult.userId,
+            "userType": loginResult.userType,
+            "fullName": loginResult.fullName
+        });
+
+        return response;
     }
 
     // Get complete voter profile with household details
@@ -357,21 +390,19 @@ service /candidate/api/v1 on SharedListener {
     }
 
     // Get candidates for elections where voter is enrolled - Updated logic
-  resource function get voter/[string voterId]/candidates() returns store:Candidate[]|error {
-    return vote:getCandidatesForVoter(voterId);
-}
-
+    resource function get voter/[string voterId]/candidates() returns store:Candidate[]|error {
+        return vote:getCandidatesForVoter(voterId);
+    }
 
     // Get candidates for a specific election if voter is enrolled - Updated logic
-resource function get voter/[string voterId]/election/[string electionId]/candidates() returns store:Candidate[]|error {
-    return vote:getEligibleCandidatesForElection(voterId, electionId);
-}
+    resource function get voter/[string voterId]/election/[string electionId]/candidates() returns store:Candidate[]|error {
+        return vote:getEligibleCandidatesForElection(voterId, electionId);
+    }
 
-        // Get candidates by party - Updated to use new structure
+    // Get candidates by party - Updated to use new structure
     resource function get candidates/party/[string partyName]() returns store:Candidate[]|error {
         return check candidate:getCandidatesByParty(partyName, true); // Get active candidates only
     }
-
 
     // Update candidate statuses - election commission only
     resource function post admin/update\-candidate\-statuses(http:Request request) returns json|http:Response|error {
@@ -407,37 +438,91 @@ resource function get voter/[string voterId]/election/[string electionId]/candid
 }
 service /vote/api/v1 on SharedListener {
     // Cast vote endpoint
-    resource function post votes/cast(vote:Vote newVote)
-    returns http:Created|http:Forbidden|error {
+    resource function post votes/cast(http:Request request, vote:Vote newVote)
+    returns http:Created|http:Forbidden|error|http:Response {
+        auth:AuthOptions options = {
+            allowedRoles: [auth:POLLING_STATION]
+        };
+
+        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
+        if authResult is http:Response {
+            return authResult;
+        }
+
         return check vote:castVote(newVote);
     }
 
-    // Check voting eligibility (enrollment + not already voted) - NEW ENDPOINT
-    resource function get eligibility/[string voterId]/election/[string electionId]() returns json|error {
-    return vote:checkVotingEligibility(voterId, electionId);
-}
+    // Check voting eligibility (enrollment + not already voted)
+    resource function get eligibility/[string voterId]/election/[string electionId](http:Request request) returns json|error|error|http:Response {
+        auth:AuthOptions options = {
+            allowedRoles: [auth:POLLING_STATION]
+        };
+
+        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
+        if authResult is http:Response {
+            return authResult;
+        }
+
+        return vote:checkVotingEligibility(voterId, electionId);
+    }
 
     // Get votes by election
-    resource function get votes/election/[string electionId]()
-    returns store:Vote[]|error {
+    resource function get votes/election/[string electionId](http:Request request)
+    returns store:Vote[]|error|http:Response {
+        auth:AuthOptions options = {
+            allowedRoles: [auth:POLLING_STATION]
+        };
+
+        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
+        if authResult is http:Response {
+            return authResult;
+        }
+
         return check vote:getVotesByElection(electionId);
     }
 
     // Get voter's voting history
-    resource function get votes/voter/[string voterId]()
-    returns store:Vote[]|error {
+    resource function get votes/voter/[string voterId](http:Request request)
+    returns store:Vote[]|error|http:Response {
+        auth:AuthOptions options = {
+            allowedRoles: [auth:POLLING_STATION]
+        };
+
+        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
+        if authResult is http:Response {
+            return authResult;
+        }
+
         return check vote:getVotesByVoter(voterId);
     }
 
     // Get votes by election and district
-    resource function get votes/election/[string electionId]/district/[string district]()
-    returns store:Vote[]|error {
+    resource function get votes/election/[string electionId]/district/[string district](http:Request request)
+    returns store:Vote[]|error|http:Response {
+        auth:AuthOptions options = {
+            allowedRoles: [auth:POLLING_STATION]
+        };
+
+        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
+        if authResult is http:Response {
+            return authResult;
+        }
+
         return check vote:getVotesByElectionAndDistrict(electionId, district);
     }
 
     // Get votes by household (new functionality)
-    resource function get votes/household/[string chiefOccupantId]/election/[string electionId]()
-    returns store:Vote[]|error {
+    resource function get votes/household/[string chiefOccupantId]/election/[string electionId](http:Request request)
+    returns store:Vote[]|error|http:Response {
+        auth:AuthOptions options = {
+            allowedRoles: [auth:POLLING_STATION]
+        };
+
+        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
+        if authResult is http:Response {
+            return authResult;
+        }
+
         return check vote:getVotesByHousehold(chiefOccupantId, electionId);
     }
 }

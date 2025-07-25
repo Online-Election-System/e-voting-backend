@@ -124,3 +124,16 @@ function joinStrings(string[] values, string separator) returns string {
     }
     return result;
 }
+
+// Convert userType string to UserRole enum
+public function getUserRoleFromUserType(string userType) returns UserRole {
+    match userType {
+        "admin" => { return ADMIN; }
+        "chief_occupant" => { return CHIEF_OCCUPANT; }
+        "household_member" => { return HOUSEHOLD_MEMBER; }
+        "government_official" => { return GOVERNMENT_OFFICIAL; }
+        "election_commission" => { return ELECTION_COMMISSION; }
+        "polling_station" => { return POLLING_STATION; }
+        _ => { return HOUSEHOLD_MEMBER; } // Default fallback
+    }
+}
