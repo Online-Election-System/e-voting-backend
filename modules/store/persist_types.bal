@@ -257,13 +257,13 @@ public type AdminUsersUpdate record {|
 public type EnrolCandidates record {|
     readonly string electionId;
     readonly string candidateId;
-    int numberOfVotes;
+    int? numberOfVotes;
 |};
 
 public type EnrolCandidatesOptionalized record {|
     string electionId?;
     string candidateId?;
-    int numberOfVotes?;
+    int? numberOfVotes?;
 |};
 
 public type EnrolCandidatesTargetType typedesc<EnrolCandidatesOptionalized>;
@@ -271,6 +271,56 @@ public type EnrolCandidatesTargetType typedesc<EnrolCandidatesOptionalized>;
 public type EnrolCandidatesInsert EnrolCandidates;
 
 public type EnrolCandidatesUpdate record {|
-    int numberOfVotes?;
+    int? numberOfVotes?;
+|};
+
+public type Vote record {|
+    readonly string id;
+    string voterId;
+    string electionId;
+    string candidateId;
+    string district;
+    string timestamp;
+|};
+
+public type VoteOptionalized record {|
+    string id?;
+    string voterId?;
+    string electionId?;
+    string candidateId?;
+    string district?;
+    string timestamp?;
+|};
+
+public type VoteTargetType typedesc<VoteOptionalized>;
+
+public type VoteInsert Vote;
+
+public type VoteUpdate record {|
+    string voterId?;
+    string electionId?;
+    string candidateId?;
+    string district?;
+    string timestamp?;
+|};
+
+public type Enrolment record {|
+    readonly string voterId;
+    readonly string electionId;
+    time:Utc enrollementDate;
+|};
+
+public type EnrolmentOptionalized record {|
+    string voterId?;
+    string electionId?;
+    time:Utc enrollementDate?;
+|};
+
+public type EnrolmentTargetType typedesc<EnrolmentOptionalized>;
+
+public type EnrolmentInsert Enrolment;
+
+public type EnrolmentUpdate record {|
+    time:Utc enrollementDate?;
 |};
 

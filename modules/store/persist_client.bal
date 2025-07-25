@@ -17,6 +17,8 @@ const HOUSEHOLD_MEMBERS = "householdmembers";
 const ELECTION = "elections";
 const ADMIN_USERS = "adminusers";
 const ENROL_CANDIDATES = "enrolcandidates";
+const VOTE = "votes";
+const ENROLMENT = "enrolments";
 
 public isolated client class Client {
     *persist:AbstractPersistClient;
@@ -136,6 +138,29 @@ public isolated client class Client {
                 numberOfVotes: {columnName: "number_of_votes"}
             },
             keyFields: ["electionId", "candidateId"]
+        },
+        [VOTE]: {
+            entityName: "Vote",
+            tableName: "Vote",
+            fieldMetadata: {
+                id: {columnName: "id"},
+                voterId: {columnName: "voter_id"},
+                electionId: {columnName: "election_id"},
+                candidateId: {columnName: "candidate_id"},
+                district: {columnName: "district"},
+                timestamp: {columnName: "timestamp"}
+            },
+            keyFields: ["id"]
+        },
+        [ENROLMENT]: {
+            entityName: "Enrolment",
+            tableName: "Enrolment",
+            fieldMetadata: {
+                voterId: {columnName: "voter_id"},
+                electionId: {columnName: "election_id"},
+                enrollementDate: {columnName: "enrollement_date"}
+            },
+            keyFields: ["voterId", "electionId"]
         }
     };
 
@@ -171,7 +196,9 @@ public isolated client class Client {
             [HOUSEHOLD_MEMBERS]: check new (dbClient, self.metadata.get(HOUSEHOLD_MEMBERS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [ELECTION]: check new (dbClient, self.metadata.get(ELECTION).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [ADMIN_USERS]: check new (dbClient, self.metadata.get(ADMIN_USERS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
-            [ENROL_CANDIDATES]: check new (dbClient, self.metadata.get(ENROL_CANDIDATES).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
+            [ENROL_CANDIDATES]: check new (dbClient, self.metadata.get(ENROL_CANDIDATES).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [VOTE]: check new (dbClient, self.metadata.get(VOTE).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [ENROLMENT]: check new (dbClient, self.metadata.get(ENROLMENT).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
         };
     }
 
@@ -445,6 +472,84 @@ public isolated client class Client {
             sqlClient = self.persistClients.get(ENROL_CANDIDATES);
         }
         _ = check sqlClient.runDeleteQuery({"electionId": electionId, "candidateId": candidateId});
+        return result;
+    }
+
+    isolated resource function get votes(VoteTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get votes/[string id](VoteTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post votes(VoteInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(VOTE);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from VoteInsert inserted in data
+            select inserted.id;
+    }
+
+    isolated resource function put votes/[string id](VoteUpdate value) returns Vote|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(VOTE);
+        }
+        _ = check sqlClient.runUpdateQuery(id, value);
+        return self->/votes/[id].get();
+    }
+
+    isolated resource function delete votes/[string id]() returns Vote|persist:Error {
+        Vote result = check self->/votes/[id].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(VOTE);
+        }
+        _ = check sqlClient.runDeleteQuery(id);
+        return result;
+    }
+
+    isolated resource function get enrolments(EnrolmentTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get enrolments/[string voterId]/[string electionId](EnrolmentTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post enrolments(EnrolmentInsert[] data) returns [string, string][]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ENROLMENT);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from EnrolmentInsert inserted in data
+            select [inserted.voterId, inserted.electionId];
+    }
+
+    isolated resource function put enrolments/[string voterId]/[string electionId](EnrolmentUpdate value) returns Enrolment|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ENROLMENT);
+        }
+        _ = check sqlClient.runUpdateQuery({"voterId": voterId, "electionId": electionId}, value);
+        return self->/enrolments/[voterId]/[electionId].get();
+    }
+
+    isolated resource function delete enrolments/[string voterId]/[string electionId]() returns Enrolment|persist:Error {
+        Enrolment result = check self->/enrolments/[voterId]/[electionId].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ENROLMENT);
+        }
+        _ = check sqlClient.runDeleteQuery({"voterId": voterId, "electionId": electionId});
         return result;
     }
 
