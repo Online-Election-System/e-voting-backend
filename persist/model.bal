@@ -203,5 +203,42 @@ public type EnrolCandidates record {|
     @sql:Name {value: "candidate_id"}
     readonly string candidateId;
     @sql:Name {value: "number_of_votes"}
-    int numberOfVotes;
+    int? numberOfVotes;
+|};
+
+# Description for votes to be inserted.
+#
+# + id - Vote ID (Primary Key)
+# + voterId - Voter ID (foreign key) - can reference either ChiefOccupant or HouseholdMembers
+# + electionId - Election ID (foreign key)
+# + candidateId - Candidate ID (foreign key)
+# + timestamp - Vote timestamp
+# + district - Voter's district
+
+public type Vote record {|
+    readonly string id;
+    @sql:Name { value: "voter_id" }
+    string voterId;
+    @sql:Name { value: "election_id" }
+    string electionId;
+    @sql:Name { value: "candidate_id" }
+    string candidateId;
+    string district;
+    string timestamp;
+|};
+
+# Description for enrol to be inserted.
+
+# + voterId - Voter ID (foreign key) - can reference either ChiefOccupant or HouseholdMembers
+# + electionId - Election ID (foreign key)
+# + enrollementDate - Date of enrolment
+
+public type Enrolment record {|
+
+    @sql:Name { value: "voter_id" }
+    readonly string voterId;
+    @sql:Name { value: "election_id" }
+    readonly string electionId;
+    @sql:Name {value: "enrollement_date"}
+    time:Utc enrollementDate;
 |};
