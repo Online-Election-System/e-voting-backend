@@ -8,16 +8,22 @@ import ballerina/log;
 
 // Extract and validate JWT token from request
 public function extractTokenFromRequest(http:Request request) returns string|AuthenticationError {
+    // Try to get token from cookie first
+    http:Cookie[] cookies = request.getCookies();
+    
+    foreach http:Cookie cookie in cookies {
+        if cookie.name == "AUTH_TOKEN" {
+            return cookie.value;
+        }
+    }
+    
+    // Fallback to Authorization header for backward compatibility (optional)
     string|http:HeaderNotFoundError authHeader = request.getHeader("Authorization");
-    if authHeader is http:HeaderNotFoundError {
-        return error AuthenticationError("Authorization header not found");
+    if authHeader is string && authHeader.startsWith("Bearer ") {
+        return authHeader.substring(7);
     }
-
-    if !authHeader.startsWith("Bearer ") {
-        return error AuthenticationError("Invalid authorization header format");
-    }
-
-    return authHeader.substring(7); // Remove "Bearer " prefix
+    
+    return error AuthenticationError("Authentication token not found in cookies or headers");
 }
 
 // Get user from database and determine role/permissions
