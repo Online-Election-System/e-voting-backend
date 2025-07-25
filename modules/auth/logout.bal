@@ -2,18 +2,10 @@ import ballerina/http;
 import ballerina/jwt;
 import ballerina/log;
 import ballerina/time;
+import ballerina/crypto;
 
 // Enhanced token blacklist with expiry matching JWT exp claim
 final map<BlacklistedTokenRecord> tokenBlacklist = {};
-
-// Blacklist record with full token metadata
-public type BlacklistedTokenRecord record {|
-    string tokenId;
-    int expiryTime;
-    string userId;
-    string userType;
-    int blacklistedAt;
-|};
 
 // Enhanced blacklist operations
 public function addToBlacklistWithMetadata(string tokenId, int expiryTime, string userId, string userType) {
@@ -138,54 +130,83 @@ function revokeRefreshTokensForUser(string userId) returns int {
     return 0;
 }
 
-// Enhanced JWT validation that checks blacklist
+// JWT validation that checks blacklist
 public function validateTokenWithBlacklist(string token) returns AuthenticatedUser|AuthenticationError {
+    log:printInfo("=== JWT VALIDATION START ===");
+    log:printInfo("Validating token...");
+    
+    // Step 1: Decode public key from certificate using crypto library
+    crypto:PublicKey|error publicKeyResult = crypto:decodeRsaPublicKeyFromCertFile(
+        "./resources/certificate.crt"
+    );
+    
+    if publicKeyResult is error {
+        log:printError("Failed to decode public key: " + publicKeyResult.message());
+        return error AuthenticationError("Public key loading failed: " + publicKeyResult.message());
+    }
+    
+    log:printInfo("Public key loaded successfully");
+    
+    // Step 2: Configure JWT validator with decoded public key
     jwt:ValidatorConfig validatorConfig = {
-        issuer: "wso2",
-        audience: "vEwzbcasJVQm1jVYHUHCjhxZ4tYa",
+        issuer: "election-authority",
+        audience: "election-clients",
+        clockSkew: 300, // 5 minutes tolerance
         signatureConfig: {
-            certFile: "./resources/public.key"
+            certFile: publicKeyResult     // Use decoded crypto:PublicKey directly
         }
     };
 
     jwt:Payload|jwt:Error payload = jwt:validate(token, validatorConfig);
     if payload is jwt:Error {
         log:printError("JWT validation failed: " + payload.message());
-        return error AuthenticationError("Invalid or expired token");
+        return error AuthenticationError("Invalid or expired token: " + payload.message());
     }
+
+    log:printInfo("JWT validation successful, checking payload...");
 
     // Check if token is blacklisted
     anydata jtiClaim = payload["jti"];
     if jtiClaim is string {
         if isTokenBlacklisted(jtiClaim) {
+            log:printError("Token is blacklisted: " + jtiClaim);
             return error AuthenticationError("Token has been revoked");
         }
     }
 
-    // Extract user info from JWT payload (rest of validation logic remains same)
+    // Extract user ID from sub claim
     string|error userId = payload.sub.toString();
     if userId is error {
+        log:printError("Invalid sub claim in token");
         return error AuthenticationError("Invalid token payload");
     }
+    log:printInfo("Extracted userId: " + userId);
 
-    anydata roleClaim = payload["role"];
-    if roleClaim is () {
-        return error AuthenticationError("Role claim missing in token");
+    // Extract userType from custom claims
+    anydata userTypeClaim = payload["userType"];
+    if userTypeClaim is () {
+        log:printError("userType claim missing in token");
+        return error AuthenticationError("UserType claim missing in token");
     }
 
     string userType;
-    if roleClaim is string {
-        userType = roleClaim;
+    if userTypeClaim is string {
+        userType = userTypeClaim;
     } else {
-        return error AuthenticationError("Invalid role claim type in token");
+        log:printError("Invalid userType claim type in token");
+        return error AuthenticationError("Invalid userType claim type in token");
     }
+    log:printInfo("Extracted userType: " + userType);
 
     // Get user details from database
     AuthenticatedUser|error user = getUserFromDatabase(userId, userType);
     if user is error {
-        return error AuthenticationError("User not found");
+        log:printError("Failed to get user from database: " + user.message());
+        return error AuthenticationError("User not found: " + user.message());
     }
 
+    log:printInfo("User authentication successful for: " + user.fullName);
+    log:printInfo("=== JWT VALIDATION END ===");
     return user;
 }
 
