@@ -3,9 +3,11 @@ import online_election.candidate;
 import online_election.election;
 import online_election.vote;
 import online_election.store;
-
+import online_election.results;
 import ballerina/http;
 import ballerina/persist;
+
+
 
 listener http:Listener SharedListener = new (8080);
 
@@ -422,5 +424,275 @@ service /vote/api/v1 on SharedListener {
     resource function get votes/household/[string chiefOccupantId]/election/[string electionId]()
     returns store:Vote[]|error {
         return check vote:getVotesByHousehold(chiefOccupantId, electionId);
+    }
+}
+
+// ============================================================================================
+// 🔥 NEW RESULTS API SERVICE - COMPREHENSIVE ELECTION RESULTS AND ANALYTICS 🔥
+// ============================================================================================
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["http://localhost:3000"],
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowHeaders: ["Content-Type", "Authorization"],
+        allowCredentials: true
+    }
+}
+service /results/api/v1 on SharedListener {
+
+    // ============================================================================
+    // 📊 CANDIDATE TOTALS AND RANKINGS
+    // ============================================================================
+
+    // Get candidate total votes for an election (sorted by highest votes)
+    resource function get elections/[string electionId]/candidates/totals() returns results:CandidateTotal[]|error {
+        return check results:getSortedCandidatesByTotal(electionId, results:dbClient);
+    }
+
+    // Update individual candidate total votes
+    resource function put elections/[string electionId]/candidates/[string candidateId]/update\-total() returns json|error {
+        int|error totalVotes = results:updateCandidateTotal(electionId, candidateId, results:dbClient);
+        if totalVotes is error {
+            return totalVotes;
+        }
+        return { "candidateId": candidateId, "totalVotes": totalVotes, "message": "Total updated successfully" };
+    }
+
+    // Batch update all candidate totals for an election
+    resource function post elections/[string electionId]/candidates/batch\-update\-totals() returns json|error {
+        error? result = results:batchUpdateCandidateTotals(electionId, results:dbClient);
+        if result is error {
+            return result;
+        }
+        return { "electionId": electionId, "message": "All candidate totals updated successfully" };
+    }
+
+    // ============================================================================
+    // 📈 CANDIDATE VOTE SUMMARIES WITH PERCENTAGES
+    // ============================================================================
+
+    // Get candidate vote summaries with percentages and rankings
+    resource function get elections/[string electionId]/candidates/summary() returns results:CandidateVoteSummary[]|error {
+        return check results:calculateCandidateVoteSummary(electionId, results:dbClient);
+    }
+
+    // Get comprehensive candidate data for export
+    resource function get elections/[string electionId]/candidates/export() returns results:CandidateExportData[]|error {
+        return check results:getComprehensiveCandidateData(electionId, results:dbClient);
+    }
+
+    // Export candidate data as CSV format
+    resource function get elections/[string electionId]/candidates/export/csv() returns string|error {
+        return check results:exportElectionCandidateDataAsCSV(electionId, results:dbClient);
+    }
+
+    // ============================================================================
+    // 🗺️ DISTRICT-WISE ANALYSIS
+    // ============================================================================
+
+    // Get district-wise vote analysis for all candidates
+    resource function get elections/[string electionId]/districts/analysis() returns results:CandidateDistrictAnalysis[]|error {
+        return check results:calculateCandidateDistrictAnalysis(electionId, results:dbClient);
+    }
+
+    // Get total votes per district for an election
+    resource function get elections/[string electionId]/districts/totals() returns results:DistrictVoteTotals|error {
+        return check results:calculateDistrictVoteTotalsFromDB(electionId, results:dbClient);
+    }
+
+    // Get district winners analysis with margins
+    resource function get elections/[string electionId]/districts/winners() returns json|error {
+        return check results:getDistrictWinnerAnalysis(electionId, results:dbClient);
+    }
+
+    // ============================================================================
+    // 🎯 ELECTION SUMMARY AND OVERVIEW
+    // ============================================================================
+
+    // Get comprehensive election summary
+    resource function get elections/[string electionId]/summary() returns json|error {
+        return check results:getElectionSummary(electionId, results:dbClient);
+    }
+
+    // Get live election results (real-time)
+    resource function get elections/[string electionId]/live() returns json|error {
+        return check results:getLiveElectionResults(electionId, results:dbClient);
+    }
+
+    // ============================================================================
+    // 🔍 DATA VALIDATION AND INTEGRITY
+    // ============================================================================
+
+    // Validate election data integrity
+    resource function get elections/[string electionId]/validate() returns json|error {
+        return check results:validateElectionDataIntegrity(electionId, results:dbClient);
+    }
+
+    // ============================================================================
+    // 🏆 SPECIFIC RESULT QUERIES
+    // ============================================================================
+
+    // Get winner of the election
+    resource function get elections/[string electionId]/winner() returns json|error {
+        results:CandidateTotal[]|error candidates = results:getSortedCandidatesByTotal(electionId, results:dbClient);
+        if candidates is error {
+            return candidates;
+        }
+        if candidates.length() == 0 {
+            return error("No candidates found for this election");
+        }
+        
+        results:CandidateTotal winner = candidates[0];
+        return {
+            "electionId": electionId,
+            "winnerCandidateId": winner.candidateId,
+            "totalVotes": winner.Totals,
+            "message": "Election winner determined"
+        };
+    }
+
+    // Get top N candidates
+    resource function get elections/[string electionId]/candidates/top/[int count]() returns results:CandidateTotal[]|error {
+        results:CandidateTotal[]|error allCandidates = results:getSortedCandidatesByTotal(electionId, results:dbClient);
+        if allCandidates is error {
+            return allCandidates;
+        }
+        
+        int maxCount = allCandidates.length() > count ? count : allCandidates.length();
+        results:CandidateTotal[] topCandidates = [];
+        foreach int i in 0 ..< maxCount {
+            topCandidates.push(allCandidates[i]);
+        }
+        return topCandidates;
+    }
+
+    // Get candidate ranking by total votes
+    resource function get elections/[string electionId]/candidates/[string candidateId]/rank() returns json|error {
+        results:CandidateTotal[]|error candidates = results:getSortedCandidatesByTotal(electionId, results:dbClient);
+        if candidates is error {
+            return candidates;
+        }
+        
+        foreach int i in 0 ..< candidates.length() {
+            if candidates[i].candidateId == candidateId {
+                return {
+                    "candidateId": candidateId,
+                    "rank": i + 1,
+                    "totalVotes": candidates[i].Totals,
+                    "totalCandidates": candidates.length()
+                };
+            }
+        }
+        
+        return error("Candidate not found in this election");
+    }
+
+    // ============================================================================
+    // 📊 ADVANCED ANALYTICS ENDPOINTS
+    // ============================================================================
+
+    // Get vote distribution statistics
+    resource function get elections/[string electionId]/statistics/distribution() returns json|error {
+        results:CandidateVoteSummary[]|error summaries = results:calculateCandidateVoteSummary(electionId, results:dbClient);
+        if summaries is error {
+            return summaries;
+        }
+        
+        if summaries.length() == 0 {
+            return error("No data available for analysis");
+        }
+        
+        // Calculate statistics
+        decimal totalVotes = 0.0;
+        decimal maxPercentage = 0.0;
+        decimal minPercentage = 100.0;
+        
+        foreach results:CandidateVoteSummary summary in summaries {
+            totalVotes += <decimal>summary.totalVotes;
+            if summary.percentage > maxPercentage {
+                maxPercentage = summary.percentage;
+            }
+            if summary.percentage < minPercentage {
+                minPercentage = summary.percentage;
+            }
+        }
+        
+       decimal averagePercentage = totalVotes > 0d ? (totalVotes / <decimal>summaries.length()) / totalVotes * 100d : 0d;
+        return {
+            "electionId": electionId,
+            "totalCandidates": summaries.length(),
+            "totalVotes": <int>totalVotes,
+            "maxPercentage": maxPercentage,
+            "minPercentage": minPercentage,
+            "averagePercentage": averagePercentage,
+            "competitivenessIndex": maxPercentage - minPercentage
+        };
+    }
+
+    // Get margin analysis between top candidates
+    resource function get elections/[string electionId]/statistics/margins() returns json|error {
+        results:CandidateTotal[]|error candidates = results:getSortedCandidatesByTotal(electionId, results:dbClient);
+        if candidates is error {
+            return candidates;
+        }
+        
+        if candidates.length() < 2 {
+            return error("Need at least 2 candidates for margin analysis");
+        }
+        
+        results:CandidateTotal first = candidates[0];
+        results:CandidateTotal second = candidates[1];
+        
+        int marginVotes = first.Totals - second.Totals;
+        decimal marginPercentage = first.Totals > 0 ? (<decimal>marginVotes / <decimal>first.Totals) * 100.0 : 0.0;
+        
+        return {
+            "electionId": electionId,
+            "winner": {
+                "candidateId": first.candidateId,
+                "votes": first.Totals
+            },
+            "runnerUp": {
+                "candidateId": second.candidateId,
+                "votes": second.Totals
+            },
+            "margin": {
+                "votes": marginVotes,
+                "percentage": marginPercentage
+            }
+        };
+    }
+
+    // ============================================================================
+    // 🛠️ ADMIN UTILITIES
+    // ============================================================================
+
+    // Admin endpoint - Refresh all calculations for an election
+    resource function post admin/elections/[string electionId]/refresh\-calculations(http:Request request) returns json|error {
+        // Optional: Add authentication
+        // auth:AuthOptions options = {
+        //     allowedRoles: [auth:ADMIN, auth:ELECTION_COMMISSION],
+        //     requiredPermissions: [auth:MANAGE_ELECTIONS]
+        // };
+        // auth:AuthenticatedUser|http:Response authResult = auth:withAuth(request, options);
+        // if authResult is http:Response {
+        //     return authResult;
+        // }
+
+        // Batch update all totals
+        error? updateResult = results:batchUpdateCandidateTotals(electionId, results:dbClient);
+        if updateResult is error {
+            return updateResult;
+        }
+
+        // Validate data integrity
+        var validationResult = check results:validateElectionDataIntegrity(electionId, results:dbClient);
+        
+        return {
+            "electionId": electionId,
+            "message": "All calculations refreshed successfully",
+            "validation": validationResult
+        };
     }
 }

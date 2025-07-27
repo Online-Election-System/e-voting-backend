@@ -63,7 +63,7 @@ public type ChiefOccupant record {|
 # HouseholdDetails Table
 #
 # + id - Auto-incrementing Primary Key
-# + chiefOccupantId - Foreign Key (ChiefOccupant)
+# + chiefOccupantId - Foreign Key (ChiefOccupant)https://claude.ai/new
 # + electoralDistrict - District of Registration
 # + pollingDivision - Polling Division Name
 # + pollingDistrictNumber - Polling District Number
@@ -241,4 +241,68 @@ public type Enrolment record {|
     readonly string electionId;
     @sql:Name {value: "enrollement_date"}
     time:Utc enrollementDate;
+|};
+
+# Description.
+#
+# + electionId - foreign key reference to the Election record
+# + candidateId - foreign key reference to the Candidate record
+# + Ampara - number of votes in the Ampara district
+# + Anuradhapura - number of votes in the Anuradhapura district
+# + Badulla - number of votes in the Badulla district
+# + Batticaloa - number of votes in the Batticaloa district
+# + Colombo - field description  
+# + Galle - field description  
+# + Gampaha - field description  
+# + Hambantota - field description  
+# + Jaffna - field description  
+# + Kalutara - field description  
+# + Kandy - field description  
+# + Kegalle - field description  
+# + Kilinochchi - field description  
+# + Kurunegala - field description  
+# + Mannar - field description  
+# + Matale - field description  
+# + Matara - field description  
+# + Monaragala - field description  
+# + Mullaitivu - field description  
+# + NuwaraEliya - field description  
+# + Polonnaruwa - field description  
+# + Puttalam - field description  
+# + Ratnapura - field description  
+# + Trincomalee - field description  
+# + Vavuniya - field description  
+# + Totals - field description
+public type CandidateDistrictVoteSummary record {|
+    @sql:Name { value: "election_id" }
+    readonly string electionId;
+
+    @sql:Name { value: "candidate_id" }
+    readonly string candidateId;
+    int Ampara;
+    int Anuradhapura;
+    int Badulla;
+    int Batticaloa;
+    int Colombo;
+    int Galle;
+    int Gampaha;
+    int Hambantota;
+    int Jaffna;
+    int Kalutara;
+    int Kandy;
+    int Kegalle;
+    int Kilinochchi;
+    int Kurunegala;
+    int Mannar;
+    int Matale;
+    int Matara;
+    int Monaragala;
+    int Mullaitivu;
+    int NuwaraEliya;
+    int Polonnaruwa;
+    int Puttalam;
+    int Ratnapura;
+    int Trincomalee;
+    int Vavuniya;
+    int Totals;
 |};
