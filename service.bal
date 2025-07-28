@@ -450,15 +450,6 @@ service /results/api/v1 on SharedListener {
         return check results:getSortedCandidatesByTotal(electionId, results:dbClient);
     }
 
-    // Update individual candidate total votes
-    resource function put elections/[string electionId]/candidates/[string candidateId]/update\-total() returns json|error {
-        int|error totalVotes = results:updateCandidateTotal(electionId, candidateId, results:dbClient);
-        if totalVotes is error {
-            return totalVotes;
-        }
-        return { "candidateId": candidateId, "totalVotes": totalVotes, "message": "Total updated successfully" };
-    }
-
     // Batch update all candidate totals for an election
     resource function post elections/[string electionId]/candidates/batch\-update\-totals() returns json|error {
         error? result = results:batchUpdateCandidateTotals(electionId, results:dbClient);
@@ -658,38 +649,6 @@ service /results/api/v1 on SharedListener {
                 "votes": marginVotes,
                 "percentage": marginPercentage
             }
-        };
-    }
-
-    // ============================================================================
-    // 🛠️ ADMIN UTILITIES
-    // ============================================================================
-
-    // Admin endpoint - Refresh all calculations for an election
-    resource function post admin/elections/[string electionId]/refresh\-calculations(http:Request request) returns json|error {
-        // Optional: Add authentication
-        // auth:AuthOptions options = {
-        //     allowedRoles: [auth:ADMIN, auth:ELECTION_COMMISSION],
-        //     requiredPermissions: [auth:MANAGE_ELECTIONS]
-        // };
-        // auth:AuthenticatedUser|http:Response authResult = auth:withAuth(request, options);
-        // if authResult is http:Response {
-        //     return authResult;
-        // }
-
-        // Batch update all totals
-        error? updateResult = results:batchUpdateCandidateTotals(electionId, results:dbClient);
-        if updateResult is error {
-            return updateResult;
-        }
-
-        // Validate data integrity
-        var validationResult = check results:validateElectionDataIntegrity(electionId, results:dbClient);
-        
-        return {
-            "electionId": electionId,
-            "message": "All calculations refreshed successfully",
-            "validation": validationResult
         };
     }
 }
