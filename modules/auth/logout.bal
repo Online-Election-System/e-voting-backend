@@ -60,8 +60,8 @@ public function logout(http:Request request) returns http:Response|error {
     string|AuthenticationError token = extractTokenFromRequest(request);
     if token is AuthenticationError {
         log:printInfo("Logout attempt without valid token: " + token.message());
-        // Still return 204 - logout is idempotent
-        addLogoutCookies(response);
+        // Still clear cookies and return 204
+        clearAllAuthCookies(response);
         return response;
     }
 
@@ -70,7 +70,7 @@ public function logout(http:Request request) returns http:Response|error {
         issuer: "wso2",
         audience: "vEwzbcasJVQm1jVYHUHCjhxZ4tYa",
         signatureConfig: {
-            certFile: "./resources/public.key"
+            certFile: "./resources/certificate.crt"
         }
     };
 
@@ -100,6 +100,7 @@ public function logout(http:Request request) returns http:Response|error {
 
     // Clear auth cookies and return 204 No Content
     addLogoutCookies(response);
+    clearAllAuthCookies(response);
     return response;
 }
 
