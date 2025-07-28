@@ -1,6 +1,5 @@
 import ballerina/sql;
 import ballerina/persist;
-import ballerina/time;
 import online_election.store;
 
 public final store:Client dbClient = check new ();
@@ -52,7 +51,7 @@ public function getSortedCandidatesByTotal(string electionId,
                                            store:Client dbClient) returns error|CandidateTotal[] {
 
     sql:ParameterizedQuery whereClause = `election_id = ${electionId}`;
-    sql:ParameterizedQuery orderByClause = `Totals DESC`;
+    sql:ParameterizedQuery orderByClause = `totals DESC`;  // FIXED: Changed from "Totals" to "totals"
 
     stream<store:CandidateDistrictVoteSummary, persist:Error?> resultStream = 
         dbClient->/candidatedistrictvotesummaries.get(
@@ -83,7 +82,7 @@ public function getSortedCandidatesByTotal(string electionId,
 public function calculateCandidateVoteSummary(string electionId, store:Client dbClient) returns CandidateVoteSummary[]|error {
     
     sql:ParameterizedQuery whereClause = `election_id = ${electionId}`;
-    sql:ParameterizedQuery orderByClause = `Totals DESC`;
+    sql:ParameterizedQuery orderByClause = `totals DESC`;  // FIXED: Changed from "Totals" to "totals"
 
     stream<store:CandidateDistrictVoteSummary, persist:Error?> resultStream = 
         dbClient->/candidatedistrictvotesummaries.get(
@@ -314,7 +313,7 @@ public function getComprehensiveCandidateData(string electionId, store:Client db
     
     // Get vote summaries first
     sql:ParameterizedQuery whereClause = `election_id = ${electionId}`;
-    sql:ParameterizedQuery orderByClause = `Totals DESC`;
+    sql:ParameterizedQuery orderByClause = `totals DESC`;  // FIXED: Changed from "Totals" to "totals"
 
     stream<store:CandidateDistrictVoteSummary, persist:Error?> voteStream = 
         dbClient->/candidatedistrictvotesummaries.get(
@@ -399,6 +398,7 @@ public function getComprehensiveCandidateData(string electionId, store:Client db
     
     return exportData;
 }
+
 function calculateDistrictsWonFromVoteSummaries(string candidateId, store:CandidateDistrictVoteSummary[] allVoteSummaries) returns int {
     
     // List of all districts
@@ -520,38 +520,38 @@ public function getElectionSummary(string electionId, store:Client dbClient) ret
     };
 }
 
-// Alternative function using native SQL for complex aggregations
+// CRITICAL FIX: Native SQL query using lowercase column names
 public function calculateDistrictVoteTotalsFromDB(string electionId, store:Client dbClient) returns DistrictVoteTotals|error {
     
     sql:ParameterizedQuery sqlQuery = `
         SELECT 
             election_id,
-            SUM(Ampara) as Ampara,
-            SUM(Anuradhapura) as Anuradhapura,
-            SUM(Badulla) as Badulla,
-            SUM(Batticaloa) as Batticaloa,
-            SUM(Colombo) as Colombo,
-            SUM(Galle) as Galle,
-            SUM(Gampaha) as Gampaha,
-            SUM(Hambantota) as Hambantota,
-            SUM(Jaffna) as Jaffna,
-            SUM(Kalutara) as Kalutara,
-            SUM(Kandy) as Kandy,
-            SUM(Kegalle) as Kegalle,
-            SUM(Kilinochchi) as Kilinochchi,
-            SUM(Kurunegala) as Kurunegala,
-            SUM(Mannar) as Mannar,
-            SUM(Matale) as Matale,
-            SUM(Matara) as Matara,
-            SUM(Monaragala) as Monaragala,
-            SUM(Mullaitivu) as Mullaitivu,
-            SUM(NuwaraEliya) as NuwaraEliya,
-            SUM(Polonnaruwa) as Polonnaruwa,
-            SUM(Puttalam) as Puttalam,
-            SUM(Ratnapura) as Ratnapura,
-            SUM(Trincomalee) as Trincomalee,
-            SUM(Vavuniya) as Vavuniya
-        FROM CandidateDistrictVoteSummary 
+            SUM(ampara) as ampara,
+            SUM(anuradhapura) as anuradhapura,
+            SUM(badulla) as badulla,
+            SUM(batticaloa) as batticaloa,
+            SUM(colombo) as colombo,
+            SUM(galle) as galle,
+            SUM(gampaha) as gampaha,
+            SUM(hambantota) as hambantota,
+            SUM(jaffna) as jaffna,
+            SUM(kalutara) as kalutara,
+            SUM(kandy) as kandy,
+            SUM(kegalle) as kegalle,
+            SUM(kilinochchi) as kilinochchi,
+            SUM(kurunegala) as kurunegala,
+            SUM(mannar) as mannar,
+            SUM(matale) as matale,
+            SUM(matara) as matara,
+            SUM(monaragala) as monaragala,
+            SUM(mullaitivu) as mullaitivu,
+            SUM(nuwaraeliya) as nuwaraeliya,
+            SUM(polonnaruwa) as polonnaruwa,
+            SUM(puttalam) as puttalam,
+            SUM(ratnapura) as ratnapura,
+            SUM(trincomalee) as trincomalee,
+            SUM(vavuniya) as vavuniya
+        FROM "CandidateDistrictVoteSummary" 
         WHERE election_id = ${electionId}
         GROUP BY election_id
     `;
@@ -569,31 +569,31 @@ public function calculateDistrictVoteTotalsFromDB(string electionId, store:Clien
     // Extract data and calculate grand total
     DistrictVoteTotals districtTotals = {
         electionId: electionId,
-        Ampara: <int>data["Ampara"],
-        Anuradhapura: <int>data["Anuradhapura"],
-        Badulla: <int>data["Badulla"],
-        Batticaloa: <int>data["Batticaloa"],
-        Colombo: <int>data["Colombo"],
-        Galle: <int>data["Galle"],
-        Gampaha: <int>data["Gampaha"],
-        Hambantota: <int>data["Hambantota"],
-        Jaffna: <int>data["Jaffna"],
-        Kalutara: <int>data["Kalutara"],
-        Kandy: <int>data["Kandy"],
-        Kegalle: <int>data["Kegalle"],
-        Kilinochchi: <int>data["Kilinochchi"],
-        Kurunegala: <int>data["Kurunegala"],
-        Mannar: <int>data["Mannar"],
-        Matale: <int>data["Matale"],
-        Matara: <int>data["Matara"],
-        Monaragala: <int>data["Monaragala"],
-        Mullaitivu: <int>data["Mullaitivu"],
-        NuwaraEliya: <int>data["NuwaraEliya"],
-        Polonnaruwa: <int>data["Polonnaruwa"],
-        Puttalam: <int>data["Puttalam"],
-        Ratnapura: <int>data["Ratnapura"],
-        Trincomalee: <int>data["Trincomalee"],
-        Vavuniya: <int>data["Vavuniya"],
+        Ampara: <int>data["ampara"],
+        Anuradhapura: <int>data["anuradhapura"],
+        Badulla: <int>data["badulla"],
+        Batticaloa: <int>data["batticaloa"],
+        Colombo: <int>data["colombo"],
+        Galle: <int>data["galle"],
+        Gampaha: <int>data["gampaha"],
+        Hambantota: <int>data["hambantota"],
+        Jaffna: <int>data["jaffna"],
+        Kalutara: <int>data["kalutara"],
+        Kandy: <int>data["kandy"],
+        Kegalle: <int>data["kegalle"],
+        Kilinochchi: <int>data["kilinochchi"],
+        Kurunegala: <int>data["kurunegala"],
+        Mannar: <int>data["mannar"],
+        Matale: <int>data["matale"],
+        Matara: <int>data["matara"],
+        Monaragala: <int>data["monaragala"],
+        Mullaitivu: <int>data["mullaitivu"],
+        NuwaraEliya: <int>data["nuwaraeliya"],
+        Polonnaruwa: <int>data["polonnaruwa"],
+        Puttalam: <int>data["puttalam"],
+        Ratnapura: <int>data["ratnapura"],
+        Trincomalee: <int>data["trincomalee"],
+        Vavuniya: <int>data["vavuniya"],
         GrandTotal: 0
     };
     
@@ -653,76 +653,6 @@ public function batchUpdateCandidateTotals(string electionId, store:Client dbCli
     }
     
     return ();
-}
-
-// Function to get live election results with real-time updates
-public function getLiveElectionResults(string electionId, store:Client dbClient) returns record {|
-    string electionId;
-    string timestamp;
-    int totalVotes;
-    int totalCandidates;
-    CandidateTotal[] topCandidates;
-    map<int> districtTotals;
-|} |error {
-    
-    // Get current timestamp
-    string currentTime = time:utcToString(time:utcNow());
-    
-    // Get all candidate vote summaries
-    CandidateTotal[] candidates = check getSortedCandidatesByTotal(electionId, dbClient);
-    
-    // Calculate total votes
-    int totalVotes = 0;
-    foreach CandidateTotal candidate in candidates {
-        totalVotes += candidate.Totals;
-    }
-    
-    // Get top 5 candidates for quick overview
-    CandidateTotal[] topCandidates = [];
-    int maxCandidates = candidates.length() > 5 ? 5 : candidates.length();
-    foreach int i in 0 ..< maxCandidates {
-        topCandidates.push(candidates[i]);
-    }
-    
-    // Calculate district totals for visualization
-    DistrictVoteTotals districtData = check calculateDistrictVoteTotalsFromDB(electionId, dbClient);
-    
-    map<int> districtTotals = {
-        "Ampara": districtData.Ampara,
-        "Anuradhapura": districtData.Anuradhapura,
-        "Badulla": districtData.Badulla,
-        "Batticaloa": districtData.Batticaloa,
-        "Colombo": districtData.Colombo,
-        "Galle": districtData.Galle,
-        "Gampaha": districtData.Gampaha,
-        "Hambantota": districtData.Hambantota,
-        "Jaffna": districtData.Jaffna,
-        "Kalutara": districtData.Kalutara,
-        "Kandy": districtData.Kandy,
-        "Kegalle": districtData.Kegalle,
-        "Kilinochchi": districtData.Kilinochchi,
-        "Kurunegala": districtData.Kurunegala,
-        "Mannar": districtData.Mannar,
-        "Matale": districtData.Matale,
-        "Matara": districtData.Matara,
-        "Monaragala": districtData.Monaragala,
-        "Mullaitivu": districtData.Mullaitivu,
-        "NuwaraEliya": districtData.NuwaraEliya,
-        "Polonnaruwa": districtData.Polonnaruwa,
-        "Puttalam": districtData.Puttalam,
-        "Ratnapura": districtData.Ratnapura,
-        "Trincomalee": districtData.Trincomalee,
-        "Vavuniya": districtData.Vavuniya
-    };
-    
-    return {
-        electionId: electionId,
-        timestamp: currentTime,
-        totalVotes: totalVotes,
-        totalCandidates: candidates.length(),
-        topCandidates: topCandidates,
-        districtTotals: districtTotals
-    };
 }
 
 // Function to get detailed district-wise winner analysis

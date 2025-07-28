@@ -399,8 +399,8 @@ service /vote/api/v1 on SharedListener {
 
     // Check voting eligibility (enrollment + not already voted) - NEW ENDPOINT
     resource function get eligibility/[string voterId]/election/[string electionId]() returns json|error {
-    return vote:checkVotingEligibility(voterId, electionId);
-}
+        return vote:checkVotingEligibility(voterId, electionId);
+    }
 
     // Get votes by election
     resource function get votes/election/[string electionId]()
@@ -515,11 +515,6 @@ service /results/api/v1 on SharedListener {
         return check results:getElectionSummary(electionId, results:dbClient);
     }
 
-    // Get live election results (real-time)
-    resource function get elections/[string electionId]/live() returns json|error {
-        return check results:getLiveElectionResults(electionId, results:dbClient);
-    }
-
     // ============================================================================
     // 🔍 DATA VALIDATION AND INTEGRITY
     // ============================================================================
@@ -604,12 +599,12 @@ service /results/api/v1 on SharedListener {
         }
         
         // Calculate statistics
-        decimal totalVotes = 0.0;
+        int totalVotes = 0;  // FIXED: Changed from decimal to int
         decimal maxPercentage = 0.0;
         decimal minPercentage = 100.0;
         
         foreach results:CandidateVoteSummary summary in summaries {
-            totalVotes += <decimal>summary.totalVotes;
+            totalVotes += summary.totalVotes;  // FIXED: Direct int addition
             if summary.percentage > maxPercentage {
                 maxPercentage = summary.percentage;
             }
@@ -618,11 +613,13 @@ service /results/api/v1 on SharedListener {
             }
         }
         
-       decimal averagePercentage = totalVotes > 0d ? (totalVotes / <decimal>summaries.length()) / totalVotes * 100d : 0d;
+        // FIXED: Corrected average percentage calculation
+        decimal averagePercentage = summaries.length() > 0 ? 100.0d / <decimal>summaries.length() : 0.0d;
+        
         return {
             "electionId": electionId,
             "totalCandidates": summaries.length(),
-            "totalVotes": <int>totalVotes,
+            "totalVotes": totalVotes,  // FIXED: Now returns int directly
             "maxPercentage": maxPercentage,
             "minPercentage": minPercentage,
             "averagePercentage": averagePercentage,

@@ -251,58 +251,110 @@ public type Enrolment record {|
 # + Anuradhapura - number of votes in the Anuradhapura district
 # + Badulla - number of votes in the Badulla district
 # + Batticaloa - number of votes in the Batticaloa district
-# + Colombo - field description  
-# + Galle - field description  
-# + Gampaha - field description  
-# + Hambantota - field description  
-# + Jaffna - field description  
-# + Kalutara - field description  
-# + Kandy - field description  
-# + Kegalle - field description  
-# + Kilinochchi - field description  
-# + Kurunegala - field description  
-# + Mannar - field description  
-# + Matale - field description  
-# + Matara - field description  
-# + Monaragala - field description  
-# + Mullaitivu - field description  
-# + NuwaraEliya - field description  
-# + Polonnaruwa - field description  
-# + Puttalam - field description  
-# + Ratnapura - field description  
-# + Trincomalee - field description  
-# + Vavuniya - field description  
-# + Totals - field description
+# + Colombo - number of votes in the Colombo district
+# + Galle - number of votes in the Galle district
+# + Gampaha - number of votes in the Gampaha district
+# + Hambantota - number of votes in the Hambantota district
+# + Jaffna - number of votes in the Jaffna district
+# + Kalutara - number of votes in the Kalutara district
+# + Kandy - number of votes in the Kandy district
+# + Kegalle - number of votes in the Kegalle district
+# + Kilinochchi - number of votes in the Kilinochchi district
+# + Kurunegala - number of votes in the Kurunegala district
+# + Mannar - number of votes in the Mannar district
+# + Matale - number of votes in the Matale district
+# + Matara - number of votes in the Matara district
+# + Monaragala - number of votes in the Monaragala district
+# + Mullaitivu - number of votes in the Mullaitivu district
+# + NuwaraEliya - number of votes in the NuwaraEliya district
+# + Polonnaruwa - number of votes in the Polonnaruwa district
+# + Puttalam - number of votes in the Puttalam district
+# + Ratnapura - number of votes in the Ratnapura district
+# + Trincomalee - number of votes in the Trincomalee district
+# + Vavuniya - number of votes in the Vavuniya district
+# + Totals - total votes across all districts
 public type CandidateDistrictVoteSummary record {|
     @sql:Name { value: "election_id" }
     readonly string electionId;
 
     @sql:Name { value: "candidate_id" }
     readonly string candidateId;
+    
+    @sql:Name { value: "ampara" }
     int Ampara;
+    
+    @sql:Name { value: "anuradhapura" }
     int Anuradhapura;
+    
+    @sql:Name { value: "badulla" }
     int Badulla;
+    
+    @sql:Name { value: "batticaloa" }
     int Batticaloa;
+    
+    @sql:Name { value: "colombo" }
     int Colombo;
+    
+    @sql:Name { value: "galle" }
     int Galle;
+    
+    @sql:Name { value: "gampaha" }
     int Gampaha;
+    
+    @sql:Name { value: "hambantota" }
     int Hambantota;
+    
+    @sql:Name { value: "jaffna" }
     int Jaffna;
+    
+    @sql:Name { value: "kalutara" }
     int Kalutara;
+    
+    @sql:Name { value: "kandy" }
     int Kandy;
+    
+    @sql:Name { value: "kegalle" }
     int Kegalle;
+    
+    @sql:Name { value: "kilinochchi" }
     int Kilinochchi;
+    
+    @sql:Name { value: "kurunegala" }
     int Kurunegala;
+    
+    @sql:Name { value: "mannar" }
     int Mannar;
+    
+    @sql:Name { value: "matale" }
     int Matale;
+    
+    @sql:Name { value: "matara" }
     int Matara;
+    
+    @sql:Name { value: "monaragala" }
     int Monaragala;
+    
+    @sql:Name { value: "mullaitivu" }
     int Mullaitivu;
+    
+    @sql:Name { value: "nuwaraeliya" }
     int NuwaraEliya;
+    
+    @sql:Name { value: "polonnaruwa" }
     int Polonnaruwa;
+    
+    @sql:Name { value: "puttalam" }
     int Puttalam;
+    
+    @sql:Name { value: "ratnapura" }
     int Ratnapura;
+    
+    @sql:Name { value: "trincomalee" }
     int Trincomalee;
+    
+    @sql:Name { value: "vavuniya" }
     int Vavuniya;
+    
+    @sql:Name { value: "totals" }
     int Totals;
 |};
