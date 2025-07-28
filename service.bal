@@ -460,23 +460,25 @@ service /api/v1 on SharedListener {
         return verification:reviewApplication(nic, reviewData);
     }
 
+    
+
     // === VOTER ENDPOINTS ===
 
-    resource function post voter/login(@http:Payload enrollment:LoginRequest payload) 
-    returns enrollment:ApiResponse|error {
-        return enrollment:loginVoter(payload);
-    }
+    // resource function post voter/login(@http:Payload enrollment:LoginRequest payload) 
+    // returns enrollment:ApiResponse|error {
+    //     return enrollment:loginVoter(payload);
+    // }
 
-    resource function get voter/profile/[int voterId]() 
-    returns enrollment:VoterProfile|http:NotFound|error {
-        return enrollment:getVoterProfile(voterId);
+    resource function get profile/[string nic]() 
+    returns enrollment:UserProfile|http:NotFound|error {
+        return enrollment:getUserProfile(nic);
     }
 
     // === ELECTION & ENROLLMENT ENDPOINTS ===
 
-    resource function get elections(@http:Query int voterId) 
+    resource function get elections(@http:Query string? voterId = (), @http:Query string? voterNic = ()) 
     returns enrollment:ElectionWithEnrollment[]|error {
-        return enrollment:getAllElections(voterId);
+        return enrollment:getAllElections(voterId, voterNic);
     }
 
     resource function get elections/[string electionId]/candidates() 
@@ -485,7 +487,7 @@ service /api/v1 on SharedListener {
     }
     
     // The verification and enrollment endpoint
-    resource function post elections/[string electionId]/enroll(
+   resource function post elections/[string electionId]/enroll(
             @http:Payload enrollment:VoterVerificationRequest verificationPayload
     ) returns http:Created|enrollment:ApiResponse|error {
         return enrollment:enrollInElection(electionId, verificationPayload);

@@ -34,16 +34,40 @@ public type ElectionWithEnrollment record {|
 |};
 
 // Represents the detailed view of a voter's profile on the /profile page
-public type VoterProfile record {|
-    int id;
-    string nationalId;
-    string name;
-    string district;
-    string pollingStation;
-    time:Date registrationDate;
-    string status;
-    EnrolledElection[] enrolledElections; // List of elections the user is enrolled in
+// public type VoterProfile record {|
+//     int id;
+//     string nationalId;
+//     string name;
+//     string district;
+//     string pollingStation;
+//     time:Date registrationDate;
+//     string status;
+//     EnrolledElection[] enrolledElections; // List of elections the user is enrolled in
+// |};
+
+public type UserProfile record {|
+    // Basic Info (from ChiefOccupant or HouseholdMembers)
+    string fullName;
+    string nic;
+    string email;
+    string dob;
+    string gender;
+    string civilStatus;
+    string role;
+    
+    // Address Info (from HouseholdDetails)
+    string electoralDistrict;
+    string pollingDivision;
+    string fullAddress;
+
+    // Voter-specific Info (will be null if the user is not an approved voter)
+    string? voterStatus;
+    time:Date? registrationDate;
+
+    // Election Info (will be an empty array if the user is not an approved voter)
+    EnrolledElection[] enrolledElections;
 |};
+
 
 // A sub-record for the VoterProfile
 public type EnrolledElection record {|
@@ -68,8 +92,6 @@ public type ElectionDetailsWithCandidates record {|
     time:TimeOfDay startTime;
     time:TimeOfDay endTime;
     string status;
-    // We will use the standard Candidate record from the store
-    // since the UI doesn't require any changes to it.
     store:Candidate[] candidates; 
 |};
 
@@ -78,4 +100,5 @@ public type ApiResponse record {|
     boolean success;
     string message;
     json data?;
+    string? voterId = ();
 |};

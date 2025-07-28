@@ -5,6 +5,7 @@ import ballerina/log;
 import ballerina/lang.'string;
 import ballerina/sql;
 import codeCrew/online_election.store;
+import online_election.common;
 
 
 // Initialize the persist client
@@ -150,7 +151,7 @@ public function getRegistrationDetails(string nic) returns RegistrationDetails|h
         phone = person.phoneNumber;
         idCopyPath = person.idCopyPath;
         imagePath = person.imagePath;
-    } else if person is store:HouseholdMember {
+    } else { // It's a HouseholdMember
         chiefOccupantId = person.chiefOccupantId;
         fullName = person.fullName;
         dob = person.dob;
@@ -159,52 +160,44 @@ public function getRegistrationDetails(string nic) returns RegistrationDetails|h
         idCopyPath = person.idCopyPath;
         imagePath = person.imagePath;
         phone = ();
-    } else {
-        return error("Invalid person type for NIC: " + nic);
     }
     
-    // Fetch household details
-    sql:ParameterizedQuery hhWhereClause = `WHERE chief_occupant_id = '${chiefOccupantId}'`;
+    // Construct and execute the query for HouseholdDetails
+    sql:ParameterizedQuery hhWhereClause = `chief_occupant_id = ${chiefOccupantId}`;
     stream<store:HouseholdDetails, persist:Error?> hhStream = dbClient->/householddetails(whereClause = hhWhereClause);
 
-    store:HouseholdDetails|error? hhDetailsResult = from hhStream select hhStream;
+    var hhDetailsResult = hhStream.next();
+    store:HouseholdDetails hhDetails;
 
-    if hhDetailsResult is error {
-        log:printError("Error fetching household details: " + hhDetailsResult.message());
+    if hhDetailsResult is () {
+        return error("Critical: Household details not found for the applicant NIC: " + nic);
+    } else if hhDetailsResult is error {
         return hhDetailsResult;
-    } else if hhDetailsResult is () {
-        return error("Household details not found for chief occupant: " + chiefOccupantId);
+    } else {
+        
+        hhDetails = hhDetailsResult.value;
     }
 
-    store:HouseholdDetails hhDetails = <store:HouseholdDetails>hhDetailsResult;
-    _ = hhStream.close();
-
-    // Fetch registration review
-    sql:ParameterizedQuery reviewWhereClause = `WHERE member_nic = '${nic}'`;
+    // Construct and execute the query for RegistrationReview
+    sql:ParameterizedQuery reviewWhereClause = `member_nic = ${nic}`;
     stream<store:RegistrationReview, persist:Error?> reviewStream = dbClient->/registrationreviews(whereClause = reviewWhereClause);
     
-    store:RegistrationReview? review = from reviewStream select reviewStream limit 1;
-    _ = reviewStream.close();
+    var reviewResult = reviewStream.next();
+    store:RegistrationReview? review = ();
 
-    // Construct response
+    if reviewResult is record {| store:RegistrationReview value; |} {
+        review = reviewResult.value;
+    } else if reviewResult is error {
+        return reviewResult;
+    }
+
+    // Assemble the final detailed record
     return {
-        fullName: fullName, 
-        nic: nic, 
-        dob: dob, 
-        gender: gender, 
-        civilStatus: civilStatus, 
-        phone: phone,
-        electoralDistrict: hhDetails.electoralDistrict, 
-        pollingDivision: hhDetails.pollingDivision, 
-        pollingDistrictNumber: hhDetails.pollingDistrictNumber,
-        villageStreetEstate: hhDetails.villageStreetEstate, 
-        houseNumber: hhDetails.houseNumber, 
-        fullAddress: (hhDetails.houseNumber ?: "") + ", " + (hhDetails.villageStreetEstate ?: ""),
-        idCopyPath: idCopyPath, 
-        imagePath: imagePath, 
-        status: review is () ? "pending" : review.status,
-        reviewedAt: review?.reviewedAt, 
-        comments: review?.comments
+        fullName: fullName, nic: nic, dob: dob, gender: gender, civilStatus: civilStatus, phone: phone,
+        electoralDistrict: hhDetails.electoralDistrict, pollingDivision: hhDetails.pollingDivision, pollingDistrictNumber: hhDetails.pollingDistrictNumber,
+        villageStreetEstate: hhDetails.villageStreetEstate, houseNumber: hhDetails.houseNumber, fullAddress: (hhDetails.houseNumber ?: "") + ", " + (hhDetails.villageStreetEstate ?: ""),
+        idCopyPath: idCopyPath, imagePath: imagePath, status: review is () ? "pending" : review.status,
+        reviewedAt: review?.reviewedAt, comments: review?.comments
     };
 }
 
@@ -234,13 +227,15 @@ public function reviewApplication(string nic, ReviewRequest reviewData) returns 
     }
     
     // Create the review record for insertion
+    string memberid = common:generateId();
     store:RegistrationReviewInsert reviewInsert = {
+        id: memberid,
         memberNic: nic,
         reviewedBy: "grama_niladhari_user_id", // Placeholder
         status: reviewData.status,
         comments: reviewData.comments,
         reviewedAt: time:utcNow()
-    ,id: 0};
+    };
     // The .post method expects an array of records
     _ = check dbClient->/registrationreviews.post([reviewInsert]);
 
@@ -251,7 +246,9 @@ public function reviewApplication(string nic, ReviewRequest reviewData) returns 
         time:Civil civilTime = time:utcToCivil(now);
         time:Date registrationDate = {year: civilTime.year, month: civilTime.month, day: civilTime.day};
         
+        string voterId = common:generateId();
         store:VoterInsert voterInsert = {
+            id: voterId,
             nationalId: nic,
             name: person.fullName,
             password: person.passwordHash,
@@ -295,3 +292,4 @@ function findPersonByNic(string nic) returns store:ChiefOccupant|store:Household
     // If not found in either table after checking both
     return error("Person with NIC " + nic + " not found in either table.");
 }
+

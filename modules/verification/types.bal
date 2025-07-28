@@ -4,6 +4,27 @@ import ballerina/time;
 // These records shape the data sent to and received from the frontend.
 
 // Represents a single application row in the main registration table.
+
+
+public type GramaNiladhariProfile record {|
+    string fullName;
+    string nic;
+    string dateOfBirth;
+    string email;
+    string officePhone;
+    string mobileNumber;
+    string residentialAddress;
+    string officialTitle;
+    string employeeId;
+    string appointmentDate;
+    string gnDivision;
+    string district;
+    string province;
+    string officeAddress;
+    string qualifications;
+    string experience;
+|};
+
 public type RegistrationApplication record {|
     string fullName;
     string nic;

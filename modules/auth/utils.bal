@@ -81,6 +81,7 @@ public function hashPassword(string password) returns string|error {
 }
 
 public function verifyPassword(string password, string hashedPassword) returns boolean|error {
+    // This is the correct function name for your project.
     return crypto:verifyBcrypt(password, hashedPassword);
 }
 

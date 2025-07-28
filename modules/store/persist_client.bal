@@ -252,7 +252,7 @@ public isolated client class Client {
             entityName: "Voter",
             tableName: "Voter",
             fieldMetadata: {
-                id: {columnName: "id", dbGenerated: true},
+                id: {columnName: "id"},
                 nationalId: {columnName: "national_id"},
                 name: {columnName: "name"},
                 password: {columnName: "password"},
@@ -665,12 +665,12 @@ public isolated client class Client {
         name: "query"
     } external;
 
-    isolated resource function get removalrequests/[int id](RemovalRequestTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+    isolated resource function get removalrequests/[string id](RemovalRequestTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
         'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
         name: "queryOne"
     } external;
 
-    isolated resource function post removalrequests(RemovalRequestInsert[] data) returns int[]|persist:Error {
+    isolated resource function post removalrequests(RemovalRequestInsert[] data) returns string[]|persist:Error {
         psql:SQLClient sqlClient;
         lock {
             sqlClient = self.persistClients.get(REMOVAL_REQUEST);
@@ -680,7 +680,7 @@ public isolated client class Client {
             select inserted.id;
     }
 
-    isolated resource function put removalrequests/[int id](RemovalRequestUpdate value) returns RemovalRequest|persist:Error {
+    isolated resource function put removalrequests/[string id](RemovalRequestUpdate value) returns RemovalRequest|persist:Error {
         psql:SQLClient sqlClient;
         lock {
             sqlClient = self.persistClients.get(REMOVAL_REQUEST);
@@ -689,7 +689,7 @@ public isolated client class Client {
         return self->/removalrequests/[id].get();
     }
 
-    isolated resource function delete removalrequests/[int id]() returns RemovalRequest|persist:Error {
+    isolated resource function delete removalrequests/[string id]() returns RemovalRequest|persist:Error {
         RemovalRequest result = check self->/removalrequests/[id].get();
         psql:SQLClient sqlClient;
         lock {
@@ -704,12 +704,12 @@ public isolated client class Client {
         name: "query"
     } external;
 
-    isolated resource function get registrationreviews/[int id](RegistrationReviewTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+    isolated resource function get registrationreviews/[string id](RegistrationReviewTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
         'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
         name: "queryOne"
     } external;
 
-    isolated resource function post registrationreviews(RegistrationReviewInsert[] data) returns int[]|persist:Error {
+    isolated resource function post registrationreviews(RegistrationReviewInsert[] data) returns string[]|persist:Error {
         psql:SQLClient sqlClient;
         lock {
             sqlClient = self.persistClients.get(REGISTRATION_REVIEW);
@@ -719,7 +719,7 @@ public isolated client class Client {
             select inserted.id;
     }
 
-    isolated resource function put registrationreviews/[int id](RegistrationReviewUpdate value) returns RegistrationReview|persist:Error {
+    isolated resource function put registrationreviews/[string id](RegistrationReviewUpdate value) returns RegistrationReview|persist:Error {
         psql:SQLClient sqlClient;
         lock {
             sqlClient = self.persistClients.get(REGISTRATION_REVIEW);
@@ -728,7 +728,7 @@ public isolated client class Client {
         return self->/registrationreviews/[id].get();
     }
 
-    isolated resource function delete registrationreviews/[int id]() returns RegistrationReview|persist:Error {
+    isolated resource function delete registrationreviews/[string id]() returns RegistrationReview|persist:Error {
         RegistrationReview result = check self->/registrationreviews/[id].get();
         psql:SQLClient sqlClient;
         lock {
@@ -743,12 +743,12 @@ public isolated client class Client {
         name: "query"
     } external;
 
-    isolated resource function get removalrequestreviews/[int id](RemovalRequestReviewTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+    isolated resource function get removalrequestreviews/[string id](RemovalRequestReviewTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
         'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
         name: "queryOne"
     } external;
 
-    isolated resource function post removalrequestreviews(RemovalRequestReviewInsert[] data) returns int[]|persist:Error {
+    isolated resource function post removalrequestreviews(RemovalRequestReviewInsert[] data) returns string[]|persist:Error {
         psql:SQLClient sqlClient;
         lock {
             sqlClient = self.persistClients.get(REMOVAL_REQUEST_REVIEW);
@@ -758,7 +758,7 @@ public isolated client class Client {
             select inserted.id;
     }
 
-    isolated resource function put removalrequestreviews/[int id](RemovalRequestReviewUpdate value) returns RemovalRequestReview|persist:Error {
+    isolated resource function put removalrequestreviews/[string id](RemovalRequestReviewUpdate value) returns RemovalRequestReview|persist:Error {
         psql:SQLClient sqlClient;
         lock {
             sqlClient = self.persistClients.get(REMOVAL_REQUEST_REVIEW);
@@ -767,7 +767,7 @@ public isolated client class Client {
         return self->/removalrequestreviews/[id].get();
     }
 
-    isolated resource function delete removalrequestreviews/[int id]() returns RemovalRequestReview|persist:Error {
+    isolated resource function delete removalrequestreviews/[string id]() returns RemovalRequestReview|persist:Error {
         RemovalRequestReview result = check self->/removalrequestreviews/[id].get();
         psql:SQLClient sqlClient;
         lock {
@@ -821,12 +821,12 @@ public isolated client class Client {
         name: "query"
     } external;
 
-    isolated resource function get notifications/[int id](NotificationTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+    isolated resource function get notifications/[string id](NotificationTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
         'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
         name: "queryOne"
     } external;
 
-    isolated resource function post notifications(NotificationInsert[] data) returns int[]|persist:Error {
+    isolated resource function post notifications(NotificationInsert[] data) returns string[]|persist:Error {
         psql:SQLClient sqlClient;
         lock {
             sqlClient = self.persistClients.get(NOTIFICATION);
@@ -836,7 +836,7 @@ public isolated client class Client {
             select inserted.id;
     }
 
-    isolated resource function put notifications/[int id](NotificationUpdate value) returns Notification|persist:Error {
+    isolated resource function put notifications/[string id](NotificationUpdate value) returns Notification|persist:Error {
         psql:SQLClient sqlClient;
         lock {
             sqlClient = self.persistClients.get(NOTIFICATION);
@@ -845,7 +845,7 @@ public isolated client class Client {
         return self->/notifications/[id].get();
     }
 
-    isolated resource function delete notifications/[int id]() returns Notification|persist:Error {
+    isolated resource function delete notifications/[string id]() returns Notification|persist:Error {
         Notification result = check self->/notifications/[id].get();
         psql:SQLClient sqlClient;
         lock {
@@ -860,23 +860,22 @@ public isolated client class Client {
         name: "query"
     } external;
 
-    isolated resource function get voters/[int id](VoterTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+    isolated resource function get voters/[string id](VoterTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
         'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
         name: "queryOne"
     } external;
 
-    isolated resource function post voters(VoterInsert[] data) returns int[]|persist:Error {
+    isolated resource function post voters(VoterInsert[] data) returns string[]|persist:Error {
         psql:SQLClient sqlClient;
         lock {
             sqlClient = self.persistClients.get(VOTER);
         }
-        sql:ExecutionResult[] result = check sqlClient.runBatchInsertQuery(data);
-        return from sql:ExecutionResult inserted in result
-            where inserted.lastInsertId != ()
-            select <int>inserted.lastInsertId;
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from VoterInsert inserted in data
+            select inserted.id;
     }
 
-    isolated resource function put voters/[int id](VoterUpdate value) returns Voter|persist:Error {
+    isolated resource function put voters/[string id](VoterUpdate value) returns Voter|persist:Error {
         psql:SQLClient sqlClient;
         lock {
             sqlClient = self.persistClients.get(VOTER);
@@ -885,7 +884,7 @@ public isolated client class Client {
         return self->/voters/[id].get();
     }
 
-    isolated resource function delete voters/[int id]() returns Voter|persist:Error {
+    isolated resource function delete voters/[string id]() returns Voter|persist:Error {
         Voter result = check self->/voters/[id].get();
         psql:SQLClient sqlClient;
         lock {

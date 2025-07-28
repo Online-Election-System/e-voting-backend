@@ -331,7 +331,7 @@ public type EnrolmentUpdate record {|
 |};
 
 public type RemovalRequest record {|
-    readonly int id;
+    readonly string id;
     string memberName;
     string nic;
     string requestedBy;
@@ -341,7 +341,7 @@ public type RemovalRequest record {|
 |};
 
 public type RemovalRequestOptionalized record {|
-    int id?;
+    string id?;
     string memberName?;
     string nic?;
     string requestedBy?;
@@ -364,7 +364,7 @@ public type RemovalRequestUpdate record {|
 |};
 
 public type RegistrationReview record {|
-    readonly int id;
+    readonly string id;
     string memberNic;
     string reviewedBy;
     string status;
@@ -373,7 +373,7 @@ public type RegistrationReview record {|
 |};
 
 public type RegistrationReviewOptionalized record {|
-    int id?;
+    string id?;
     string memberNic?;
     string reviewedBy?;
     string status?;
@@ -394,7 +394,7 @@ public type RegistrationReviewUpdate record {|
 |};
 
 public type RemovalRequestReview record {|
-    readonly int id;
+    readonly string id;
     int removalRequestId;
     string reviewedBy;
     string status;
@@ -403,7 +403,7 @@ public type RemovalRequestReview record {|
 |};
 
 public type RemovalRequestReviewOptionalized record {|
-    int id?;
+    string id?;
     int removalRequestId?;
     string reviewedBy?;
     string status?;
@@ -487,7 +487,7 @@ public type GramaNiladhariUpdate record {|
 |};
 
 public type Notification record {|
-    readonly int id;
+    readonly string id;
     string title;
     string message;
     string? link;
@@ -497,7 +497,7 @@ public type Notification record {|
 |};
 
 public type NotificationOptionalized record {|
-    int id?;
+    string id?;
     string title?;
     string message?;
     string? link?;
@@ -520,7 +520,7 @@ public type NotificationUpdate record {|
 |};
 
 public type Voter record {|
-    readonly int id;
+    readonly string id;
     string nationalId;
     string name;
     string password;
@@ -531,7 +531,7 @@ public type Voter record {|
 |};
 
 public type VoterOptionalized record {|
-    int id?;
+    string id?;
     string nationalId?;
     string name?;
     string password?;
@@ -543,15 +543,7 @@ public type VoterOptionalized record {|
 
 public type VoterTargetType typedesc<VoterOptionalized>;
 
-public type VoterInsert record {|
-    string nationalId;
-    string name;
-    string password;
-    string district;
-    string pollingStation;
-    time:Date registrationDate;
-    string status;
-|};
+public type VoterInsert Voter;
 
 public type VoterUpdate record {|
     string nationalId?;

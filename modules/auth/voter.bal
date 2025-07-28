@@ -283,12 +283,15 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
     check memberStream.close();
 
     // Government officials & election commission login (AdminUsers table)
+    io:println("Now checking AdminUsers table...");
     stream<store:AdminUsers, persist:Error?> adminStream = dbClient->/adminusers.get();
     check from store:AdminUsers admin in adminStream
         where admin.username == loginReq.nic
         do {
+            io:println("Found matching username in AdminUsers: ", admin.username);
             check adminStream.close();
             boolean|error isVerified = verifyPassword(loginReq.password, admin.passwordHash);
+             io:println("Password verification result for admin: ", isVerified);
             if isVerified is error || !isVerified {
                 return http:UNAUTHORIZED;
             }
@@ -319,6 +322,7 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
         };
     check adminStream.close();
 
+io:println("Did not find a matching user in AdminUsers table, or password was incorrect.");
     return http:UNAUTHORIZED;
 }
 

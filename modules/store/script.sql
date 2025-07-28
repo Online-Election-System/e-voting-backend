@@ -20,7 +20,7 @@ DROP TABLE IF EXISTS "HouseholdDetails";
 DROP TABLE IF EXISTS "RegistrationReview";
 
 CREATE TABLE "RegistrationReview" (
-	"id" INT NOT NULL,
+	"id" VARCHAR(191) NOT NULL,
 	"member_nic" VARCHAR(191) NOT NULL,
 	"reviewed_by" VARCHAR(191) NOT NULL,
 	"status" VARCHAR(191) NOT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE "ChiefOccupant" (
 );
 
 CREATE TABLE "Voter" (
-	"id"  SERIAL,
+	"id" VARCHAR(191) NOT NULL,
 	"national_id" VARCHAR(191) NOT NULL,
 	"name" VARCHAR(191) NOT NULL,
 	"password" VARCHAR(191) NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE "Voter" (
 );
 
 CREATE TABLE "RemovalRequestReview" (
-	"id" INT NOT NULL,
+	"id" VARCHAR(191) NOT NULL,
 	"removal_request_id" INT NOT NULL,
 	"reviewed_by" VARCHAR(191) NOT NULL,
 	"status" VARCHAR(191) NOT NULL,
@@ -102,7 +102,7 @@ CREATE TABLE "GramaNiladhari" (
 );
 
 CREATE TABLE "RemovalRequest" (
-	"id" INT NOT NULL,
+	"id" VARCHAR(191) NOT NULL,
 	"member_name" VARCHAR(191) NOT NULL,
 	"nic" VARCHAR(191) NOT NULL,
 	"requested_by" VARCHAR(191) NOT NULL,
@@ -142,7 +142,7 @@ CREATE TABLE "HouseholdMembers" (
 );
 
 CREATE TABLE "Notification" (
-	"id" INT NOT NULL,
+	"id" VARCHAR(191) NOT NULL,
 	"title" VARCHAR(191) NOT NULL,
 	"message" VARCHAR(191) NOT NULL,
 	"link" VARCHAR(191),

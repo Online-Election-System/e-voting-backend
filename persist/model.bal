@@ -251,7 +251,7 @@ public type Enrolment record {|
 
 // -- Removal Requests Table --
 public type RemovalRequest record {|
-    readonly int id;
+    readonly string id;
     @sql:Name { value: "member_name" }
     string memberName;
     string nic;
@@ -265,7 +265,7 @@ public type RemovalRequest record {|
 
 // -- Registration Reviews Table --
 public type RegistrationReview record {|
-    readonly int id;
+    readonly string id;
     @sql:Name { value: "member_nic" }
     string memberNic;
     @sql:Name { value: "reviewed_by" }
@@ -278,7 +278,7 @@ public type RegistrationReview record {|
 
 // -- Removal Request Reviews Table --
 public type RemovalRequestReview record {|
-    readonly int id;
+    readonly string id;
     @sql:Name { value: "removal_request_id" }
     int removalRequestId;
     @sql:Name { value: "reviewed_by" }
@@ -322,7 +322,7 @@ public type GramaNiladhari record {|
 
 // -- Notifications Table --
 public type Notification record {|
-    readonly int id;
+    readonly string id;
     string title;
     string message;
     string? link; // e.g., to view the action
@@ -344,8 +344,8 @@ public type Notification record {|
 # + registrationDate - Registration date
 # + status - ACTIVE / INACTIVE
 public type Voter record {|
-    @sql:Generated
-    readonly int id;
+    
+    readonly string id;
     @sql:Name { value: "national_id" }
     string nationalId;
     string name;
