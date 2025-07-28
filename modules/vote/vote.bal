@@ -1,12 +1,13 @@
 import online_election.common;
 import online_election.store;
 import online_election.auth;
+import online_election.results; // ✨ NEW: Import results module
+import online_election.candidate;
 
 import ballerina/http;
 import ballerina/persist;
 import ballerina/crypto;
 import ballerina/io;
-import online_election.candidate;
 
 final store:Client dbVote = check new ();
 
@@ -208,40 +209,103 @@ public function getVoterDistrict(string voterId) returns string|error {
     return householdDetails.electoralDistrict;
 }
 
-// Enhanced vote casting with enrollment check
+// ✨ DEBUG: Add this function to help troubleshoot results update
+public function debugResultsUpdate(string electionId, string candidateId, string district) returns json|error {
+    io:println("=== DEBUG: Results Update Troubleshooting ===");
+    
+    // Check if candidate is enrolled
+    stream<store:EnrolCandidates, persist:Error?> enrolmentStream = dbVote->/enrolcandidates;
+    store:EnrolCandidates[] candidateEnrolments = check from store:EnrolCandidates enrolment in enrolmentStream
+        where enrolment.electionId == electionId && enrolment.candidateId == candidateId
+        select enrolment;
+    
+    io:println("Candidate enrolments found: ", candidateEnrolments.length().toString());
+    
+    // Check existing results for this candidate
+    store:CandidateDistrictVoteSummary|persist:Error existingSummary = 
+        dbVote->/candidatedistrictvotesummaries/[electionId]/[candidateId].get();
+    
+    if existingSummary is store:CandidateDistrictVoteSummary {
+        io:println("Existing summary found for candidate: ", candidateId);
+        io:println("Current totals: ", existingSummary.Totals.toString());
+    } else {
+        io:println("No existing summary found for candidate: ", candidateId);
+        io:println("Error: ", existingSummary.message());
+    }
+    
+    // Check all votes for this election
+    stream<store:Vote, persist:Error?> voteStream = dbVote->/votes;
+    store:Vote[] allVotes = check from store:Vote vote in voteStream
+        where vote.electionId == electionId
+        select vote;
+    
+    io:println("Total votes in election: ", allVotes.length().toString());
+    
+    // Check votes for this specific candidate
+    store:Vote[] candidateVotes = check from store:Vote vote in voteStream
+        where vote.electionId == electionId && vote.candidateId == candidateId
+        select vote;
+    
+    io:println("Votes for this candidate: ", candidateVotes.length().toString());
+    
+    return {
+        "electionId": electionId,
+        "candidateId": candidateId,
+        "district": district,
+        "candidateEnrolments": candidateEnrolments.length(),
+        "existingSummary": existingSummary is store:CandidateDistrictVoteSummary,
+        "totalVotesInElection": allVotes.length(),
+        "votesForCandidate": candidateVotes.length()
+    };
+}
+
+// Enhanced vote casting with enrollment check AND real-time results update
 public function castVote(Vote newVote) returns http:Created|http:Forbidden|error {
+    io:println("=== Starting vote casting process ===");
+    io:println("Voter: ", newVote.voterId, " | Election: ", newVote.electionId, " | Candidate: ", newVote.candidateId);
+    
     // Check if voter exists and get voter details
     json|persist:Error voterData = getVoterById(newVote.voterId);
     if voterData is persist:Error {
+        io:println("ERROR: Voter not found - ", newVote.voterId);
         return error("Voter not found");
     }
+    io:println("✓ Voter found and verified");
 
     // Check if election exists
     store:Election|persist:Error election = getElectionById(newVote.electionId);
     if election is persist:Error {
+        io:println("ERROR: Election not found - ", newVote.electionId);
         return error("Election not found");
     }
     
     // Check if election is active for voting
     if election.status != "Active" {
+        io:println("ERROR: Election not active - Status: ", election.status);
         return error("Election is not currently active for voting");
     }
+    io:println("✓ Election is active for voting");
 
     // Check if voter is enrolled in this election
     boolean|error isEnrolled = isVoterEnrolledInElection(newVote.voterId, newVote.electionId);
     if isEnrolled is error {
+        io:println("ERROR: Failed to check enrollment - ", isEnrolled.message());
         return error("Failed to check enrollment status: " + isEnrolled.message());
     }
     
     if !isEnrolled {
+        io:println("ERROR: Voter not enrolled in this election");
         return error("Voter is not enrolled in this election");
     }
+    io:println("✓ Voter is enrolled in this election");
 
     // Get voter's district
     string|error district = getVoterDistrict(newVote.voterId);
     if district is error {
+        io:println("ERROR: Could not determine voter's district - ", district.message());
         return error("Could not determine voter's district: " + district.message());
     }
+    io:println("✓ Voter district determined: ", district);
 
     // Hash the voterId before checking for existing votes
     io:println("Raw voterId: ", newVote.voterId);
@@ -254,27 +318,83 @@ public function castVote(Vote newVote) returns http:Created|http:Forbidden|error
     store:Vote[] votes = check from store:Vote vote in existingVotes
         where vote.voterId == hashedVoterId && vote.electionId == newVote.electionId
         select vote;
-    io:println("Found votes: ", votes.length().toString());
+    io:println("Found existing votes: ", votes.length().toString());
 
     if votes.length() > 0 {
+        io:println("ERROR: Vote already exists for this voter in this election");
         return error("Vote already exists for this voter in this election");
     }
+    io:println("✓ No existing vote found - proceeding with vote casting");
 
     // Create new vote with district from household details
     store:VoteInsert voteInsert = {
         id: common:generateId(),
         voterId: hashedVoterId,
         electionId: newVote.electionId,
-        candidateId: newVote.candidateId,
+        candidateId: newVote.candidateId, // Use original candidate ID (not hashed in your system)
         district: district,
         timestamp: common:generateTimestamp()
     };
     
+    io:println("Inserting vote with ID: ", voteInsert.id);
     string[]|persist:Error resultInsert = dbVote->/votes.post([voteInsert]);
 
-    return resultInsert is persist:Error
-        ? error("Failed to record vote: " + resultInsert.message())
-        : http:CREATED;
+    if resultInsert is persist:Error {
+        io:println("ERROR: Failed to record vote - ", resultInsert.message());
+        return error("Failed to record vote: " + resultInsert.message());
+    }
+    io:println("✓ Vote successfully stored in database");
+    io:println("Inserted vote result: ", resultInsert.toString());
+
+    // ✨ NEW: Update results immediately after successful vote casting
+    io:println("=== Starting real-time results update ===");
+    io:println("Vote details for results update:");
+    io:println("  - Vote ID: ", voteInsert.id);
+    io:println("  - Hashed Voter ID: ", hashedVoterId);
+    io:println("  - Election ID: ", newVote.electionId);
+    io:println("  - Candidate ID: ", newVote.candidateId);
+    io:println("  - District: ", district);
+    
+    // Create a Vote record for the results update (matching the store:Vote structure)
+    store:Vote castVote = {
+        id: voteInsert.id,
+        voterId: hashedVoterId,
+        electionId: newVote.electionId,
+        candidateId: newVote.candidateId, // Use original candidate ID
+        district: district,
+        timestamp: voteInsert.timestamp
+    };
+
+    io:println("Calling results:updateResultsForVote...");
+    
+    // ✨ DEBUG: Add debug information before calling results update
+    json|error debugInfo = debugResultsUpdate(newVote.electionId, newVote.candidateId, district);
+    if debugInfo is json {
+        io:println("Debug info: ", debugInfo.toString());
+    }
+    
+    // ✨ DEBUG: Test if results module is accessible
+    io:println("Testing results module accessibility...");
+    
+    // Update election results in real-time
+    error? updateResult = results:updateResultsForVote(castVote);
+    if updateResult is error {
+        // Log the error but don't fail the vote - the vote was successfully cast
+        io:println("⚠️  WARNING: Failed to update election results in real-time");
+        io:println("Error details: ", updateResult.message());
+        if updateResult.cause() != () {
+            io:println("Error cause: ", (check updateResult.cause()).toString());
+        }
+        io:println("Vote was successfully cast, but results may not reflect immediately");
+        // You could also use log:printError if you have logging configured
+        // log:printError("Failed to update election results", updateResult);
+    } else {
+        io:println("✅ Election results updated successfully!");
+        io:println("Vote ID: ", voteInsert.id, " | Results are now live");
+    }
+
+    io:println("=== Vote casting process completed successfully ===");
+    return http:CREATED;
 }
 
 function getElectionById(string electionId) returns store:Election|persist:Error {
@@ -433,5 +553,3 @@ public function getCandidatesForVoter(string voterId) returns store:Candidate[]|
 
     return allCandidates;
 }
-
-
