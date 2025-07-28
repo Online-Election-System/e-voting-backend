@@ -541,4 +541,3 @@ public function deactivateCandidatesFromEndedElections() returns error? {
 function isDateEqual(time:Date date1, time:Date date2) returns boolean {
     return date1.year == date2.year && date1.month == date2.month && date1.day == date2.day;
 }
-

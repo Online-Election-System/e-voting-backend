@@ -10,7 +10,8 @@ public function getRolePermissions(UserRole role) returns Permission[] {
                 MANAGE_USERS,
                 MANAGE_CANDIDATES,
                 VERIFY_USERS,
-                VIEW_RESULTS
+                VIEW_RESULTS,
+                VIEW_AUDIT_LOGS
             ];
         }
         GOVERNMENT_OFFICIAL => {
@@ -27,7 +28,8 @@ public function getRolePermissions(UserRole role) returns Permission[] {
                 VIEW_ELECTION,
                 MANAGE_CANDIDATES,
                 VERIFY_USERS,
-                VIEW_RESULTS
+                VIEW_RESULTS,
+                VIEW_AUDIT_LOGS
             ];
         }
         CHIEF_OCCUPANT => {

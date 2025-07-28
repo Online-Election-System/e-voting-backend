@@ -324,3 +324,63 @@ public type EnrolmentUpdate record {|
     time:Utc enrollementDate?;
 |};
 
+public type AuditLog record {|
+    readonly string id;
+    time:Utc timestamp;
+    string userId;
+    string userRole;
+    string? sessionId;
+    string action;
+    string resourceType;
+    string? resourceId;
+    string? oldValues;
+    string? newValues;
+    string? ipAddress;
+    string? userAgent;
+    string result;
+    string? errorMessage;
+    string severity;
+    string? additionalContext;
+|};
+
+public type AuditLogOptionalized record {|
+    string id?;
+    time:Utc timestamp?;
+    string userId?;
+    string userRole?;
+    string? sessionId?;
+    string action?;
+    string resourceType?;
+    string? resourceId?;
+    string? oldValues?;
+    string? newValues?;
+    string? ipAddress?;
+    string? userAgent?;
+    string result?;
+    string? errorMessage?;
+    string severity?;
+    string? additionalContext?;
+|};
+
+public type AuditLogTargetType typedesc<AuditLogOptionalized>;
+
+public type AuditLogInsert AuditLog;
+
+public type AuditLogUpdate record {|
+    time:Utc timestamp?;
+    string userId?;
+    string userRole?;
+    string? sessionId?;
+    string action?;
+    string resourceType?;
+    string? resourceId?;
+    string? oldValues?;
+    string? newValues?;
+    string? ipAddress?;
+    string? userAgent?;
+    string result?;
+    string? errorMessage?;
+    string severity?;
+    string? additionalContext?;
+|};
+

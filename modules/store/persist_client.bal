@@ -19,6 +19,7 @@ const ADMIN_USERS = "adminusers";
 const ENROL_CANDIDATES = "enrolcandidates";
 const VOTE = "votes";
 const ENROLMENT = "enrolments";
+const AUDIT_LOG = "auditlogs";
 
 public isolated client class Client {
     *persist:AbstractPersistClient;
@@ -161,6 +162,29 @@ public isolated client class Client {
                 enrollementDate: {columnName: "enrollement_date"}
             },
             keyFields: ["voterId", "electionId"]
+        },
+        [AUDIT_LOG]: {
+            entityName: "AuditLog",
+            tableName: "AuditLog",
+            fieldMetadata: {
+                id: {columnName: "id"},
+                timestamp: {columnName: "timestamp"},
+                userId: {columnName: "user_id"},
+                userRole: {columnName: "user_role"},
+                sessionId: {columnName: "session_id"},
+                action: {columnName: "action"},
+                resourceType: {columnName: "resource_type"},
+                resourceId: {columnName: "resource_id"},
+                oldValues: {columnName: "old_values"},
+                newValues: {columnName: "new_values"},
+                ipAddress: {columnName: "ip_address"},
+                userAgent: {columnName: "user_agent"},
+                result: {columnName: "result"},
+                errorMessage: {columnName: "error_message"},
+                severity: {columnName: "severity"},
+                additionalContext: {columnName: "additional_context"}
+            },
+            keyFields: ["id"]
         }
     };
 
@@ -198,7 +222,8 @@ public isolated client class Client {
             [ADMIN_USERS]: check new (dbClient, self.metadata.get(ADMIN_USERS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [ENROL_CANDIDATES]: check new (dbClient, self.metadata.get(ENROL_CANDIDATES).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [VOTE]: check new (dbClient, self.metadata.get(VOTE).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
-            [ENROLMENT]: check new (dbClient, self.metadata.get(ENROLMENT).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
+            [ENROLMENT]: check new (dbClient, self.metadata.get(ENROLMENT).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [AUDIT_LOG]: check new (dbClient, self.metadata.get(AUDIT_LOG).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
         };
     }
 
@@ -550,6 +575,45 @@ public isolated client class Client {
             sqlClient = self.persistClients.get(ENROLMENT);
         }
         _ = check sqlClient.runDeleteQuery({"voterId": voterId, "electionId": electionId});
+        return result;
+    }
+
+    isolated resource function get auditlogs(AuditLogTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get auditlogs/[string id](AuditLogTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post auditlogs(AuditLogInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(AUDIT_LOG);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from AuditLogInsert inserted in data
+            select inserted.id;
+    }
+
+    isolated resource function put auditlogs/[string id](AuditLogUpdate value) returns AuditLog|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(AUDIT_LOG);
+        }
+        _ = check sqlClient.runUpdateQuery(id, value);
+        return self->/auditlogs/[id].get();
+    }
+
+    isolated resource function delete auditlogs/[string id]() returns AuditLog|persist:Error {
+        AuditLog result = check self->/auditlogs/[id].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(AUDIT_LOG);
+        }
+        _ = check sqlClient.runDeleteQuery(id);
         return result;
     }
 

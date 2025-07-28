@@ -20,7 +20,8 @@ public enum Permission {
     MANAGE_CANDIDATES = "manage_candidates",
     VOTE = "vote",
     VERIFY_USERS = "verify_users",
-    VIEW_RESULTS = "view_results"
+    VIEW_RESULTS = "view_results",
+    VIEW_AUDIT_LOGS = "view_audit_logs"
 }
 
 // Authorization options for middleware

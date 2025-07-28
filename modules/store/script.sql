@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS "ChiefOccupant";
 DROP TABLE IF EXISTS "HouseholdDetails";
 DROP TABLE IF EXISTS "Enrolment";
 DROP TABLE IF EXISTS "Election";
+DROP TABLE IF EXISTS "AuditLog";
 DROP TABLE IF EXISTS "HouseholdMembers";
 
 CREATE TABLE "HouseholdMembers" (
@@ -27,6 +28,26 @@ CREATE TABLE "HouseholdMembers" (
 	"Hased_password" VARCHAR(191) NOT NULL,
 	"passwordchanged" BOOLEAN NOT NULL,
 	"role" VARCHAR(191) NOT NULL,
+	PRIMARY KEY("id")
+);
+
+CREATE TABLE "AuditLog" (
+	"id" VARCHAR(191) NOT NULL,
+	"timestamp" TIMESTAMP NOT NULL,
+	"user_id" VARCHAR(191) NOT NULL,
+	"user_role" VARCHAR(191) NOT NULL,
+	"session_id" VARCHAR(191),
+	"action" VARCHAR(191) NOT NULL,
+	"resource_type" VARCHAR(191) NOT NULL,
+	"resource_id" VARCHAR(191),
+	"old_values" VARCHAR(191),
+	"new_values" VARCHAR(191),
+	"ip_address" VARCHAR(191),
+	"user_agent" VARCHAR(191),
+	"result" VARCHAR(191) NOT NULL,
+	"error_message" VARCHAR(191),
+	"severity" VARCHAR(191) NOT NULL,
+	"additional_context" VARCHAR(191),
 	PRIMARY KEY("id")
 );
 
