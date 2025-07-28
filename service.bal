@@ -427,9 +427,8 @@ service /vote/api/v1 on SharedListener {
     }
 }
 
-// ============================================================================================
-// 🔥 NEW RESULTS API SERVICE - COMPREHENSIVE ELECTION RESULTS AND ANALYTICS 🔥
-// ============================================================================================
+//  NEW RESULTS API SERVICE - COMPREHENSIVE ELECTION RESULTS AND ANALYTICS 
+
 
 @http:ServiceConfig {
     cors: {
@@ -441,9 +440,9 @@ service /vote/api/v1 on SharedListener {
 }
 service /results/api/v1 on SharedListener {
 
-    // ============================================================================
-    // 📊 CANDIDATE TOTALS AND RANKINGS
-    // ============================================================================
+
+    //  CANDIDATE TOTALS AND RANKINGS
+
 
     // Get candidate total votes for an election (sorted by highest votes)
     resource function get elections/[string electionId]/candidates/totals() returns results:CandidateTotal[]|error {
@@ -459,9 +458,7 @@ service /results/api/v1 on SharedListener {
         return { "electionId": electionId, "message": "All candidate totals updated successfully" };
     }
 
-    // ============================================================================
-    // 📈 CANDIDATE VOTE SUMMARIES WITH PERCENTAGES
-    // ============================================================================
+    //  CANDIDATE VOTE SUMMARIES WITH PERCENTAGES
 
     // Get candidate vote summaries with percentages and rankings
     resource function get elections/[string electionId]/candidates/summary() returns results:CandidateVoteSummary[]|error {
@@ -478,9 +475,8 @@ service /results/api/v1 on SharedListener {
         return check results:exportElectionCandidateDataAsCSV(electionId, results:dbClient);
     }
 
-    // ============================================================================
-    // 🗺️ DISTRICT-WISE ANALYSIS
-    // ============================================================================
+
+    //  DISTRICT-WISE ANALYSIS
 
     // Get district-wise vote analysis for all candidates
     resource function get elections/[string electionId]/districts/analysis() returns results:CandidateDistrictAnalysis[]|error {
@@ -497,27 +493,22 @@ service /results/api/v1 on SharedListener {
         return check results:getDistrictWinnerAnalysis(electionId, results:dbClient);
     }
 
-    // ============================================================================
-    // 🎯 ELECTION SUMMARY AND OVERVIEW
-    // ============================================================================
+    //  ELECTION SUMMARY AND OVERVIEW
+
 
     // Get comprehensive election summary
     resource function get elections/[string electionId]/summary() returns json|error {
         return check results:getElectionSummary(electionId, results:dbClient);
     }
 
-    // ============================================================================
-    // 🔍 DATA VALIDATION AND INTEGRITY
-    // ============================================================================
+    //  DATA VALIDATION AND INTEGRITY
+
 
     // Validate election data integrity
     resource function get elections/[string electionId]/validate() returns json|error {
         return check results:validateElectionDataIntegrity(electionId, results:dbClient);
     }
-
-    // ============================================================================
-    // 🏆 SPECIFIC RESULT QUERIES
-    // ============================================================================
+    //  SPECIFIC RESULT QUERIES
 
     // Get winner of the election
     resource function get elections/[string electionId]/winner() returns json|error {
@@ -574,9 +565,7 @@ service /results/api/v1 on SharedListener {
         return error("Candidate not found in this election");
     }
 
-    // ============================================================================
-    // 📊 ADVANCED ANALYTICS ENDPOINTS
-    // ============================================================================
+    //  ADVANCED ANALYTICS ENDPOINTS
 
     // Get vote distribution statistics
     resource function get elections/[string electionId]/statistics/distribution() returns json|error {
