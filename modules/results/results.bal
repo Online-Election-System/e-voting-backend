@@ -65,32 +65,32 @@ public function initializeElectionResults(string electionId) returns error? {
         store:CandidateDistrictVoteSummary initialSummary = {
             electionId: electionId,
             candidateId: enrolment.candidateId, // Use original candidate ID as key
-            Ampara: 0,
-            Anuradhapura: 0,
-            Badulla: 0,
-            Batticaloa: 0,
-            Colombo: 0,
-            Galle: 0,
-            Gampaha: 0,
-            Hambantota: 0,
-            Jaffna: 0,
-            Kalutara: 0,
-            Kandy: 0,
-            Kegalle: 0,
-            Kilinochchi: 0,
-            Kurunegala: 0,
-            Mannar: 0,
-            Matale: 0,
-            Matara: 0,
-            Monaragala: 0,
-            Mullaitivu: 0,
-            NuwaraEliya: 0,
-            Polonnaruwa: 0,
-            Puttalam: 0,
-            Ratnapura: 0,
-            Trincomalee: 0,
-            Vavuniya: 0,
-            Totals: 0
+            ampara: 0,
+            anuradhapura: 0,
+            badulla: 0,
+            batticaloa: 0,
+            colombo: 0,
+            galle: 0,
+            gampaha: 0,
+            hambantota: 0,
+            jaffna: 0,
+            kalutara: 0,
+            kandy: 0,
+            kegalle: 0,
+            kilinochchi: 0,
+            kurunegala: 0,
+            mannar: 0,
+            matale: 0,
+            matara: 0,
+            monaragala: 0,
+            mullaitivu: 0,
+            nuwaraEliya: 0,
+            polonnaruwa: 0,
+            puttalam: 0,
+            ratnapura: 0,
+            trincomalee: 0,
+            vavuniya: 0,
+            totals: 0
         };
         
         initialResults.push(initialSummary);
@@ -179,7 +179,7 @@ public function updateResultsForVote(store:Vote vote) returns error? {
     
     if existingSummary is store:CandidateDistrictVoteSummary {
         io:println("✅ Found existing summary for candidate: ", originalCandidateId);
-        io:println("Current totals: ", existingSummary.Totals.toString());
+        io:println("Current totals: ", existingSummary.totals.toString());
         
         // Get current count for the district
         int currentCount = getDistrictCount(existingSummary, normalizedDistrict);
@@ -216,7 +216,7 @@ public function updateResultsForVote(store:Vote vote) returns error? {
             if verifyResult is store:CandidateDistrictVoteSummary {
                 int verifyCount = getDistrictCount(verifyResult, normalizedDistrict);
                 io:println("Verification - ", normalizedDistrict, " count is now: ", verifyCount.toString());
-                io:println("Verification - Total votes: ", verifyResult.Totals.toString());
+                io:println("Verification - Total votes: ", verifyResult.totals.toString());
                 
                 if verifyCount == newCount {
                     io:println("✅ VERIFICATION PASSED: Update was successful!");
@@ -254,31 +254,31 @@ public function updateResultsForVote(store:Vote vote) returns error? {
 // Helper function to get district count using match statement
 function getDistrictCount(store:CandidateDistrictVoteSummary summary, string district) returns int {
     match district {
-        "Ampara" => { return summary.Ampara; }
-        "Anuradhapura" => { return summary.Anuradhapura; }
-        "Badulla" => { return summary.Badulla; }
-        "Batticaloa" => { return summary.Batticaloa; }
-        "Colombo" => { return summary.Colombo; }
-        "Galle" => { return summary.Galle; }
-        "Gampaha" => { return summary.Gampaha; }
-        "Hambantota" => { return summary.Hambantota; }
-        "Jaffna" => { return summary.Jaffna; }
-        "Kalutara" => { return summary.Kalutara; }
-        "Kandy" => { return summary.Kandy; }
-        "Kegalle" => { return summary.Kegalle; }
-        "Kilinochchi" => { return summary.Kilinochchi; }
-        "Kurunegala" => { return summary.Kurunegala; }
-        "Mannar" => { return summary.Mannar; }
-        "Matale" => { return summary.Matale; }
-        "Matara" => { return summary.Matara; }
-        "Monaragala" => { return summary.Monaragala; }
-        "Mullaitivu" => { return summary.Mullaitivu; }
-        "NuwaraEliya" => { return summary.NuwaraEliya; }
-        "Polonnaruwa" => { return summary.Polonnaruwa; }
-        "Puttalam" => { return summary.Puttalam; }
-        "Ratnapura" => { return summary.Ratnapura; }
-        "Trincomalee" => { return summary.Trincomalee; }
-        "Vavuniya" => { return summary.Vavuniya; }
+        "Ampara" => { return summary.ampara; }
+        "Anuradhapura" => { return summary.anuradhapura; }
+        "Badulla" => { return summary.badulla; }
+        "Batticaloa" => { return summary.batticaloa; }
+        "Colombo" => { return summary.colombo; }
+        "Galle" => { return summary.galle; }
+        "Gampaha" => { return summary.gampaha; }
+        "Hambantota" => { return summary.hambantota; }
+        "Jaffna" => { return summary.jaffna; }
+        "Kalutara" => { return summary.kalutara; }
+        "Kandy" => { return summary.kandy; }
+        "Kegalle" => { return summary.kegalle; }
+        "Kilinochchi" => { return summary.kilinochchi; }
+        "Kurunegala" => { return summary.kurunegala; }
+        "Mannar" => { return summary.mannar; }
+        "Matale" => { return summary.matale; }
+        "Matara" => { return summary.matara; }
+        "Monaragala" => { return summary.monaragala; }
+        "Mullaitivu" => { return summary.mullaitivu; }
+        "NuwaraEliya" => { return summary.nuwaraEliya; }
+        "Polonnaruwa" => { return summary.polonnaruwa; }
+        "Puttalam" => { return summary.puttalam; }
+        "Ratnapura" => { return summary.ratnapura; }
+        "Trincomalee" => { return summary.trincomalee; }
+        "Vavuniya" => { return summary.vavuniya ; }
         _ => { return 0; }
     }
 }
@@ -286,31 +286,31 @@ function getDistrictCount(store:CandidateDistrictVoteSummary summary, string dis
 // Helper function to set district count
 function setDistrictCount(store:CandidateDistrictVoteSummary summary, string district, int count) returns store:CandidateDistrictVoteSummary {
     match district {
-        "Ampara" => { summary.Ampara = count; }
-        "Anuradhapura" => { summary.Anuradhapura = count; }
-        "Badulla" => { summary.Badulla = count; }
-        "Batticaloa" => { summary.Batticaloa = count; }
-        "Colombo" => { summary.Colombo = count; }
-        "Galle" => { summary.Galle = count; }
-        "Gampaha" => { summary.Gampaha = count; }
-        "Hambantota" => { summary.Hambantota = count; }
-        "Jaffna" => { summary.Jaffna = count; }
-        "Kalutara" => { summary.Kalutara = count; }
-        "Kandy" => { summary.Kandy = count; }
-        "Kegalle" => { summary.Kegalle = count; }
-        "Kilinochchi" => { summary.Kilinochchi = count; }
-        "Kurunegala" => { summary.Kurunegala = count; }
-        "Mannar" => { summary.Mannar = count; }
-        "Matale" => { summary.Matale = count; }
-        "Matara" => { summary.Matara = count; }
-        "Monaragala" => { summary.Monaragala = count; }
-        "Mullaitivu" => { summary.Mullaitivu = count; }
-        "NuwaraEliya" => { summary.NuwaraEliya = count; }
-        "Polonnaruwa" => { summary.Polonnaruwa = count; }
-        "Puttalam" => { summary.Puttalam = count; }
-        "Ratnapura" => { summary.Ratnapura = count; }
-        "Trincomalee" => { summary.Trincomalee = count; }
-        "Vavuniya" => { summary.Vavuniya = count; }
+        "Ampara" => { summary.ampara = count; }
+        "Anuradhapura" => { summary.anuradhapura = count; }
+        "Badulla" => { summary.badulla = count; }
+        "Batticaloa" => { summary.batticaloa = count; }
+        "Colombo" => { summary.colombo = count; }
+        "Galle" => { summary.galle = count; }
+        "Gampaha" => { summary.gampaha = count; }
+        "Hambantota" => { summary.hambantota = count; }
+        "Jaffna" => { summary.jaffna = count; }
+        "Kalutara" => { summary.kalutara = count; }
+        "Kandy" => { summary.kandy = count; }
+        "Kegalle" => { summary.kegalle = count; }
+        "Kilinochchi" => { summary.kilinochchi = count; }
+        "Kurunegala" => { summary.kurunegala = count; }
+        "Mannar" => { summary.mannar = count; }
+        "Matale" => { summary.matale = count; }
+        "Matara" => { summary.matara = count; }
+        "Monaragala" => { summary.monaragala = count; }
+        "Mullaitivu" => { summary.mullaitivu = count; }
+        "NuwaraEliya" => { summary.nuwaraEliya = count; }
+        "Polonnaruwa" => { summary.polonnaruwa = count; }
+        "Puttalam" => { summary.puttalam = count; }
+        "Ratnapura" => { summary.ratnapura = count; }
+        "Trincomalee" => { summary.trincomalee = count; }
+        "Vavuniya" => { summary.vavuniya = count; }
     }
     return summary;
 }
@@ -318,61 +318,61 @@ function setDistrictCount(store:CandidateDistrictVoteSummary summary, string dis
 // Helper function to create update record
 function createUpdateRecord(store:CandidateDistrictVoteSummary existing, string district, int newCount) returns store:CandidateDistrictVoteSummaryUpdate {
     store:CandidateDistrictVoteSummaryUpdate updateData = {
-        Ampara: existing.Ampara,
-        Anuradhapura: existing.Anuradhapura,
-        Badulla: existing.Badulla,
-        Batticaloa: existing.Batticaloa,
-        Colombo: existing.Colombo,
-        Galle: existing.Galle,
-        Gampaha: existing.Gampaha,
-        Hambantota: existing.Hambantota,
-        Jaffna: existing.Jaffna,
-        Kalutara: existing.Kalutara,
-        Kandy: existing.Kandy,
-        Kegalle: existing.Kegalle,
-        Kilinochchi: existing.Kilinochchi,
-        Kurunegala: existing.Kurunegala,
-        Mannar: existing.Mannar,
-        Matale: existing.Matale,
-        Matara: existing.Matara,
-        Monaragala: existing.Monaragala,
-        Mullaitivu: existing.Mullaitivu,
-        NuwaraEliya: existing.NuwaraEliya,
-        Polonnaruwa: existing.Polonnaruwa,
-        Puttalam: existing.Puttalam,
-        Ratnapura: existing.Ratnapura,
-        Trincomalee: existing.Trincomalee,
-        Vavuniya: existing.Vavuniya,
-        Totals: existing.Totals + 1
+        ampara: existing.ampara,
+        anuradhapura: existing.anuradhapura,
+        badulla: existing.badulla,
+        batticaloa: existing.batticaloa,
+        colombo: existing.colombo,
+        galle: existing.galle,
+        gampaha: existing.gampaha,
+        hambantota: existing.hambantota,
+        jaffna: existing.jaffna,
+        kalutara: existing.kalutara,
+        kandy: existing.kandy,
+        kegalle: existing.kegalle,
+        kilinochchi: existing.kilinochchi,
+        kurunegala: existing.kurunegala,
+        mannar: existing.mannar,
+        matale: existing.matale,
+        matara: existing.matara,
+        monaragala: existing.monaragala,
+        mullaitivu: existing.mullaitivu,
+        nuwaraEliya: existing.nuwaraEliya,
+        polonnaruwa: existing.polonnaruwa,
+        puttalam: existing.puttalam,
+        ratnapura: existing.ratnapura,
+        trincomalee: existing.trincomalee,
+        vavuniya: existing.vavuniya,
+        totals: existing.totals + 1
     };
     
     // Update the specific district count
     match district {
-        "Ampara" => { updateData.Ampara = newCount; }
-        "Anuradhapura" => { updateData.Anuradhapura = newCount; }
-        "Badulla" => { updateData.Badulla = newCount; }
-        "Batticaloa" => { updateData.Batticaloa = newCount; }
-        "Colombo" => { updateData.Colombo = newCount; }
-        "Galle" => { updateData.Galle = newCount; }
-        "Gampaha" => { updateData.Gampaha = newCount; }
-        "Hambantota" => { updateData.Hambantota = newCount; }
-        "Jaffna" => { updateData.Jaffna = newCount; }
-        "Kalutara" => { updateData.Kalutara = newCount; }
-        "Kandy" => { updateData.Kandy = newCount; }
-        "Kegalle" => { updateData.Kegalle = newCount; }
-        "Kilinochchi" => { updateData.Kilinochchi = newCount; }
-        "Kurunegala" => { updateData.Kurunegala = newCount; }
-        "Mannar" => { updateData.Mannar = newCount; }
-        "Matale" => { updateData.Matale = newCount; }
-        "Matara" => { updateData.Matara = newCount; }
-        "Monaragala" => { updateData.Monaragala = newCount; }
-        "Mullaitivu" => { updateData.Mullaitivu = newCount; }
-        "NuwaraEliya" => { updateData.NuwaraEliya = newCount; }
-        "Polonnaruwa" => { updateData.Polonnaruwa = newCount; }
-        "Puttalam" => { updateData.Puttalam = newCount; }
-        "Ratnapura" => { updateData.Ratnapura = newCount; }
-        "Trincomalee" => { updateData.Trincomalee = newCount; }
-        "Vavuniya" => { updateData.Vavuniya = newCount; }
+        "Ampara" => { updateData.ampara = newCount; }
+        "Anuradhapura" => { updateData.anuradhapura = newCount; }
+        "Badulla" => { updateData.badulla = newCount; }
+        "Batticaloa" => { updateData.batticaloa = newCount; }
+        "Colombo" => { updateData.colombo = newCount; }
+        "Galle" => { updateData.galle = newCount; }
+        "Gampaha" => { updateData.gampaha = newCount; }
+        "Hambantota" => { updateData.hambantota = newCount; }
+        "Jaffna" => { updateData.jaffna = newCount; }
+        "Kalutara" => { updateData.kalutara = newCount; }
+        "Kandy" => { updateData.kandy = newCount; }
+        "Kegalle" => { updateData.kegalle = newCount; }
+        "Kilinochchi" => { updateData.kilinochchi = newCount; }
+        "Kurunegala" => { updateData.kurunegala = newCount; }
+        "Mannar" => { updateData.mannar = newCount; }
+        "Matale" => { updateData.matale = newCount; }
+        "Matara" => { updateData.matara = newCount; }
+        "Monaragala" => { updateData.monaragala = newCount; }
+        "Mullaitivu" => { updateData.mullaitivu = newCount; }
+        "NuwaraEliya" => { updateData.nuwaraEliya = newCount; }
+        "Polonnaruwa" => { updateData.polonnaruwa = newCount; }
+        "Puttalam" => { updateData.puttalam = newCount; }
+        "Ratnapura" => { updateData.ratnapura = newCount; }
+        "Trincomalee" => { updateData.trincomalee = newCount; }
+        "Vavuniya" => { updateData.vavuniya = newCount; }
     }
     
     return updateData;
@@ -393,15 +393,15 @@ public function debugResultsTableState(string electionId) returns json|error {
     
     json[] resultDetails = [];
     foreach store:CandidateDistrictVoteSummary result in results {
-        io:println("Candidate: ", result.candidateId, " | Totals: ", result.Totals.toString());
-        io:println("  Colombo: ", result.Colombo.toString(), " | Kandy: ", result.Kandy.toString(), " | Galle: ", result.Galle.toString());
+        io:println("Candidate: ", result.candidateId, " | Totals: ", result.totals.toString());
+        io:println("  Colombo: ", result.colombo.toString(), " | Kandy: ", result.kandy.toString(), " | Galle: ", result.galle.toString());
         
         resultDetails.push({
             "candidateId": result.candidateId,
-            "totals": result.Totals,
-            "colombo": result.Colombo,
-            "kandy": result.Kandy,
-            "galle": result.Galle
+            "totals": result.totals,
+            "colombo": result.colombo,
+            "kandy": result.kandy,
+            "galle": result.galle
         });
     }
     
@@ -543,18 +543,18 @@ function calculateElectionResultsForOngoing(string electionId) returns store:Can
         store:CandidateDistrictVoteSummary summary = {
             electionId: electionId,
             candidateId: candidateId,
-            Ampara: 0, Anuradhapura: 0, Badulla: 0, Batticaloa: 0, Colombo: 0,
-            Galle: 0, Gampaha: 0, Hambantota: 0, Jaffna: 0, Kalutara: 0,
-            Kandy: 0, Kegalle: 0, Kilinochchi: 0, Kurunegala: 0, Mannar: 0,
-            Matale: 0, Matara: 0, Monaragala: 0, Mullaitivu: 0, NuwaraEliya: 0,
-            Polonnaruwa: 0, Puttalam: 0, Ratnapura: 0, Trincomalee: 0, Vavuniya: 0,
-            Totals: 0
+            ampara: 0, anuradhapura: 0, badulla: 0, batticaloa: 0, colombo: 0,
+            galle: 0, gampaha: 0, hambantota: 0, jaffna: 0, kalutara: 0,
+            kandy: 0, kegalle: 0, kilinochchi: 0, kurunegala: 0, mannar: 0,
+            matale: 0, matara: 0, monaragala: 0, mullaitivu: 0, nuwaraEliya: 0,
+            polonnaruwa: 0, puttalam: 0, ratnapura: 0, trincomalee: 0, vavuniya: 0,
+            totals: 0
         };
 
         // Set counts for districts that have votes
         foreach var [district, count] in districtCounts.entries() {
             summary = setDistrictCount(summary, district, count);
-            summary.Totals += count;
+            summary.totals += count;
         }
 
         results.push(summary);
@@ -1226,38 +1226,38 @@ public function calculateElectionResults(string electionId) returns store:Candid
         store:CandidateDistrictVoteSummary summary = {
             electionId: electionId,
             candidateId: candidateId,
-            Ampara: 0,
-            Anuradhapura: 0,
-            Badulla: 0,
-            Batticaloa: 0,
-            Colombo: 0,
-            Galle: 0,
-            Gampaha: 0,
-            Hambantota: 0,
-            Jaffna: 0,
-            Kalutara: 0,
-            Kandy: 0,
-            Kegalle: 0,
-            Kilinochchi: 0,
-            Kurunegala: 0,
-            Mannar: 0,
-            Matale: 0,
-            Matara: 0,
-            Monaragala: 0,
-            Mullaitivu: 0,
-            NuwaraEliya: 0,
-            Polonnaruwa: 0,
-            Puttalam: 0,
-            Ratnapura: 0,
-            Trincomalee: 0,
-            Vavuniya: 0,
-            Totals: 0
+            ampara: 0,
+            anuradhapura: 0,
+            badulla: 0,
+            batticaloa: 0,
+            colombo: 0,
+            galle: 0,
+            gampaha: 0,
+            hambantota: 0,
+            jaffna: 0,
+            kalutara: 0,
+            kandy: 0,
+            kegalle: 0,
+            kilinochchi: 0,
+            kurunegala: 0,
+            mannar: 0,
+            matale: 0,
+            matara: 0,
+            monaragala: 0,
+            mullaitivu: 0,
+            nuwaraEliya: 0,
+            polonnaruwa: 0,
+            puttalam: 0,
+            ratnapura: 0,
+            trincomalee: 0,
+            vavuniya: 0,
+            totals: 0
         };
 
         // Set counts for districts that have votes
         foreach var [district, count] in districtCounts.entries() {
             summary = setDistrictCount(summary, district, count);
-            summary.Totals += count;
+            summary.totals += count;
         }
 
         results.push(summary);
@@ -1357,32 +1357,32 @@ public function getElectionResultsWithDetails(string electionId) returns map<jso
             partySymbol: candidate.partySymbol,
             partyColor: candidate.partyColor,
             // Include all district vote counts
-            Ampara: summary.Ampara,
-            Anuradhapura: summary.Anuradhapura,
-            Badulla: summary.Badulla,
-            Batticaloa: summary.Batticaloa,
-            Colombo: summary.Colombo,
-            Galle: summary.Galle,
-            Gampaha: summary.Gampaha,
-            Hambantota: summary.Hambantota,
-            Jaffna: summary.Jaffna,
-            Kalutara: summary.Kalutara,
-            Kandy: summary.Kandy,
-            Kegalle: summary.Kegalle,
-            Kilinochchi: summary.Kilinochchi,
-            Kurunegala: summary.Kurunegala,
-            Mannar: summary.Mannar,
-            Matale: summary.Matale,
-            Matara: summary.Matara,
-            Monaragala: summary.Monaragala,
-            Mullaitivu: summary.Mullaitivu,
-            NuwaraEliya: summary.NuwaraEliya,
-            Polonnaruwa: summary.Polonnaruwa,
-            Puttalam: summary.Puttalam,
-            Ratnapura: summary.Ratnapura,
-            Trincomalee: summary.Trincomalee,
-            Vavuniya: summary.Vavuniya,
-            Totals: summary.Totals
+            ampara: summary.ampara,
+            anuradhapura: summary.anuradhapura,
+            badulla: summary.badulla,
+            batticaloa: summary.batticaloa,
+            colombo: summary.colombo,
+            galle: summary.galle,
+            gampaha: summary.gampaha,
+            hambantota: summary.hambantota,
+            jaffna: summary.jaffna,
+            kalutara: summary.kalutara,
+            kandy: summary.kandy,
+            kegalle: summary.kegalle,
+            kilinochchi: summary.kilinochchi,
+            kurunegala: summary.kurunegala,
+            mannar: summary.mannar,
+            matale: summary.matale,
+            matara: summary.matara,
+            monaragala: summary.monaragala,
+            mullaitivu: summary.mullaitivu,
+            nuwaraEliya: summary.nuwaraEliya,
+            polonnaruwa: summary.polonnaruwa,
+            puttalam: summary.puttalam,
+            ratnapura: summary.ratnapura,
+            trincomalee: summary.trincomalee,
+            vavuniya: summary.vavuniya,
+            totals: summary.totals
         };
 
         results.push(result);

@@ -12,21 +12,29 @@ DROP TABLE IF EXISTS "Notification";
 DROP TABLE IF EXISTS "HouseholdMembers";
 DROP TABLE IF EXISTS "AdminUsers";
 DROP TABLE IF EXISTS "RemovalRequest";
-DROP TABLE IF EXISTS "CandidateDistrictVoteSummary";
 DROP TABLE IF EXISTS "GramaNiladhari";
 DROP TABLE IF EXISTS "Voter";
+DROP TABLE IF EXISTS "RegistrationReview";
+DROP TABLE IF EXISTS "CandidateDistrictVoteSummary";
+DROP TABLE IF EXISTS "DeleteMemberRequest";
+DROP TABLE IF EXISTS "UpdateMemberRequest";
 DROP TABLE IF EXISTS "ChiefOccupant";
 DROP TABLE IF EXISTS "HouseholdDetails";
-DROP TABLE IF EXISTS "RegistrationReview";
+DROP TABLE IF EXISTS "AddMemberRequest";
 
-CREATE TABLE "RegistrationReview" (
-	"id" VARCHAR(191) NOT NULL,
-	"member_nic" VARCHAR(191) NOT NULL,
-	"reviewed_by" VARCHAR(191) NOT NULL,
-	"status" VARCHAR(191) NOT NULL,
-	"comments" VARCHAR(191),
-	"reviewed_at" TIMESTAMP,
-	PRIMARY KEY("id")
+CREATE TABLE "AddMemberRequest" (
+	"add_request_id" VARCHAR(191) NOT NULL,
+	"chief_occupant_id" VARCHAR(191) NOT NULL,
+	"nic_number" VARCHAR(191) NOT NULL,
+	"full_name" VARCHAR(191) NOT NULL,
+	"date_of_birth" VARCHAR(191) NOT NULL,
+	"gender" VARCHAR(191) NOT NULL,
+	"civil_status" VARCHAR(191) NOT NULL,
+	"relationship_to_chief" VARCHAR(191) NOT NULL,
+	"chief_occupant_approval" VARCHAR(191) NOT NULL,
+	"request_status" VARCHAR(191) NOT NULL,
+	"nic_or_birth_certificate_path" VARCHAR(191),
+	PRIMARY KEY("add_request_id")
 );
 
 CREATE TABLE "HouseholdDetails" (
@@ -55,6 +63,97 @@ CREATE TABLE "ChiefOccupant" (
 	"id_copy_path" VARCHAR(191),
 	"photo_copy_path" VARCHAR(191),
 	"role" VARCHAR(191) NOT NULL,
+	PRIMARY KEY("id")
+);
+
+CREATE TABLE "UpdateMemberRequest" (
+	"update_request_id" VARCHAR(191) NOT NULL,
+	"chief_occupant_id" VARCHAR(191) NOT NULL,
+	"household_member_id" VARCHAR(191),
+	"new_full_name" VARCHAR(191),
+	"new_resident_area" VARCHAR(191),
+	"request_status" VARCHAR(191) NOT NULL,
+	"relevant_certificate_path" VARCHAR(191),
+	PRIMARY KEY("update_request_id")
+);
+
+CREATE TABLE "DeleteMemberRequest" (
+	"delete_request_id" VARCHAR(191) NOT NULL,
+	"chief_occupant_id" VARCHAR(191) NOT NULL,
+	"household_member_id" VARCHAR(191),
+	"request_status" VARCHAR(191) NOT NULL,
+	"required_document_path" VARCHAR(191),
+	PRIMARY KEY("delete_request_id")
+);
+
+CREATE TABLE "CandidateDistrictVoteSummary" (
+	"election_id" VARCHAR(191) NOT NULL,
+	"candidate_id" VARCHAR(191) NOT NULL,
+	"ampara" INT NOT NULL,
+	"anuradhapura" INT NOT NULL,
+	"badulla" INT NOT NULL,
+	"batticaloa" INT NOT NULL,
+	"colombo" INT NOT NULL,
+	"galle" INT NOT NULL,
+	"gampaha" INT NOT NULL,
+	"hambantota" INT NOT NULL,
+	"jaffna" INT NOT NULL,
+	"kalutara" INT NOT NULL,
+	"kandy" INT NOT NULL,
+	"kegalle" INT NOT NULL,
+	"kilinochchi" INT NOT NULL,
+	"kurunegala" INT NOT NULL,
+	"mannar" INT NOT NULL,
+	"matale" INT NOT NULL,
+	"matara" INT NOT NULL,
+	"monaragala" INT NOT NULL,
+	"mullaitivu" INT NOT NULL,
+	"nuwaraEliya" INT NOT NULL,
+	"polonnaruwa" INT NOT NULL,
+	"puttalam" INT NOT NULL,
+	"ratnapura" INT NOT NULL,
+	"trincomalee" INT NOT NULL,
+	"vavuniya" INT NOT NULL,
+	"totals" INT NOT NULL,
+	PRIMARY KEY("election_id","candidate_id")
+);
+
+CREATE TABLE "AdminUsers" (
+	"id" VARCHAR(191) NOT NULL,
+	"username" VARCHAR(191) NOT NULL,
+	"email" VARCHAR(191) NOT NULL,
+	"password_hash" VARCHAR(191) NOT NULL,
+	"role" VARCHAR(191) NOT NULL,
+	"created_at" TIMESTAMP NOT NULL,
+	"is_active" BOOLEAN NOT NULL,
+	PRIMARY KEY("id")
+);
+
+CREATE TABLE "HouseholdMembers" (
+	"id" VARCHAR(191) NOT NULL,
+	"chief_occupant_id" VARCHAR(191) NOT NULL,
+	"full_name" VARCHAR(191) NOT NULL,
+	"nic" VARCHAR(191),
+	"dob" VARCHAR(191) NOT NULL,
+	"gender" VARCHAR(191) NOT NULL,
+	"civil_status" VARCHAR(191) NOT NULL,
+	"relationship_with_chief_occupant" VARCHAR(191) NOT NULL,
+	"id_copy_path" VARCHAR(191),
+	"photo_copy_path" VARCHAR(191),
+	"approved_by_chief" BOOLEAN NOT NULL,
+	"Hased_password" VARCHAR(191) NOT NULL,
+	"passwordchanged" BOOLEAN NOT NULL,
+	"role" VARCHAR(191) NOT NULL,
+	PRIMARY KEY("id")
+);
+
+  CREATE TABLE "RegistrationReview" (
+	"id" VARCHAR(191) NOT NULL,
+	"member_nic" VARCHAR(191) NOT NULL,
+	"reviewed_by" VARCHAR(191) NOT NULL,
+	"status" VARCHAR(191) NOT NULL,
+	"comments" VARCHAR(191),
+	"reviewed_at" TIMESTAMP,
 	PRIMARY KEY("id")
 );
 
@@ -91,39 +190,21 @@ CREATE TABLE "GramaNiladhari" (
 	PRIMARY KEY("id")
 );
 
-CREATE TABLE "CandidateDistrictVoteSummary" (
+CREATE TABLE "Enrolment" (
+	"voter_id" VARCHAR(191) NOT NULL,
 	"election_id" VARCHAR(191) NOT NULL,
-	"candidate_id" VARCHAR(191) NOT NULL,
-	"Ampara" INT NOT NULL,
-	"Anuradhapura" INT NOT NULL,
-	"Badulla" INT NOT NULL,
-	"Batticaloa" INT NOT NULL,
-	"Colombo" INT NOT NULL,
-	"Galle" INT NOT NULL,
-	"Gampaha" INT NOT NULL,
-	"Hambantota" INT NOT NULL,
-	"Jaffna" INT NOT NULL,
-	"Kalutara" INT NOT NULL,
-	"Kandy" INT NOT NULL,
-	"Kegalle" INT NOT NULL,
-	"Kilinochchi" INT NOT NULL,
-	"Kurunegala" INT NOT NULL,
-	"Mannar" INT NOT NULL,
-	"Matale" INT NOT NULL,
-	"Matara" INT NOT NULL,
-	"Monaragala" INT NOT NULL,
-	"Mullaitivu" INT NOT NULL,
-	"NuwaraEliya" INT NOT NULL,
-	"Polonnaruwa" INT NOT NULL,
-	"Puttalam" INT NOT NULL,
-	"Ratnapura" INT NOT NULL,
-	"Trincomalee" INT NOT NULL,
-	"Vavuniya" INT NOT NULL,
-	"Totals" INT NOT NULL,
-	PRIMARY KEY("election_id","candidate_id")
+	"enrollement_date" TIMESTAMP NOT NULL,
+	PRIMARY KEY("voter_id","election_id")
 );
 
-CREATE TABLE "RemovalRequest" (
+CREATE TABLE "EnrolCandidates" (
+	"election_id" VARCHAR(191) NOT NULL,
+	"candidate_id" VARCHAR(191) NOT NULL,
+	"number_of_votes" INT,
+	PRIMARY KEY("election_id","candidate_id")
+);
+  
+  CREATE TABLE "RemovalRequest" (
 	"id" VARCHAR(191) NOT NULL,
 	"member_name" VARCHAR(191) NOT NULL,
 	"nic" VARCHAR(191) NOT NULL,
@@ -131,35 +212,6 @@ CREATE TABLE "RemovalRequest" (
 	"reason" VARCHAR(191) NOT NULL,
 	"proof_document" VARCHAR(191) NOT NULL,
 	"status" VARCHAR(191) NOT NULL,
-	PRIMARY KEY("id")
-);
-
-CREATE TABLE "AdminUsers" (
-	"id" VARCHAR(191) NOT NULL,
-	"username" VARCHAR(191) NOT NULL,
-	"email" VARCHAR(191) NOT NULL,
-	"password_hash" VARCHAR(191) NOT NULL,
-	"role" VARCHAR(191) NOT NULL,
-	"created_at" TIMESTAMP NOT NULL,
-	"is_active" BOOLEAN NOT NULL,
-	PRIMARY KEY("id")
-);
-
-CREATE TABLE "HouseholdMembers" (
-	"id" VARCHAR(191) NOT NULL,
-	"chief_occupant_id" VARCHAR(191) NOT NULL,
-	"full_name" VARCHAR(191) NOT NULL,
-	"nic" VARCHAR(191),
-	"dob" VARCHAR(191) NOT NULL,
-	"gender" VARCHAR(191) NOT NULL,
-	"civil_status" VARCHAR(191) NOT NULL,
-	"relationship_with_chief_occupant" VARCHAR(191) NOT NULL,
-	"id_copy_path" VARCHAR(191),
-	"photo_copy_path" VARCHAR(191),
-	"approved_by_chief" BOOLEAN NOT NULL,
-	"Hased_password" VARCHAR(191) NOT NULL,
-	"passwordchanged" BOOLEAN NOT NULL,
-	"role" VARCHAR(191) NOT NULL,
 	PRIMARY KEY("id")
 );
 
@@ -188,20 +240,6 @@ CREATE TABLE "Election" (
 	"end_time" TIME NOT NULL,
 	"status" VARCHAR(191) NOT NULL,
 	PRIMARY KEY("id")
-);
-
-CREATE TABLE "Enrolment" (
-	"voter_id" VARCHAR(191) NOT NULL,
-	"election_id" VARCHAR(191) NOT NULL,
-	"enrollement_date" TIMESTAMP NOT NULL,
-	PRIMARY KEY("voter_id","election_id")
-);
-
-CREATE TABLE "EnrolCandidates" (
-	"election_id" VARCHAR(191) NOT NULL,
-	"candidate_id" VARCHAR(191) NOT NULL,
-	"number_of_votes" INT,
-	PRIMARY KEY("election_id","candidate_id")
 );
 
 CREATE TABLE "Vote" (

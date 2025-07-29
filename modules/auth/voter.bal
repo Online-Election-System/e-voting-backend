@@ -1,6 +1,5 @@
 import online_election.common;
 import online_election.store;
-
 import ballerina/email;
 import ballerina/http;
 import ballerina/io;
@@ -13,7 +12,6 @@ email:SmtpClient smtpClient = check new (
     "rashminkavindya2@gmail.com",
     "ktax nqmc qcre myfq"
 );
-
 public function postRegistration(VoterRegistrationRequest request) returns json|http:Forbidden|error {
     log:printInfo("Processing registration request");
     log:printInfo("Password received: " + request.chiefOccupant.passwordHash);
@@ -75,6 +73,7 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
         passwordHash: hashedPassword,
         email: request.chiefOccupant.email,
         idCopyPath: request.chiefOccupant.idCopyPath,
+        photoCopyPath: request.chiefOccupant.phophotoCopyPath,
         role: "chief_occupant"
     ,imagePath: ()};
 
@@ -97,7 +96,6 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
         log:printInfo("=== DEBUG: Verification - Chief in DB ===");
         log:printInfo("Verified chief idCopyPath from DB: " + (verifyChief.idCopyPath ?: "NULL"));
     }
-
     // Send welcome email
     error? emailError = sendWelcomeEmail(request.chiefOccupant.email, request.chiefOccupant.fullName, request.chiefOccupant.passwordHash);
     if emailError is error {
@@ -161,6 +159,7 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
             approvedByChief: member.approvedByChief,
             civilStatus: member.civilStatus,
             idCopyPath: member.idCopyPath,
+            photoCopyPath: member.phophotoCopyPath,
             passwordHash: memberHashedPassword,
             passwordchanged: false,
             role: "household_member"
@@ -200,7 +199,6 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
             // Don't fail the registration for email issues
         }
     }
-
     log:printInfo("Registration completed successfully");
     return {
         status: "success",
@@ -209,7 +207,6 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
         householdId: householdId
     };
 }
-
 public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unauthorized|error {
     log:printInfo("=== LOGIN DEBUG START ===");
     log:printInfo("Attempting login for NIC: " + loginReq.nic);
@@ -475,7 +472,6 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
     log:printInfo("=== LOGIN DEBUG END - NO USER FOUND ===");
     return http:UNAUTHORIZED;
 }
-
 public function putChangePassword(ChangePasswordRequest req) returns http:Ok|http:Unauthorized|json|error {
     // Validate new password
     string? passwordError = validatePasswordPolicy(req.newPassword);
@@ -569,4 +565,5 @@ public function postResetPassword(PasswordResetRequest req) returns http:Ok|http
     // Then update their password similar to changePassword function
 
     return http:OK;
+
 }
