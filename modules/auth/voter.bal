@@ -214,7 +214,7 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
     log:printInfo("=== LOGIN DEBUG START ===");
     log:printInfo("Attempting login for NIC: " + loginReq.nic);
     log:printInfo("Password length: " + loginReq.password.length().toString());
-    
+
     // ChiefOccupant login
     log:printInfo("Checking ChiefOccupants table...");
     stream<store:ChiefOccupant, persist:Error?> chiefStream = dbClient->/chiefoccupants.get();
@@ -225,21 +225,21 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
         do {
             chiefCount += 1;
             log:printInfo("Checking chief #" + chiefCount.toString() + ": " + chief.nic + " vs " + loginReq.nic);
-            
+
             if chief.nic == loginReq.nic {
                 chiefFound = true;
                 log:printInfo("Chief found: " + chief.fullName);
                 log:printInfo("Stored password hash: " + chief.passwordHash);
-                
+
                 boolean|error isVerified = verifyPassword(loginReq.password, chief.passwordHash);
                 log:printInfo("Password verification result: " + (check isVerified).toString());
-                
+
                 if isVerified is error {
                     log:printError("Password verification error: " + isVerified.message());
                     check chiefStream.close();
                     return http:UNAUTHORIZED;
                 }
-                
+
                 if !isVerified {
                     log:printInfo("Password verification failed - passwords don't match");
                     check chiefStream.close();
@@ -255,17 +255,20 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
 
                 check chiefStream.close();
                 log:printInfo("Chief login successful");
-                return {
+
+                // Response with cookie
+                LoginResponse response = {
                     userId: chief.id,
                     userType: "chief_occupant",
                     fullName: chief.fullName,
-                    message: "Login successful",
-                    token: token
+                    message: "Login successful"
                 };
+
+                return response;
             }
         };
     check chiefStream.close();
-    
+
     log:printInfo("Total chiefs checked: " + chiefCount.toString());
     if !chiefFound {
         log:printInfo("No chief found with NIC: " + loginReq.nic);
@@ -281,21 +284,21 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
         do {
             memberCount += 1;
             log:printInfo("Checking member #" + memberCount.toString() + ": " + (member.nic ?: "NULL") + " vs " + loginReq.nic);
-            
+
             if member.nic == loginReq.nic {
                 memberFound = true;
                 log:printInfo("Member found: " + member.fullName);
                 log:printInfo("Stored password hash: " + member.passwordHash);
-                
+
                 boolean|error isVerified = verifyPassword(loginReq.password, member.passwordHash);
                 log:printInfo("Password verification result: " + (check isVerified).toString());
-                
+
                 if isVerified is error {
                     log:printError("Password verification error: " + isVerified.message());
                     check memberStream.close();
                     return http:UNAUTHORIZED;
                 }
-                
+
                 if !isVerified {
                     log:printInfo("Password verification failed - passwords don't match");
                     check memberStream.close();
@@ -311,17 +314,21 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
 
                 check memberStream.close();
                 log:printInfo("Member login successful");
-                return {
+
+                
+                // Response with cookie
+                LoginResponse response = {
                     userId: member.id,
                     userType: "household_member",
                     fullName: member.fullName,
-                    message: member.passwordchanged ? "Login successful" : "First-time login. Please change your password.",
-                    token: token
+                    message: member.passwordchanged ? "Login successful" : "First-time login. Please change your password."
                 };
+
+                return response;
             }
         };
     check memberStream.close();
-    
+
     log:printInfo("Total members checked: " + memberCount.toString());
     if !memberFound {
         log:printInfo("No member found with NIC: " + loginReq.nic);
@@ -337,21 +344,21 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
         do {
             adminCount += 1;
             log:printInfo("Checking admin #" + adminCount.toString() + ": " + admin.username + " vs " + loginReq.nic);
-            
+
             if admin.username == loginReq.nic {
                 adminFound = true;
                 log:printInfo("Admin found: " + admin.username);
                 log:printInfo("Stored password hash: " + admin.passwordHash);
-                
+
                 boolean|error isVerified = verifyPassword(loginReq.password, admin.passwordHash);
                 log:printInfo("Password verification result: " + (check isVerified).toString());
-                
+
                 if isVerified is error {
                     log:printError("Password verification error: " + isVerified.message());
                     check adminStream.close();
                     return http:UNAUTHORIZED;
                 }
-                
+
                 if !isVerified {
                     log:printInfo("Password verification failed - passwords don't match");
                     check adminStream.close();
@@ -363,6 +370,8 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
                     role = GOVERNMENT_OFFICIAL;
                 } else if admin.role == "election_commission" {
                     role = ELECTION_COMMISSION;
+                } else if admin.role == "polling_station" {
+                    role = POLLING_STATION;
                 } else if admin.role == "admin" {
                     role = ADMIN;
                 } else {
@@ -380,17 +389,20 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
 
                 check adminStream.close();
                 log:printInfo("Admin login successful");
-                return {
+                
+                // Response with cookie
+                LoginResponse response = {
                     userId: admin.id,
                     userType: admin.role,
                     fullName: admin.username,
-                    message: "Login successful",
-                    token: token
+                    message: "Login successful"
                 };
+
+                return response;
             }
         };
     check adminStream.close();
-    
+
     log:printInfo("Total admins checked: " + adminCount.toString());
     if !adminFound {
         log:printInfo("No admin found with username: " + loginReq.nic);

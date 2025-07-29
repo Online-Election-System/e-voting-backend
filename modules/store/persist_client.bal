@@ -19,6 +19,7 @@ const ADMIN_USERS = "adminusers";
 const ENROL_CANDIDATES = "enrolcandidates";
 const VOTE = "votes";
 const ENROLMENT = "enrolments";
+const CANDIDATE_DISTRICT_VOTE_SUMMARY = "candidatedistrictvotesummaries";
 const AUDIT_LOG = "auditlogs";
 
 public isolated client class Client {
@@ -163,6 +164,41 @@ public isolated client class Client {
             },
             keyFields: ["voterId", "electionId"]
         },
+        [CANDIDATE_DISTRICT_VOTE_SUMMARY]: {
+            entityName: "CandidateDistrictVoteSummary",
+            tableName: "CandidateDistrictVoteSummary",
+            fieldMetadata: {
+                electionId: {columnName: "election_id"},
+                candidateId: {columnName: "candidate_id"},
+                Ampara: {columnName: "Ampara"},
+                Anuradhapura: {columnName: "Anuradhapura"},
+                Badulla: {columnName: "Badulla"},
+                Batticaloa: {columnName: "Batticaloa"},
+                Colombo: {columnName: "Colombo"},
+                Galle: {columnName: "Galle"},
+                Gampaha: {columnName: "Gampaha"},
+                Hambantota: {columnName: "Hambantota"},
+                Jaffna: {columnName: "Jaffna"},
+                Kalutara: {columnName: "Kalutara"},
+                Kandy: {columnName: "Kandy"},
+                Kegalle: {columnName: "Kegalle"},
+                Kilinochchi: {columnName: "Kilinochchi"},
+                Kurunegala: {columnName: "Kurunegala"},
+                Mannar: {columnName: "Mannar"},
+                Matale: {columnName: "Matale"},
+                Matara: {columnName: "Matara"},
+                Monaragala: {columnName: "Monaragala"},
+                Mullaitivu: {columnName: "Mullaitivu"},
+                NuwaraEliya: {columnName: "NuwaraEliya"},
+                Polonnaruwa: {columnName: "Polonnaruwa"},
+                Puttalam: {columnName: "Puttalam"},
+                Ratnapura: {columnName: "Ratnapura"},
+                Trincomalee: {columnName: "Trincomalee"},
+                Vavuniya: {columnName: "Vavuniya"},
+                Totals: {columnName: "Totals"}
+            },
+            keyFields: ["electionId", "candidateId"]
+        },
         [AUDIT_LOG]: {
             entityName: "AuditLog",
             tableName: "AuditLog",
@@ -223,6 +259,7 @@ public isolated client class Client {
             [ENROL_CANDIDATES]: check new (dbClient, self.metadata.get(ENROL_CANDIDATES).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [VOTE]: check new (dbClient, self.metadata.get(VOTE).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [ENROLMENT]: check new (dbClient, self.metadata.get(ENROLMENT).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [CANDIDATE_DISTRICT_VOTE_SUMMARY]: check new (dbClient, self.metadata.get(CANDIDATE_DISTRICT_VOTE_SUMMARY).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [AUDIT_LOG]: check new (dbClient, self.metadata.get(AUDIT_LOG).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
         };
     }
@@ -575,6 +612,45 @@ public isolated client class Client {
             sqlClient = self.persistClients.get(ENROLMENT);
         }
         _ = check sqlClient.runDeleteQuery({"voterId": voterId, "electionId": electionId});
+        return result;
+    }
+
+    isolated resource function get candidatedistrictvotesummaries(CandidateDistrictVoteSummaryTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get candidatedistrictvotesummaries/[string electionId]/[string candidateId](CandidateDistrictVoteSummaryTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post candidatedistrictvotesummaries(CandidateDistrictVoteSummaryInsert[] data) returns [string, string][]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(CANDIDATE_DISTRICT_VOTE_SUMMARY);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from CandidateDistrictVoteSummaryInsert inserted in data
+            select [inserted.electionId, inserted.candidateId];
+    }
+
+    isolated resource function put candidatedistrictvotesummaries/[string electionId]/[string candidateId](CandidateDistrictVoteSummaryUpdate value) returns CandidateDistrictVoteSummary|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(CANDIDATE_DISTRICT_VOTE_SUMMARY);
+        }
+        _ = check sqlClient.runUpdateQuery({"electionId": electionId, "candidateId": candidateId}, value);
+        return self->/candidatedistrictvotesummaries/[electionId]/[candidateId].get();
+    }
+
+    isolated resource function delete candidatedistrictvotesummaries/[string electionId]/[string candidateId]() returns CandidateDistrictVoteSummary|persist:Error {
+        CandidateDistrictVoteSummary result = check self->/candidatedistrictvotesummaries/[electionId]/[candidateId].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(CANDIDATE_DISTRICT_VOTE_SUMMARY);
+        }
+        _ = check sqlClient.runDeleteQuery({"electionId": electionId, "candidateId": candidateId});
         return result;
     }
 

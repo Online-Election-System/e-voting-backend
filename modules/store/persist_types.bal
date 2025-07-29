@@ -324,6 +324,101 @@ public type EnrolmentUpdate record {|
     time:Utc enrollementDate?;
 |};
 
+public type CandidateDistrictVoteSummary record {|
+    readonly string electionId;
+    readonly string candidateId;
+    int Ampara;
+    int Anuradhapura;
+    int Badulla;
+    int Batticaloa;
+    int Colombo;
+    int Galle;
+    int Gampaha;
+    int Hambantota;
+    int Jaffna;
+    int Kalutara;
+    int Kandy;
+    int Kegalle;
+    int Kilinochchi;
+    int Kurunegala;
+    int Mannar;
+    int Matale;
+    int Matara;
+    int Monaragala;
+    int Mullaitivu;
+    int NuwaraEliya;
+    int Polonnaruwa;
+    int Puttalam;
+    int Ratnapura;
+    int Trincomalee;
+    int Vavuniya;
+    int Totals;
+|};
+
+public type CandidateDistrictVoteSummaryOptionalized record {|
+    string electionId?;
+    string candidateId?;
+    int Ampara?;
+    int Anuradhapura?;
+    int Badulla?;
+    int Batticaloa?;
+    int Colombo?;
+    int Galle?;
+    int Gampaha?;
+    int Hambantota?;
+    int Jaffna?;
+    int Kalutara?;
+    int Kandy?;
+    int Kegalle?;
+    int Kilinochchi?;
+    int Kurunegala?;
+    int Mannar?;
+    int Matale?;
+    int Matara?;
+    int Monaragala?;
+    int Mullaitivu?;
+    int NuwaraEliya?;
+    int Polonnaruwa?;
+    int Puttalam?;
+    int Ratnapura?;
+    int Trincomalee?;
+    int Vavuniya?;
+    int Totals?;
+|};
+
+public type CandidateDistrictVoteSummaryTargetType typedesc<CandidateDistrictVoteSummaryOptionalized>;
+
+public type CandidateDistrictVoteSummaryInsert CandidateDistrictVoteSummary;
+
+public type CandidateDistrictVoteSummaryUpdate record {|
+    int Ampara?;
+    int Anuradhapura?;
+    int Badulla?;
+    int Batticaloa?;
+    int Colombo?;
+    int Galle?;
+    int Gampaha?;
+    int Hambantota?;
+    int Jaffna?;
+    int Kalutara?;
+    int Kandy?;
+    int Kegalle?;
+    int Kilinochchi?;
+    int Kurunegala?;
+    int Mannar?;
+    int Matale?;
+    int Matara?;
+    int Monaragala?;
+    int Mullaitivu?;
+    int NuwaraEliya?;
+    int Polonnaruwa?;
+    int Puttalam?;
+    int Ratnapura?;
+    int Trincomalee?;
+    int Vavuniya?;
+    int Totals?;
+|};
+
 public type AuditLog record {|
     readonly string id;
     time:Utc timestamp;

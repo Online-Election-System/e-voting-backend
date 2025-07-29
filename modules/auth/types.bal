@@ -65,7 +65,6 @@ public type LoginResponse record {|
     string userType;
     string fullName;
     string message;
-    string token;
     int expiresAt?; // Unix timestamp
     int expiresIn?; // Seconds until expiry
 |};
