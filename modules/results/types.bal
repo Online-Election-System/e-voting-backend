@@ -221,6 +221,15 @@ public type ElectionSummary record {
     decimal overall_turnout?;
 };
 
+public type ElectionSummaryies record {|
+    string electionId;
+    int totalCandidates;
+    int totalVotes;
+    string winner;
+    decimal winnerPercentage;
+    int totalDistrictsConsidered;
+|};
+
 public type CandidateOverall record {
     string candidate_id;
     string candidate_name;

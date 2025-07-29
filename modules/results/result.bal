@@ -565,7 +565,7 @@ public function exportElectionCandidateDataAsCSV(string electionId, store:Client
     return csvContent;
 }
 
-public function getElectionSummary(string electionId, store:Client dbClient) returns record {|
+public function getElectionSummaryies(string electionId, store:Client dbClient) returns record {|
     string electionId;
     int totalCandidates;
     int totalVotes;

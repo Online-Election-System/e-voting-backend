@@ -5,7 +5,6 @@
 
 DROP TABLE IF EXISTS "Candidate";
 DROP TABLE IF EXISTS "Vote";
-DROP TABLE IF EXISTS "CandidateDistrictVoteSummary";
 DROP TABLE IF EXISTS "EnrolCandidates";
 DROP TABLE IF EXISTS "Enrolment";
 DROP TABLE IF EXISTS "Election";
@@ -104,7 +103,7 @@ CREATE TABLE "CandidateDistrictVoteSummary" (
 	"matara" INT NOT NULL,
 	"monaragala" INT NOT NULL,
 	"mullaitivu" INT NOT NULL,
-	"nuwaraEliya" INT NOT NULL,
+	"nuwaraeliya" INT NOT NULL,
 	"polonnaruwa" INT NOT NULL,
 	"puttalam" INT NOT NULL,
 	"ratnapura" INT NOT NULL,
@@ -170,38 +169,6 @@ CREATE TABLE "EnrolCandidates" (
 	"election_id" VARCHAR(191) NOT NULL,
 	"candidate_id" VARCHAR(191) NOT NULL,
 	"number_of_votes" INT,
-	PRIMARY KEY("election_id","candidate_id")
-);
-
-CREATE TABLE "CandidateDistrictVoteSummary" (
-	"election_id" VARCHAR(191) NOT NULL,
-	"candidate_id" VARCHAR(191) NOT NULL,
-	"ampara" INT NOT NULL,
-	"anuradhapura" INT NOT NULL,
-	"badulla" INT NOT NULL,
-	"batticaloa" INT NOT NULL,
-	"colombo" INT NOT NULL,
-	"galle" INT NOT NULL,
-	"gampaha" INT NOT NULL,
-	"hambantota" INT NOT NULL,
-	"jaffna" INT NOT NULL,
-	"kalutara" INT NOT NULL,
-	"kandy" INT NOT NULL,
-	"kegalle" INT NOT NULL,
-	"kilinochchi" INT NOT NULL,
-	"kurunegala" INT NOT NULL,
-	"mannar" INT NOT NULL,
-	"matale" INT NOT NULL,
-	"matara" INT NOT NULL,
-	"monaragala" INT NOT NULL,
-	"mullaitivu" INT NOT NULL,
-	"nuwaraeliya" INT NOT NULL,
-	"polonnaruwa" INT NOT NULL,
-	"puttalam" INT NOT NULL,
-	"ratnapura" INT NOT NULL,
-	"trincomalee" INT NOT NULL,
-	"vavuniya" INT NOT NULL,
-	"totals" INT NOT NULL,
 	PRIMARY KEY("election_id","candidate_id")
 );
 

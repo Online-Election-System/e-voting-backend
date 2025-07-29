@@ -4,12 +4,9 @@ import online_election.election;
 import online_election.results;
 import online_election.vote;
 import online_election.store;
-import online_election.results;
-import online_election.HouseholdManagement;
-
 import ballerina/http;
 import ballerina/persist;
-
+import online_election.HouseholdManagement;
 
 
 listener http:Listener SharedListener = new (8080);
@@ -594,12 +591,6 @@ service /results/api/v1 on SharedListener {
 
     //  ELECTION SUMMARY AND OVERVIEW
 
-
-    // Get comprehensive election summary
-    resource function get elections/[string electionId]/summary() returns json|error {
-        return check results:getElectionSummary(electionId, results:dbClient);
-    }
-
     //  DATA VALIDATION AND INTEGRITY
 
     //  SPECIFIC RESULT QUERIES
@@ -755,8 +746,8 @@ service /results/api/v1 on SharedListener {
 
     // Get election summary with district winners
     resource function get election/[string electionId]/summary()
-    returns results:ElectionSummary|http:NotFound|error {
-        return check results:getElectionSummary(electionId);
+    returns results:ElectionSummaryies|http:NotFound|error {
+        return check results:getElectionSummaryies(electionId, results:dbClient);
     }
 
     // Get top performing districts for a candidate
