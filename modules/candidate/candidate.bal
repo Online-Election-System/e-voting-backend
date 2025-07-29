@@ -246,38 +246,35 @@ function isDateBetween(time:Date date, time:Date startDate, time:Date endDate) r
 
 // Get candidates by election with optional status filtering
 public function getCandidatesByElection(string electionId, boolean? activeOnly = true) returns store:Candidate[]|error {
-    // Get enrolled candidates for this election
+    // Get enrolled candidates for this specific election
     stream<store:EnrolCandidates, persist:Error?> enrolmentStream = dbCandidate->/enrolcandidates;
     store:EnrolCandidates[] enrolments = check from store:EnrolCandidates enrolment in enrolmentStream
         where enrolment.electionId == electionId
         select enrolment;
 
-    string[] candidateIds = enrolments.map(function(store:EnrolCandidates e) returns string {
-        return e.candidateId;
-    });
-
-    // Get candidate details with optional status filter
-    stream<store:Candidate, persist:Error?> candidatesStream = dbCandidate->/candidates;
-    store:Candidate[] candidates;
-
-    if activeOnly is boolean {
-        candidates = check from store:Candidate candidate in candidatesStream
-            where candidate.isActive is boolean && candidate.isActive == activeOnly
-            select candidate;
-    } else {
-        candidates = check from store:Candidate candidate in candidatesStream
-            select candidate;
+    // Get candidates directly by their IDs from enrollment
+    store:Candidate[] candidates = [];
+    
+    foreach store:EnrolCandidates enrolment in enrolments {
+        store:Candidate|persist:Error candidateResult = dbCandidate->/candidates/[enrolment.candidateId].get();
+        if candidateResult is store:Candidate {
+            // Apply status filter if specified
+            if activeOnly is boolean {
+                if candidateResult.isActive is boolean && candidateResult.isActive == activeOnly {
+                    candidates.push(candidateResult);
+                }
+            } else {
+                candidates.push(candidateResult);
+            }
+        }
     }
 
-    // Filter by enrolled candidate IDs
-    return candidates.filter(function(store:Candidate c) returns boolean {
-        return candidateIds.indexOf(c.candidateId) != -1;
-    });
+    return candidates;
 }
 
 // Get candidate by composite key (election + candidate)
 public function getCandidateByCompositeKey(string candidateId, string electionId) returns store:Candidate|error {
-    // Verify candidate enrollment
+    // Verify candidate enrollment for specific election
     store:EnrolCandidates|persist:Error enrolment = dbCandidate->/enrolcandidates/[electionId]/[candidateId].get();
     if enrolment is persist:Error {
         return error("Candidate not enrolled in election");
@@ -289,34 +286,33 @@ public function getCandidateByCompositeKey(string candidateId, string electionId
 
 // Get candidates by election and party
 public function getCandidatesByElectionAndParty(string electionId, string partyName, boolean? activeOnly = true) returns store:Candidate[]|error {
-    // Get candidates by party with optional status filter
-    stream<store:Candidate, persist:Error?> candidatesStream = dbCandidate->/candidates;
-    store:Candidate[] partyCandidates;
-
-    if activeOnly is boolean {
-        partyCandidates = check from store:Candidate candidate in candidatesStream
-            where candidate.partyName == partyName && candidate.isActive is boolean && candidate.isActive == activeOnly
-            select candidate;
-    } else {
-        partyCandidates = check from store:Candidate candidate in candidatesStream
-            where candidate.partyName == partyName
-            select candidate;
-    }
-
-    // Get enrolled candidates for this election
+    // Get enrolled candidates for this specific election
     stream<store:EnrolCandidates, persist:Error?> enrolmentStream = dbCandidate->/enrolcandidates;
     store:EnrolCandidates[] enrolments = check from store:EnrolCandidates enrolment in enrolmentStream
         where enrolment.electionId == electionId
         select enrolment;
 
-    string[] enrolledIds = enrolments.map(function(store:EnrolCandidates e) returns string {
-        return e.candidateId;
-    });
+    // Get candidates from enrollment and filter by party
+    store:Candidate[] candidates = [];
+    
+    foreach store:EnrolCandidates enrolment in enrolments {
+        store:Candidate|persist:Error candidateResult = dbCandidate->/candidates/[enrolment.candidateId].get();
+        if candidateResult is store:Candidate {
+            // Check if candidate belongs to the specified party
+            if candidateResult.partyName == partyName {
+                // Apply status filter if specified
+                if activeOnly is boolean {
+                    if candidateResult.isActive is boolean && candidateResult.isActive == activeOnly {
+                        candidates.push(candidateResult);
+                    }
+                } else {
+                    candidates.push(candidateResult);
+                }
+            }
+        }
+    }
 
-    // Filter party candidates by enrollment
-    return partyCandidates.filter(function(store:Candidate c) returns boolean {
-        return enrolledIds.indexOf(c.candidateId) != -1;
-    });
+    return candidates;
 }
 
 // Check if candidate is active
@@ -343,6 +339,36 @@ public function getCandidatesByParty(string partyName, boolean? activeOnly = tru
         select candidate;
 }
 
-
-
-
+// Alternative optimized version using direct query (if your database supports it)
+public function getCandidatesByElectionOptimized(string electionId, boolean? activeOnly = true) returns store:Candidate[]|error {
+    // Direct join-like query to get candidates enrolled in specific election
+    stream<store:EnrolCandidates, persist:Error?> enrolmentStream = dbCandidate->/enrolcandidates;
+    stream<store:Candidate, persist:Error?> candidatesStream = dbCandidate->/candidates;
+    
+    store:Candidate[] result = [];
+    
+    // Get enrollments for the specific election and fetch corresponding candidates
+    store:EnrolCandidates[] enrolments = check from store:EnrolCandidates enrolment in enrolmentStream
+        where enrolment.electionId == electionId
+        select enrolment;
+    
+    // For each enrollment, get the candidate details
+    foreach store:EnrolCandidates enrolment in enrolments {
+        store:Candidate[] matchingCandidates = check from store:Candidate candidate in candidatesStream
+            where candidate.candidateId == enrolment.candidateId
+            select candidate;
+            
+        foreach store:Candidate candidate in matchingCandidates {
+            // Apply status filter if specified
+            if activeOnly is boolean {
+                if candidate.isActive is boolean && candidate.isActive == activeOnly {
+                    result.push(candidate);
+                }
+            } else {
+                result.push(candidate);
+            }
+        }
+    }
+    
+    return result;
+}
