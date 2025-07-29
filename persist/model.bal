@@ -106,7 +106,7 @@ public type HouseholdDetails record {|
 # + civilStatus - Marital Status
 # + relationshipWithChiefOccupant - Relationship with Chief Occupant
 # + idCopyPath - File Path of ID Copy
-# + photoCopyPath - File Path of Image
+# + photoCopyPath - field description
 # + approvedByChief - Chief Occupant Approval Status
 # + passwordHash - Hashed Password
 # + passwordchanged - if the password change
