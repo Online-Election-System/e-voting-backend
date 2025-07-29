@@ -73,6 +73,7 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
         passwordHash: hashedPassword,
         email: request.chiefOccupant.email,
         idCopyPath: request.chiefOccupant.idCopyPath,
+        photoCopyPath: request.chiefOccupant.phophotoCopyPath,
         role: "chief_occupant"
     };
 
@@ -158,6 +159,7 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
             approvedByChief: member.approvedByChief,
             civilStatus: member.civilStatus,
             idCopyPath: member.idCopyPath,
+            photoCopyPath: member.phophotoCopyPath,
             passwordHash: memberHashedPassword,
             passwordchanged: false,
             role: "household_member"

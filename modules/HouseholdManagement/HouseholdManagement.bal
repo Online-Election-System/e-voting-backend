@@ -29,27 +29,79 @@ public isolated function submitAddMemberRequest(store:AddMemberRequest request) 
     return addResponse;
 }
 public isolated function submitUpdateMemberRequest(store:UpdateMemberRequest request) returns error|string[] {
-    string newId = common:generateId();
+    string requestId = request.updateRequestId;
+    
+    log:printInfo("Processing update request with ID: " + requestId);
+    log:printInfo("Chief Occupant ID: " + request.chiefOccupantId);
+    
+    string? actualHouseholdMemberId = ();
+    
+    // Check if householdMemberId is null (chief occupant update)
+    if (request.householdMemberId is ()) {
+        log:printInfo("Household Member ID: NULL (Chief Occupant Update)");
+        actualHouseholdMemberId = (); // Keep it null for chief occupant updates
+    } else {
+        string providedId = request.householdMemberId.toString();
+        log:printInfo("Provided Identifier: " + providedId);
+        
+        // Query HouseholdMembers table to find member by NIC or actual member ID
+        stream<store:HouseholdMembers, persist:Error?> membersStream = dbclient->/householdmembers.get();
+        store:HouseholdMembers[] matchingMembers = check from var m in membersStream
+            where (m.nic is string && m.nic == providedId) || (m.id == providedId)
+            select m;
+        
+        if (matchingMembers.length() > 0) {
+            actualHouseholdMemberId = matchingMembers[0].id;
+            log:printInfo("Found household member - ID: " + (actualHouseholdMemberId ?: "N/A") + ", NIC: " + (matchingMembers[0].nic ?: "N/A"));
+        } else {
+            log:printError("No household member found with identifier: " + providedId);
+            return error("Household member not found with identifier: " + providedId);
+        }
+    }
+    
+    log:printInfo("Actual Household Member ID to use: " + (actualHouseholdMemberId ?: "NULL"));
+    log:printInfo("New Full Name: " + (request.newFullName ?: "NULL"));
+    log:printInfo("New Resident Area: " + (request.newResidentArea ?: "NULL"));
+    log:printInfo("Request Status: " + request.requestStatus);
+    log:printInfo("Certificate Path: " + (request.relevantCertificatePath ?: "NULL"));
+    
     store:UpdateMemberRequestInsert insertRequest = {
-        updateRequestId: newId,
+        updateRequestId: requestId,
         chiefOccupantId: request.chiefOccupantId,
-        householdMemberId: request.householdMemberId,
+        householdMemberId: actualHouseholdMemberId,
         newFullName: request.newFullName,
         newResidentArea: request.newResidentArea,
         requestStatus: request.requestStatus,
         relevantCertificatePath: request.relevantCertificatePath
     };
+    
     string[]|error updateResponse = dbclient->/updatememberrequests.post([insertRequest]);
     if updateResponse is error {
         log:printError("Failed to submit update member request: " + updateResponse.message());
         return error("Failed to submit update member request: " + updateResponse.message());
     }
 
-    log:printInfo("Update member request submitted successfully");
-    return updateResponse;
+    log:printInfo("Update member request submitted successfully with ID: " + requestId);
+    return [requestId];
 }
 public isolated function submitDeleteMemberRequest(store:DeleteMemberRequest request) returns error|string[] {
     string newId = common:generateId();
+    
+    log:printInfo("Processing delete request");
+    log:printInfo("Chief Occupant ID: " + request.chiefOccupantId);
+    log:printInfo("Household Member ID: " + request.householdMemberId.toString());
+    
+    // Verify member exists
+    stream<store:HouseholdMembers, persist:Error?> membersStream = dbclient->/householdmembers.get();
+    store:HouseholdMembers[] matchingMembers = check from var m in membersStream
+        where m.id == request.householdMemberId
+        select m;
+    
+    if matchingMembers.length() == 0 {
+        log:printError("Household member not found: " + request.householdMemberId.toString());
+        return error("Household member not found");
+    }
+    
     store:DeleteMemberRequestInsert insertRequest = {
         deleteRequestId: newId,
         chiefOccupantId: request.chiefOccupantId,
@@ -57,15 +109,16 @@ public isolated function submitDeleteMemberRequest(store:DeleteMemberRequest req
         requestStatus: request.requestStatus,
         requiredDocumentPath: request.requiredDocumentPath
     };
+    
     string[]|error deleteResponse = dbclient->/deletememberrequests.post([insertRequest]);
     if deleteResponse is error {
-        log:printError("Failed to submit delete member request: " + deleteResponse.message());
-        return error("Failed to submit delete member request: " + deleteResponse.message());
+        log:printError("Failed to submit delete request: " + deleteResponse.message());
+        return error("Failed to submit delete request");
     }
-    log:printInfo("Delete member request submitted successfully");
-    return deleteResponse;
-}
 
+    log:printInfo("Delete request submitted successfully");
+    return [newId];
+}
 // --- Get Household Members ---
 public function getHouseholdMembers(string chiefOccupantId) returns json|error {
     // Fetch chief occupant
@@ -94,17 +147,21 @@ public function getHouseholdMembers(string chiefOccupantId) returns json|error {
 
     foreach store:HouseholdMembers member in members {
         json status = {
+            memberId: member.id, 
             memberName: member.fullName,
+            fullName: member.fullName, 
             nic: member.nic ?: "N/A",
             status: "☑ Pending",
             rejectionReason: "☑ Pending",
-            relationship: member.relationshipWithChiefOccupant
+            relationship: member.relationshipWithChiefOccupant,
+            relationshipWithChiefOccupant: member.relationshipWithChiefOccupant 
         };
         memberData.push(status);
     }
 
     return {
         chiefOccupant: {
+            memberId: chief.id, 
             fullName: chief.fullName,
             nic: chief.nic,
             status: "☑ Approved",

@@ -41,6 +41,7 @@ public isolated client class Client {
                 passwordHash: {columnName: "password_hash"},
                 email: {columnName: "email"},
                 idCopyPath: {columnName: "id_copy_path"},
+                photoCopyPath: {columnName: "photo_copy_path"},
                 role: {columnName: "role"}
             },
             keyFields: ["id"]
@@ -74,6 +75,7 @@ public isolated client class Client {
                 civilStatus: {columnName: "civil_status"},
                 relationshipWithChiefOccupant: {columnName: "relationship_with_chief_occupant"},
                 idCopyPath: {columnName: "id_copy_path"},
+                photoCopyPath: {columnName: "photo_copy_path"},
                 approvedByChief: {columnName: "approved_by_chief"},
                 passwordHash: {columnName: "Hased_password"},
                 passwordchanged: {columnName: "passwordchanged"},

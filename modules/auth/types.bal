@@ -17,6 +17,7 @@ public type ChiefOccupantInput record {|
     string email;
     string passwordHash;
     string? idCopyPath;
+    string? phophotoCopyPath;
 |};
 
 public type HouseholdMemberInput record {
@@ -27,6 +28,7 @@ public type HouseholdMemberInput record {
     string civilStatus;
     string relationshipWithChiefOccupant;
     string? idCopyPath;
+    string? phophotoCopyPath;
     boolean approvedByChief;
 
 };

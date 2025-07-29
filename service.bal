@@ -58,7 +58,7 @@ service /voter\-registration/api/v1 on SharedListener {
         }
     }
     resource function post register(auth:VoterRegistrationRequest request)
-returns json|http:Forbidden|error {
+    returns json|http:Forbidden|error {
         return check auth:postRegistration(request);
     }
 

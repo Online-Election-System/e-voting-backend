@@ -37,6 +37,7 @@ CREATE TABLE "HouseholdMembers" (
 	"civil_status" VARCHAR(191) NOT NULL,
 	"relationship_with_chief_occupant" VARCHAR(191) NOT NULL,
 	"id_copy_path" VARCHAR(191),
+	"photo_copy_path" VARCHAR(191),
 	"approved_by_chief" BOOLEAN NOT NULL,
 	"Hased_password" VARCHAR(191) NOT NULL,
 	"passwordchanged" BOOLEAN NOT NULL,
@@ -84,6 +85,7 @@ CREATE TABLE "ChiefOccupant" (
 	"password_hash" VARCHAR(191) NOT NULL,
 	"email" VARCHAR(191) NOT NULL,
 	"id_copy_path" VARCHAR(191),
+	"photo_copy_path" VARCHAR(191),
 	"role" VARCHAR(191) NOT NULL,
 	PRIMARY KEY("id")
 );
@@ -91,7 +93,7 @@ CREATE TABLE "ChiefOccupant" (
 CREATE TABLE "UpdateMemberRequest" (
 	"update_request_id" VARCHAR(191) NOT NULL,
 	"chief_occupant_id" VARCHAR(191) NOT NULL,
-	"household_member_id" VARCHAR(191) NOT NULL,
+	"household_member_id" VARCHAR(191),
 	"new_full_name" VARCHAR(191),
 	"new_resident_area" VARCHAR(191),
 	"request_status" VARCHAR(191) NOT NULL,
@@ -102,7 +104,7 @@ CREATE TABLE "UpdateMemberRequest" (
 CREATE TABLE "DeleteMemberRequest" (
 	"delete_request_id" VARCHAR(191) NOT NULL,
 	"chief_occupant_id" VARCHAR(191) NOT NULL,
-	"household_member_id" VARCHAR(191) NOT NULL,
+	"household_member_id" VARCHAR(191),
 	"request_status" VARCHAR(191) NOT NULL,
 	"required_document_path" VARCHAR(191),
 	PRIMARY KEY("delete_request_id")

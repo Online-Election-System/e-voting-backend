@@ -15,6 +15,7 @@ import ballerinax/persist.sql;
 # + idCopyPath - File Path of ID Copy
 # + email - email of chiefoccupant
 # + role - Role of the user
+# + photoCopyPath-file path to photo
 
 
 public type ChiefOccupant record {|
@@ -33,6 +34,8 @@ public type ChiefOccupant record {|
     string email;
     @sql:Name {value: "id_copy_path"}
     string? idCopyPath;
+    @sql:Name {value: "photo_copy_path"}
+    string? photoCopyPath;
     string role;
 |};
 
@@ -70,18 +73,19 @@ public type HouseholdDetails record {|
 
 # HouseholdMembers Table
 #
-# + id - Auto-incrementing Primary Key
-# + chiefOccupantId - Foreign Key (ChiefOccupant)
-# + fullName - Full Name of Household Member
-# + nic - National Identity Card (Nullable)
-# + dob - Date of Birth (MM/DD/YYYY)
-# + gender - Gender (Male/Female)
-# + civilStatus - Marital Status
-# + relationshipWithChiefOccupant - Relationship with Chief Occupant
-# + idCopyPath - File Path of ID Copy
-# + approvedByChief - Chief Occupant Approval Status
-# + passwordHash - Hashed Password
-# + passwordchanged - if the password change
+# + id - Auto-incrementing Primary Key  
+# + chiefOccupantId - Foreign Key (ChiefOccupant)  
+# + fullName - Full Name of Household Member  
+# + nic - National Identity Card (Nullable)  
+# + dob - Date of Birth (MM/DD/YYYY)  
+# + gender - Gender (Male/Female)  
+# + civilStatus - Marital Status  
+# + relationshipWithChiefOccupant - Relationship with Chief Occupant  
+# + idCopyPath - File Path of ID Copy  
+# + photoCopyPath - field description  
+# + approvedByChief - Chief Occupant Approval Status  
+# + passwordHash - Hashed Password  
+# + passwordchanged - if the password change  
 # + role - Role of the user
 
 public type HouseholdMembers record {|
@@ -99,6 +103,8 @@ public type HouseholdMembers record {|
     string relationshipWithChiefOccupant;
     @sql:Name {value: "id_copy_path"}
     string? idCopyPath;
+    @sql:Name {value: "photo_copy_path"}
+    string? photoCopyPath;
     @sql:Name {value: "approved_by_chief"}
     boolean approvedByChief;
     @sql:Name {value: "Hased_password"}
@@ -189,7 +195,7 @@ public type UpdateMemberRequest record {|
     @sql:Name {value: "chief_occupant_id"}
     string chiefOccupantId;
     @sql:Name {value: "household_member_id"}
-    string householdMemberId;
+    string? householdMemberId;
     @sql:Name {value: "new_full_name"}
     string? newFullName;
     @sql:Name {value: "new_resident_area"}
@@ -206,7 +212,7 @@ public type DeleteMemberRequest record {|
     @sql:Name {value: "chief_occupant_id"}
     string chiefOccupantId; 
     @sql:Name {value: "household_member_id"}
-    string householdMemberId; 
+    string? householdMemberId; 
     @sql:Name {value: "request_status"}
     string requestStatus; 
     @sql:Name {value: "required_document_path"}

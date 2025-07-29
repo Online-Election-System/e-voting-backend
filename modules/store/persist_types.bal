@@ -16,6 +16,7 @@ public type ChiefOccupant record {|
     string passwordHash;
     string email;
     string? idCopyPath;
+    string? photoCopyPath;
     string role;
 |};
 
@@ -30,6 +31,7 @@ public type ChiefOccupantOptionalized record {|
     string passwordHash?;
     string email?;
     string? idCopyPath?;
+    string? photoCopyPath?;
     string role?;
 |};
 
@@ -47,6 +49,7 @@ public type ChiefOccupantUpdate record {|
     string passwordHash?;
     string email?;
     string? idCopyPath?;
+    string? photoCopyPath?;
     string role?;
 |};
 
@@ -99,6 +102,7 @@ public type HouseholdMembers record {|
     string civilStatus;
     string relationshipWithChiefOccupant;
     string? idCopyPath;
+    string? photoCopyPath;
     boolean approvedByChief;
     string passwordHash;
     boolean passwordchanged;
@@ -115,6 +119,7 @@ public type HouseholdMembersOptionalized record {|
     string civilStatus?;
     string relationshipWithChiefOccupant?;
     string? idCopyPath?;
+    string? photoCopyPath?;
     boolean approvedByChief?;
     string passwordHash?;
     boolean passwordchanged?;
@@ -134,6 +139,7 @@ public type HouseholdMembersUpdate record {|
     string civilStatus?;
     string relationshipWithChiefOccupant?;
     string? idCopyPath?;
+    string? photoCopyPath?;
     boolean approvedByChief?;
     string passwordHash?;
     boolean passwordchanged?;
@@ -269,7 +275,7 @@ public type AddMemberRequestUpdate record {|
 public type UpdateMemberRequest record {|
     readonly string updateRequestId;
     string chiefOccupantId;
-    string householdMemberId;
+    string? householdMemberId;
     string? newFullName;
     string? newResidentArea;
     string requestStatus;
@@ -279,7 +285,7 @@ public type UpdateMemberRequest record {|
 public type UpdateMemberRequestOptionalized record {|
     string updateRequestId?;
     string chiefOccupantId?;
-    string householdMemberId?;
+    string? householdMemberId?;
     string? newFullName?;
     string? newResidentArea?;
     string requestStatus?;
@@ -292,7 +298,7 @@ public type UpdateMemberRequestInsert UpdateMemberRequest;
 
 public type UpdateMemberRequestUpdate record {|
     string chiefOccupantId?;
-    string householdMemberId?;
+    string? householdMemberId?;
     string? newFullName?;
     string? newResidentArea?;
     string requestStatus?;
@@ -302,7 +308,7 @@ public type UpdateMemberRequestUpdate record {|
 public type DeleteMemberRequest record {|
     readonly string deleteRequestId;
     string chiefOccupantId;
-    string householdMemberId;
+    string? householdMemberId;
     string requestStatus;
     string? requiredDocumentPath;
 |};
@@ -310,7 +316,7 @@ public type DeleteMemberRequest record {|
 public type DeleteMemberRequestOptionalized record {|
     string deleteRequestId?;
     string chiefOccupantId?;
-    string householdMemberId?;
+    string? householdMemberId?;
     string requestStatus?;
     string? requiredDocumentPath?;
 |};
@@ -321,7 +327,7 @@ public type DeleteMemberRequestInsert DeleteMemberRequest;
 
 public type DeleteMemberRequestUpdate record {|
     string chiefOccupantId?;
-    string householdMemberId?;
+    string? householdMemberId?;
     string requestStatus?;
     string? requiredDocumentPath?;
 |};
