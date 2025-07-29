@@ -53,7 +53,7 @@ CREATE TABLE "ChiefOccupant" (
 	"password_hash" VARCHAR(191) NOT NULL,
 	"email" VARCHAR(191) NOT NULL,
 	"id_copy_path" VARCHAR(191),
-	"image_path" VARCHAR(191),
+	"photo_copy_path" VARCHAR(191),
 	"role" VARCHAR(191) NOT NULL,
 	PRIMARY KEY("id")
 );
@@ -155,7 +155,7 @@ CREATE TABLE "HouseholdMembers" (
 	"civil_status" VARCHAR(191) NOT NULL,
 	"relationship_with_chief_occupant" VARCHAR(191) NOT NULL,
 	"id_copy_path" VARCHAR(191),
-	"image_path" VARCHAR(191),
+	"photo_copy_path" VARCHAR(191),
 	"approved_by_chief" BOOLEAN NOT NULL,
 	"Hased_password" VARCHAR(191) NOT NULL,
 	"passwordchanged" BOOLEAN NOT NULL,

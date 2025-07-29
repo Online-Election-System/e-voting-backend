@@ -38,7 +38,7 @@ public type Candidate record {|
 # + civilStatus - Marital Status
 # + passwordHash - Hashed Password
 # + idCopyPath - File Path of ID Copy
-# + imagePath - File Path of Image
+# + photoCopyPath - File Path of Image
 # + email - email of chiefoccupant
 # + role - Role of the user
 
@@ -58,8 +58,8 @@ public type ChiefOccupant record {|
     string email;
     @sql:Name {value: "id_copy_path"}
     string? idCopyPath;
-    @sql:Name {value: "image_path"}
-    string? imagePath;
+    @sql:Name {value: "photo_copy_path"}
+    string? photoCopyPath;
     string role;
 |};
 
@@ -106,7 +106,7 @@ public type HouseholdDetails record {|
 # + civilStatus - Marital Status
 # + relationshipWithChiefOccupant - Relationship with Chief Occupant
 # + idCopyPath - File Path of ID Copy
-# + imagePath - File Path of Image
+# + photoCopyPath - File Path of Image
 # + approvedByChief - Chief Occupant Approval Status
 # + passwordHash - Hashed Password
 # + passwordchanged - if the password change
@@ -127,8 +127,8 @@ public type HouseholdMembers record {|
     string relationshipWithChiefOccupant;
     @sql:Name {value: "id_copy_path"}
     string? idCopyPath;
-    @sql:Name {value: "image_path"}
-    string? imagePath;
+    @sql:Name {value: "photo_copy_path"}
+    string? photoCopyPath;
     @sql:Name {value: "approved_by_chief"}
     boolean approvedByChief;
     @sql:Name {value: "Hased_password"}
