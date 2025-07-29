@@ -435,6 +435,201 @@ public type EnrolmentUpdate record {|
     time:Utc enrollementDate?;
 |};
 
+public type RemovalRequest record {|
+    readonly string id;
+    string memberName;
+    string nic;
+    string requestedBy;
+    string reason;
+    string proofDocument;
+    string status;
+|};
+
+public type RemovalRequestOptionalized record {|
+    string id?;
+    string memberName?;
+    string nic?;
+    string requestedBy?;
+    string reason?;
+    string proofDocument?;
+    string status?;
+|};
+
+public type RemovalRequestTargetType typedesc<RemovalRequestOptionalized>;
+
+public type RemovalRequestInsert RemovalRequest;
+
+public type RemovalRequestUpdate record {|
+    string memberName?;
+    string nic?;
+    string requestedBy?;
+    string reason?;
+    string proofDocument?;
+    string status?;
+|};
+
+public type RegistrationReview record {|
+    readonly string id;
+    string memberNic;
+    string reviewedBy;
+    string status;
+    string? comments;
+    time:Utc? reviewedAt;
+|};
+
+public type RegistrationReviewOptionalized record {|
+    string id?;
+    string memberNic?;
+    string reviewedBy?;
+    string status?;
+    string? comments?;
+    time:Utc? reviewedAt?;
+|};
+
+public type RegistrationReviewTargetType typedesc<RegistrationReviewOptionalized>;
+
+public type RegistrationReviewInsert RegistrationReview;
+
+public type RegistrationReviewUpdate record {|
+    string memberNic?;
+    string reviewedBy?;
+    string status?;
+    string? comments?;
+    time:Utc? reviewedAt?;
+|};
+
+public type GramaNiladhari record {|
+    readonly string id;
+    string fullName;
+    string nic;
+    string dateOfBirth;
+    string email;
+    string officePhone;
+    string mobileNumber;
+    string residentialAddress;
+    string officialTitle;
+    string employeeId;
+    string appointmentDate;
+    string gnDivision;
+    string district;
+    string province;
+    string officeAddress;
+    string qualifications;
+    string experience;
+|};
+
+public type GramaNiladhariOptionalized record {|
+    string id?;
+    string fullName?;
+    string nic?;
+    string dateOfBirth?;
+    string email?;
+    string officePhone?;
+    string mobileNumber?;
+    string residentialAddress?;
+    string officialTitle?;
+    string employeeId?;
+    string appointmentDate?;
+    string gnDivision?;
+    string district?;
+    string province?;
+    string officeAddress?;
+    string qualifications?;
+    string experience?;
+|};
+
+public type GramaNiladhariTargetType typedesc<GramaNiladhariOptionalized>;
+
+public type GramaNiladhariInsert GramaNiladhari;
+
+public type GramaNiladhariUpdate record {|
+    string fullName?;
+    string nic?;
+    string dateOfBirth?;
+    string email?;
+    string officePhone?;
+    string mobileNumber?;
+    string residentialAddress?;
+    string officialTitle?;
+    string employeeId?;
+    string appointmentDate?;
+    string gnDivision?;
+    string district?;
+    string province?;
+    string officeAddress?;
+    string qualifications?;
+    string experience?;
+|};
+
+public type Notification record {|
+    readonly string id;
+    string title;
+    string message;
+    string? link;
+    time:Utc createdAt;
+    string status;
+    string recipientNic;
+|};
+
+public type NotificationOptionalized record {|
+    string id?;
+    string title?;
+    string message?;
+    string? link?;
+    time:Utc createdAt?;
+    string status?;
+    string recipientNic?;
+|};
+
+public type NotificationTargetType typedesc<NotificationOptionalized>;
+
+public type NotificationInsert Notification;
+
+public type NotificationUpdate record {|
+    string title?;
+    string message?;
+    string? link?;
+    time:Utc createdAt?;
+    string status?;
+    string recipientNic?;
+|};
+
+public type Voter record {|
+    readonly string id;
+    string nationalId;
+    string name;
+    string password;
+    string district;
+    string pollingStation;
+    time:Date registrationDate;
+    string status;
+|};
+
+public type VoterOptionalized record {|
+    string id?;
+    string nationalId?;
+    string name?;
+    string password?;
+    string district?;
+    string pollingStation?;
+    time:Date registrationDate?;
+    string status?;
+|};
+
+public type VoterTargetType typedesc<VoterOptionalized>;
+
+public type VoterInsert Voter;
+
+public type VoterUpdate record {|
+    string nationalId?;
+    string name?;
+    string password?;
+    string district?;
+    string pollingStation?;
+    time:Date registrationDate?;
+    string status?;
+|};
+
 public type CandidateDistrictVoteSummary record {|
     readonly string electionId;
     readonly string candidateId;

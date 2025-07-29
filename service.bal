@@ -6,9 +6,10 @@ import online_election.vote;
 import online_election.store;
 import online_election.HouseholdManagement;
 
-
 import ballerina/http;
 import ballerina/persist;
+import online_election.verification;
+import online_election.enrollment;
 
 listener http:Listener SharedListener = new (8080);
 
@@ -586,6 +587,72 @@ service /household\-management/api/v1 on SharedListener {
 }
 
 
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["http://localhost:3000"], // Your frontend URL
+        allowMethods: ["GET", "POST", "PUT", "DELETE"],
+        allowHeaders: ["Content-Type", "Authorization"]
+    }
+}
+service /api/v1 on SharedListener {
+
+    // == REGISTRATION REVIEW ENDPOINTS ==
+
+    // CORRECTED: All function calls now use the 'verification:' prefix.
+    resource function get registrations/applications(string? nameOrNic, string? statusFilter) 
+    returns verification:RegistrationApplication[]|error {
+        return verification:getRegistrationApplications(nameOrNic, statusFilter);
+    }
+
+    resource function get registrations/counts() 
+    returns verification:StatusCounts|error {
+        return verification:getApplicationCounts();
+    }
+
+    resource function get registrations/applications/[string nic]() 
+    returns verification:RegistrationDetails|http:NotFound|error {
+        return verification:getRegistrationDetails(nic);
+    }
+
+    resource function post registrations/applications/[string nic]/review(verification:ReviewRequest reviewData) 
+    returns http:Ok|http:Forbidden|error {
+        return verification:reviewApplication(nic, reviewData);
+    }
+
+    
+
+    // === VOTER ENDPOINTS ===
+
+    // resource function post voter/login(@http:Payload enrollment:LoginRequest payload) 
+    // returns enrollment:ApiResponse|error {
+    //     return enrollment:loginVoter(payload);
+    // }
+
+    resource function get profile/[string nic]() 
+    returns enrollment:UserProfile|http:NotFound|error {
+        return enrollment:getUserProfile(nic);
+    }
+
+    // === ELECTION & ENROLLMENT ENDPOINTS ===
+
+    resource function get elections(@http:Query string? voterId = (), @http:Query string? voterNic = ()) 
+    returns enrollment:ElectionWithEnrollment[]|error {
+        return enrollment:getAllElections(voterId, voterNic);
+    }
+
+    resource function get elections/[string electionId]/candidates() 
+    returns enrollment:ElectionDetailsWithCandidates|http:NotFound|error {
+        return enrollment:getElectionWithCandidates(electionId);
+    }
+    
+    // The verification and enrollment endpoint
+   resource function post elections/[string electionId]/enroll(
+            @http:Payload enrollment:VoterVerificationRequest verificationPayload
+    ) returns http:Created|enrollment:ApiResponse|error {
+        return enrollment:enrollInElection(electionId, verificationPayload);
+    }
+}
 @http:ServiceConfig {
     cors: {
         allowOrigins: ["http://localhost:3000"],
