@@ -9,9 +9,5 @@ target/
 # Contains configuration values used during development time.
 # See https://ballerina.io/learn/provide-values-to-configurable-variables/ for more details.
 Config.toml
-<<<<<<< HEAD
-resources/private.key
-=======
 
 resources/*
->>>>>>> 7890ffdc2d79e7bf4e7ca55aff551e65500653aa
