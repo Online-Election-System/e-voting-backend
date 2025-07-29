@@ -346,7 +346,7 @@ public type CandidateDistrictVoteSummary record {|
     int matara;
     int monaragala;
     int mullaitivu;
-    int nuwaraeliya;
+    int nuwaraEliya;
     int polonnaruwa;
     int puttalam;
     int ratnapura;
@@ -377,7 +377,7 @@ public type CandidateDistrictVoteSummaryOptionalized record {|
     int matara?;
     int monaragala?;
     int mullaitivu?;
-    int nuwaraeliya?;
+    int nuwaraEliya?;
     int polonnaruwa?;
     int puttalam?;
     int ratnapura?;
@@ -410,7 +410,7 @@ public type CandidateDistrictVoteSummaryUpdate record {|
     int matara?;
     int monaragala?;
     int mullaitivu?;
-    int nuwaraeliya?;
+    int nuwaraEliya?;
     int polonnaruwa?;
     int puttalam?;
     int ratnapura?;

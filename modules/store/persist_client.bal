@@ -188,7 +188,7 @@ public isolated client class Client {
                 matara: {columnName: "matara"},
                 monaragala: {columnName: "monaragala"},
                 mullaitivu: {columnName: "mullaitivu"},
-                nuwaraeliya: {columnName: "nuwaraeliya"},
+                nuwaraEliya: {columnName: "nuwaraEliya"},
                 polonnaruwa: {columnName: "polonnaruwa"},
                 puttalam: {columnName: "puttalam"},
                 ratnapura: {columnName: "ratnapura"},

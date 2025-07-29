@@ -460,10 +460,6 @@ service /results/api/v1 on SharedListener {
 
     //  CANDIDATE VOTE SUMMARIES WITH PERCENTAGES
 
-    // Get candidate vote summaries with percentages and rankings
-    resource function get elections/[string electionId]/candidates/summary() returns results:CandidateVoteSummary[]|error {
-        return check results:calculateCandidateVoteSummary(electionId, results:dbClient);
-    }
 
     // Get comprehensive candidate data for export
     resource function get elections/[string electionId]/candidates/export() returns results:CandidateExportData[]|error {

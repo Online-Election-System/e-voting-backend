@@ -137,7 +137,6 @@ public function calculateCandidateVoteSummary(string electionId, store:Client db
     
     return candidateSummaries; // Return the calculated summaries instead of ()
 }
-
 // Function to get detailed district-wise winner analysis
 public function getDistrictWinnerAnalysis(string electionId, store:Client dbClient) returns record {|
     string electionId;
@@ -214,6 +213,8 @@ public function getDistrictWinnerAnalysis(string electionId, store:Client dbClie
         marginPercentages: marginPercentages
     };
 }
+
+// Function to validate election data integrity
 
 
 public function calculateCandidateDistrictAnalysis(string electionId, store:Client dbClient) returns CandidateDistrictAnalysis[]|error {
