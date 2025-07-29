@@ -95,6 +95,8 @@ public type HouseholdDetails record {|
     int householdMemberCount;
 |};
 
+# HouseholdMembers Table
+#
 # + id - Auto-incrementing Primary Key  
 # + chiefOccupantId - Foreign Key (ChiefOccupant)  
 # + fullName - Full Name of Household Member  
@@ -107,7 +109,7 @@ public type HouseholdDetails record {|
 # + photoCopyPath - field description  
 # + approvedByChief - Chief Occupant Approval Status  
 # + passwordHash - Hashed Password  
-# + passwordchanged - if the password change 
+# + passwordchanged - if the password change  
 # + role - Role of the user
 
 public type HouseholdMembers record {|
