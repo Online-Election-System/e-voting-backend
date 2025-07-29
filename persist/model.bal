@@ -240,7 +240,6 @@ public type Vote record {|
 # + enrollementDate - Date of enrolment
 
 public type Enrolment record {|
-
     @sql:Name { value: "voter_id" }
     readonly string voterId;
     @sql:Name { value: "election_id" }
@@ -276,18 +275,6 @@ public type RegistrationReview record {|
     time:Utc? reviewedAt;
 |};
 
-// -- Removal Request Reviews Table --
-public type RemovalRequestReview record {|
-    readonly string id;
-    @sql:Name { value: "removal_request_id" }
-    int removalRequestId;
-    @sql:Name { value: "reviewed_by" }
-    string reviewedBy;
-    string status; // approved, rejected
-    string? comments;
-    @sql:Name { value: "reviewed_at" }
-    time:Utc? reviewedAt;
-|};
 
 // -- Grama Niladhari Table --
 public type GramaNiladhari record {|
@@ -344,7 +331,6 @@ public type Notification record {|
 # + registrationDate - Registration date
 # + status - ACTIVE / INACTIVE
 public type Voter record {|
-    
     readonly string id;
     @sql:Name { value: "national_id" }
     string nationalId;

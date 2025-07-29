@@ -211,7 +211,7 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
 }
 
 public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unauthorized|error {
-    // ChiefOccupant login
+    // UPDATED: ChiefOccupant login with role-based verification
     stream<store:ChiefOccupant, persist:Error?> chiefStream = dbClient->/chiefoccupants.get();
     boolean chiefFound = false;
 
@@ -220,6 +220,7 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
         do {
             chiefFound = true;
             io:println("Chief found: ", chief.fullName);
+            io:println("Chief role: ", chief.role); // ADDED: Log the role
 
             boolean|error isVerified = verifyPassword(loginReq.password, chief.passwordHash);
             io:println("Password verification result: ", isVerified);
@@ -229,9 +230,28 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
                 return http:UNAUTHORIZED;
             }
 
+            // UPDATED: Check role and only allow verified chief occupants or regular chief occupants
+            string userRole;
+            UserRole jwtRole;
+            
+            if chief.role == "verified_chief_occupant" {
+                userRole = "verified_chief_occupant";
+                jwtRole = VERIFIED_CHIEF_OCCUPANT;
+                io:println("Verified chief occupant login approved");
+            } else if chief.role == "chief_occupant" {
+                userRole = "chief_occupant";
+                jwtRole = CHIEF_OCCUPANT;
+                io:println("Regular chief occupant login approved");
+            } else {
+                // ADDED: Reject login if role is not recognized
+                io:println("Unrecognized chief occupant role: ", chief.role);
+                check chiefStream.close();
+                return http:UNAUTHORIZED;
+            }
+
             // Use new JWT generation with ID tracking
             io:println("About to generate JWT for chief ID: ", chief.id);
-            string|error token = generateJwtWithId(chief.id.toString(), CHIEF_OCCUPANT);
+            string|error token = generateJwtWithId(chief.id.toString(), jwtRole);
 
             if token is error {
                 io:println("JWT generation failed: ", token);
@@ -245,7 +265,7 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
             check chiefStream.close();
             return {
                 userId: chief.id,
-                userType: "chief_occupant",
+                userType: userRole, // UPDATED: Return the actual role
                 fullName: chief.fullName,
                 message: "Login successful",
                 token: token
@@ -256,33 +276,77 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
         io:println("No chief found with NIC: ", loginReq.nic);
     }
 
-    // Household members login
+    // UPDATED: Household members login with role-based verification
     stream<store:HouseholdMembers, persist:Error?> memberStream = dbClient->/householdmembers.get();
+    boolean memberFound = false;
+    
     check from store:HouseholdMembers member in memberStream
         where member.nic == loginReq.nic
         do {
+            memberFound = true;
+            io:println("Household member found: ", member.fullName);
+            io:println("Member role: ", member.role); // ADDED: Log the role
+            io:println("Member ID: ", member.id); // ADDED: Log member ID
             check memberStream.close();
 
+            io:println("About to verify password for member"); // ADDED: Debug log
             boolean|error isVerified = verifyPassword(loginReq.password, member.passwordHash);
-            if isVerified is error || !isVerified {
+            io:println("Password verification result for member: ", isVerified); // ADDED: Enhanced logging
+            
+            if isVerified is error {
+                io:println("Password verification error: ", isVerified.message()); // ADDED: Log error details
+                return http:UNAUTHORIZED;
+            }
+            
+            if !isVerified {
+                io:println("Password verification failed - incorrect password"); // ADDED: Log failure reason
                 return http:UNAUTHORIZED;
             }
 
-            string|error token = generateJwtWithId(member.id.toString(), HOUSEHOLD_MEMBER);
-            if token is error {
+            // UPDATED: Check role and only allow verified household members or regular household members
+            string userRole;
+            UserRole jwtRole;
+            
+            if member.role == "verified_household_member" {
+                userRole = "verified_household_member";
+                jwtRole = VERIFIED_HOUSEHOLD_MEMBER;
+                io:println("Verified household member login approved");
+            } else if member.role == "household_member" {
+                userRole = "household_member";
+                jwtRole = HOUSEHOLD_MEMBER;
+                io:println("Regular household member login approved");
+            } else {
+                // ADDED: Reject login if role is not recognized
+                io:println("Unrecognized household member role: ", member.role);
                 return http:UNAUTHORIZED;
             }
+
+            io:println("About to generate JWT for member ID: ", member.id); // ADDED: Debug log
+            string|error token = generateJwtWithId(member.id.toString(), jwtRole);
+            if token is error {
+                io:println("JWT generation failed for member: ", token.message()); // ADDED: Log JWT error
+                return http:UNAUTHORIZED;
+            }
+            
+            io:println("JWT generated successfully for member"); // ADDED: Success log
+            io:println("Returning successful login response for member"); // ADDED: Final success log
+            
             return {
                 userId: member.id,
-                userType: "household_member",
+                userType: userRole, // UPDATED: Return the actual role
                 fullName: member.fullName,
                 message: member.passwordchanged ? "Login successful" : "First-time login. Please change your password.",
                 token: token
             };
         };
     check memberStream.close();
+    
+    if !memberFound {
+        io:println("No household member found with NIC: ", loginReq.nic); // ADDED: Log when no member found
+    }
+    
 
-    // Government officials & election commission login (AdminUsers table)
+    // Government officials & election commission login (AdminUsers table) - NO CHANGES
     io:println("Now checking AdminUsers table...");
     stream<store:AdminUsers, persist:Error?> adminStream = dbClient->/adminusers.get();
     check from store:AdminUsers admin in adminStream
@@ -315,6 +379,7 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
             return {
                 userId: admin.id,
                 userType: admin.role,
+               
                 fullName: admin.username,
                 message: "Login successful",
                 token: token

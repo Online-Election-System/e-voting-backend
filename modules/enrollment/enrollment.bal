@@ -5,6 +5,7 @@ import ballerina/crypto;
 import ballerina/sql;
 
 import codeCrew/online_election.store;
+import ballerina/io;
 
 final store:Client dbClient = check new ();
 
@@ -131,8 +132,12 @@ public function getUserProfile(string nic) returns UserProfile|http:NotFound|err
 public function getAllElections(string? voterId = (), string? voterNic = ()) returns ElectionWithEnrollment[]|error {
     string actualVoterId;
     
+    // UPDATED: Enhanced logging for debugging
+    io:println("getAllElections called with voterId:", voterId, " voterNic:", voterNic);
+    
     // If voterNic is provided, convert it to voter ID
     if (voterNic is string) {
+        io:println("Looking up voter by NIC:", voterNic); // ADDED: Debug log
         sql:ParameterizedQuery voterWhere = `national_id = ${voterNic}`;
         stream<store:Voter, persist:Error?> voterStream = dbClient->/voters(whereClause = voterWhere);
         var voterResult = voterStream.next();
@@ -140,12 +145,16 @@ public function getAllElections(string? voterId = (), string? voterNic = ()) ret
         
         if (voterResult is record {| store:Voter value; |}) {
             actualVoterId = voterResult.value.id;
+            io:println("Found voter ID:", actualVoterId, " for NIC:", voterNic); // ADDED: Debug log
         } else {
+            io:println("Voter not found with NIC:", voterNic); // ADDED: Debug log
             return error("Voter not found with NIC: " + voterNic);
         }
     } else if (voterId is string) {
         actualVoterId = voterId;
+        io:println("Using provided voterId:", actualVoterId); // ADDED: Debug log
     } else {
+        io:println("Neither voterId nor voterNic provided"); // ADDED: Debug log
         return error("Either voterId or voterNic must be provided");
     }
     
@@ -153,6 +162,8 @@ public function getAllElections(string? voterId = (), string? voterNic = ()) ret
     sql:ParameterizedQuery orderBy = `start_date`; 
     stream<store:Election, persist:Error?> allElectionsStream = dbClient->/elections(orderByClause = orderBy);
     store:Election[] allElections = check from store:Election e in allElectionsStream select e;
+    
+    io:println("Found", allElections.length(), "total elections"); // ADDED: Debug log
     
     // 2. Fetch all of the current voter's enrollments into a map for efficient lookup
     sql:ParameterizedQuery enrolmentWhere = `voter_id = ${actualVoterId}`;
@@ -162,21 +173,29 @@ public function getAllElections(string? voterId = (), string? voterNic = ()) ret
     check from store:Enrolment e in enrolmentStream
         do {
             enrolledMap[e.electionId] = true;
+            io:println("Found enrollment: voter", actualVoterId, " enrolled in election", e.electionId); // ADDED: Debug log
         };
+    
+    io:println("Voter", actualVoterId, "is enrolled in", enrolledMap.keys().length(), "elections"); // ADDED: Debug log
     
     // 3. Combine the data
     ElectionWithEnrollment[] result = [];
     foreach var election in allElections {
+        boolean isEnrolled = enrolledMap.hasKey(election.id);
         result.push({
             id: election.id, title: election.electionName, description: election.description,
             startDate: election.startDate, endDate: election.endDate,
             enrollmentDeadline: election.enrolDdl, electionDate: election.electionDate,
             noOfCandidates: election.noOfCandidates, electionType: election.electionType,
             startTime: election.startTime, endTime: election.endTime,
-            status: election.status, enrolled: enrolledMap.hasKey(election.id)
+            status: election.status, enrolled: isEnrolled
         });
+        
+        // ADDED: Debug log for each election
+        io:println("Election", election.id, ":", election.electionName, " - Enrolled:", isEnrolled);
     }
 
+    io:println("Returning", result.length(), "elections with enrollment status for voter", actualVoterId); // ADDED: Debug log
     return result;
 }
 

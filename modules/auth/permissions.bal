@@ -25,12 +25,14 @@ public function getRolePermissions(UserRole role) returns Permission[] {
                 VIEW_RESULTS
             ];
         }
-        // VERIFIED_CHIEF_OCCUPANT => {
-        //     return [VOTE, VIEW_ELECTION];
-        // }
-        // VERIFIED_HOUSEHOLD_MEMBER => {
-        //     return [VOTE, VIEW_ELECTION];
-        // }
+
+        VERIFIED_CHIEF_OCCUPANT => {
+            return [VOTE, VIEW_ELECTION];
+        }
+        VERIFIED_HOUSEHOLD_MEMBER => {
+            return [VOTE, VIEW_ELECTION];
+        }
+        
         CHIEF_OCCUPANT => {
             return [VIEW_ELECTION];
         }
