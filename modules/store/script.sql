@@ -108,7 +108,7 @@ CREATE TABLE "CandidateDistrictVoteSummary" (
 	"matara" INT NOT NULL,
 	"monaragala" INT NOT NULL,
 	"mullaitivu" INT NOT NULL,
-	"nuwaraEliya" INT NOT NULL,
+	"nuwaraeliya" INT NOT NULL,
 	"polonnaruwa" INT NOT NULL,
 	"puttalam" INT NOT NULL,
 	"ratnapura" INT NOT NULL,

@@ -68,7 +68,7 @@ public type ChiefOccupant record {|
 # HouseholdDetails Table
 #
 # + id - Auto-incrementing Primary Key
-# + chiefOccupantId - Foreign Key (ChiefOccupant)
+# + chiefOccupantId - Foreign Key (ChiefOccupant)https://claude.ai/new
 # + electoralDistrict - District of Registration
 # + pollingDivision - Polling Division Name
 # + pollingDistrictNumber - Polling District Number
@@ -421,7 +421,7 @@ public type Voter record {|
 # + matara - field description
 # + monaragala - field description
 # + mullaitivu - field description
-# + nuwaraEliya - field description
+# + nuwaraeliya - field description
 # + polonnaruwa - field description
 # + puttalam - field description
 # + ratnapura - field description
@@ -453,7 +453,7 @@ public type CandidateDistrictVoteSummary record {|
     int matara;
     int monaragala;
     int mullaitivu;
-    int nuwaraEliya;
+    int nuwaraeliya;
     int polonnaruwa;
     int puttalam;
     int ratnapura;
