@@ -95,21 +95,19 @@ public type HouseholdDetails record {|
     int householdMemberCount;
 |};
 
-# HouseholdMembers Table
-#
-# + id - Auto-incrementing Primary Key
-# + chiefOccupantId - Foreign Key (ChiefOccupant)
-# + fullName - Full Name of Household Member
-# + nic - National Identity Card (Nullable)
-# + dob - Date of Birth (MM/DD/YYYY)
-# + gender - Gender (Male/Female)
-# + civilStatus - Marital Status
-# + relationshipWithChiefOccupant - Relationship with Chief Occupant
-# + idCopyPath - File Path of ID Copy
-# + photoCopyPath - field description
-# + approvedByChief - Chief Occupant Approval Status
-# + passwordHash - Hashed Password
-# + passwordchanged - if the password change
+# + id - Auto-incrementing Primary Key  
+# + chiefOccupantId - Foreign Key (ChiefOccupant)  
+# + fullName - Full Name of Household Member  
+# + nic - National Identity Card (Nullable)  
+# + dob - Date of Birth (MM/DD/YYYY)  
+# + gender - Gender (Male/Female)  
+# + civilStatus - Marital Status  
+# + relationshipWithChiefOccupant - Relationship with Chief Occupant  
+# + idCopyPath - File Path of ID Copy  
+# + photoCopyPath - field description  
+# + approvedByChief - Chief Occupant Approval Status  
+# + passwordHash - Hashed Password  
+# + passwordchanged - if the password change 
 # + role - Role of the user
 
 public type HouseholdMembers record {|
