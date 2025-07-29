@@ -503,11 +503,6 @@ service /results/api/v1 on SharedListener {
 
     //  DATA VALIDATION AND INTEGRITY
 
-
-    // Validate election data integrity
-    resource function get elections/[string electionId]/validate() returns json|error {
-        return check results:validateElectionDataIntegrity(electionId, results:dbClient);
-    }
     //  SPECIFIC RESULT QUERIES
 
     // Get winner of the election
@@ -524,7 +519,7 @@ service /results/api/v1 on SharedListener {
         return {
             "electionId": electionId,
             "winnerCandidateId": winner.candidateId,
-            "totalVotes": winner.Totals,
+            "totalVotes": winner.totals,
             "message": "Election winner determined"
         };
     }
@@ -556,7 +551,7 @@ service /results/api/v1 on SharedListener {
                 return {
                     "candidateId": candidateId,
                     "rank": i + 1,
-                    "totalVotes": candidates[i].Totals,
+                    "totalVotes": candidates[i].totals,
                     "totalCandidates": candidates.length()
                 };
             }
@@ -621,18 +616,18 @@ service /results/api/v1 on SharedListener {
         results:CandidateTotal first = candidates[0];
         results:CandidateTotal second = candidates[1];
         
-        int marginVotes = first.Totals - second.Totals;
-        decimal marginPercentage = first.Totals > 0 ? (<decimal>marginVotes / <decimal>first.Totals) * 100.0 : 0.0;
+        int marginVotes = first.totals - second.totals;
+        decimal marginPercentage = first.totals > 0 ? (<decimal>marginVotes / <decimal>first.totals) * 100.0 : 0.0;
         
         return {
             "electionId": electionId,
             "winner": {
                 "candidateId": first.candidateId,
-                "votes": first.Totals
+                "votes": first.totals
             },
             "runnerUp": {
                 "candidateId": second.candidateId,
-                "votes": second.Totals
+                "votes": second.totals
             },
             "margin": {
                 "votes": marginVotes,

@@ -20,20 +20,20 @@ public function updateCandidateTotal(string electionId, string candidateId,
 
     store:CandidateDistrictVoteSummary candidate = result;
 
-    // Sum all district votes using proper field access
-    int totalVotes = candidate.Ampara + candidate.Anuradhapura + candidate.Badulla + 
-                    candidate.Batticaloa + candidate.Colombo + candidate.Galle + 
-                    candidate.Gampaha + candidate.Hambantota + candidate.Jaffna + 
-                    candidate.Kalutara + candidate.Kandy + candidate.Kegalle + 
-                    candidate.Kilinochchi + candidate.Kurunegala + candidate.Mannar + 
-                    candidate.Matale + candidate.Matara + candidate.Monaragala + 
-                    candidate.Mullaitivu + candidate.NuwaraEliya + candidate.Polonnaruwa + 
-                    candidate.Puttalam + candidate.Ratnapura + candidate.Trincomalee + 
-                    candidate.Vavuniya;
+    // Sum all district votes using proper field access (lowercase names)
+    int totalVotes = candidate.ampara + candidate.anuradhapura + candidate.badulla + 
+                    candidate.batticaloa + candidate.colombo + candidate.galle + 
+                    candidate.gampaha + candidate.hambantota + candidate.jaffna + 
+                    candidate.kalutara + candidate.kandy + candidate.kegalle + 
+                    candidate.kilinochchi + candidate.kurunegala + candidate.mannar + 
+                    candidate.matale + candidate.matara + candidate.monaragala + 
+                    candidate.mullaitivu + candidate.nuwaraeliya + candidate.polonnaruwa + 
+                    candidate.puttalam + candidate.ratnapura + candidate.trincomalee + 
+                    candidate.vavuniya;
 
     // Use the correct update type from the generated client
     store:CandidateDistrictVoteSummaryUpdate updateData = {
-        Totals: totalVotes
+        totals: totalVotes
     };
     
     // Update using the composite key
@@ -51,7 +51,7 @@ public function getSortedCandidatesByTotal(string electionId,
                                            store:Client dbClient) returns error|CandidateTotal[] {
 
     sql:ParameterizedQuery whereClause = `election_id = ${electionId}`;
-    sql:ParameterizedQuery orderByClause = `totals DESC`;  // FIXED: Changed from "Totals" to "totals"
+    sql:ParameterizedQuery orderByClause = `totals DESC`;
 
     stream<store:CandidateDistrictVoteSummary, persist:Error?> resultStream = 
         dbClient->/candidatedistrictvotesummaries.get(
@@ -65,7 +65,7 @@ public function getSortedCandidatesByTotal(string electionId,
         // Convert to CandidateTotal type
         CandidateTotal candidateTotal = {
             candidateId: candidate.candidateId,
-            Totals: candidate.Totals
+            totals: candidate.totals
         };
         sortedCandidates.push(candidateTotal);
     }); 
@@ -82,7 +82,7 @@ public function getSortedCandidatesByTotal(string electionId,
 public function calculateCandidateVoteSummary(string electionId, store:Client dbClient) returns CandidateVoteSummary[]|error {
     
     sql:ParameterizedQuery whereClause = `election_id = ${electionId}`;
-    sql:ParameterizedQuery orderByClause = `totals DESC`;  // FIXED: Changed from "Totals" to "totals"
+    sql:ParameterizedQuery orderByClause = `totals DESC`;
 
     stream<store:CandidateDistrictVoteSummary, persist:Error?> resultStream = 
         dbClient->/candidatedistrictvotesummaries.get(
@@ -94,10 +94,10 @@ public function calculateCandidateVoteSummary(string electionId, store:Client db
     error? processError = resultStream.forEach(function(store:CandidateDistrictVoteSummary candidate) {
         CandidateTotal candidateTotal = {
             candidateId: candidate.candidateId,
-            Totals: candidate.Totals
+            totals: candidate.totals
         };
         candidates.push(candidateTotal);
-    });
+    }); // Added missing closing brace and semicolon
     
     check resultStream.close();
     
@@ -112,7 +112,7 @@ public function calculateCandidateVoteSummary(string electionId, store:Client db
     // Calculate grand total votes
     int grandTotalVotes = 0;
     foreach CandidateTotal candidate in candidates {
-        grandTotalVotes += candidate.Totals;
+        grandTotalVotes += candidate.totals;
     }
     
     // Create candidate summaries with percentages and ranks
@@ -121,13 +121,13 @@ public function calculateCandidateVoteSummary(string electionId, store:Client db
         CandidateTotal candidate = candidates[i];
         decimal percentage = 0.0;
         if grandTotalVotes > 0 {
-            percentage = <decimal>candidate.Totals / <decimal>grandTotalVotes * 100.0;
+            percentage = <decimal>candidate.totals / <decimal>grandTotalVotes * 100.0;
         }
         
         CandidateVoteSummary summary = {
             candidateId: candidate.candidateId,
             candidateName: (),
-            totalVotes: candidate.Totals,
+            totalVotes: candidate.totals,
             percentage: percentage,
             rank: i + 1
         };
@@ -135,8 +135,86 @@ public function calculateCandidateVoteSummary(string electionId, store:Client db
         candidateSummaries.push(summary);
     }
     
-    return candidateSummaries;
+    return candidateSummaries; // Return the calculated summaries instead of ()
 }
+
+// Function to get detailed district-wise winner analysis
+public function getDistrictWinnerAnalysis(string electionId, store:Client dbClient) returns record {|
+    string electionId;
+    map<record {| string candidateId; string candidateName; int votes; |}> districtWinners;
+    map<decimal> marginPercentages;
+|} |error {
+    
+    sql:ParameterizedQuery whereClause = `election_id = ${electionId}`;
+    stream<store:CandidateDistrictVoteSummary, persist:Error?> resultStream = 
+        dbClient->/candidatedistrictvotesummaries.get(whereClause = whereClause);
+    
+    store:CandidateDistrictVoteSummary[] allCandidates = [];
+    error? processError = resultStream.forEach(function(store:CandidateDistrictVoteSummary candidate) {
+        allCandidates.push(candidate);
+    });
+    
+    check resultStream.close();
+    
+    if processError is error {
+        return processError;
+    }
+    
+    string[] districts = [
+        "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo",
+        "Galle", "Gampaha", "Hambantota", "Jaffna", "Kalutara",
+        "Kandy", "Kegalle", "Kilinochchi", "Kurunegala", "Mannar",
+        "Matale", "Matara", "Monaragala", "Mullaitivu", "NuwaraEliya",
+        "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"
+    ];
+    
+    map<record {| string candidateId; string candidateName; int votes; |}> districtWinners = {};
+    map<decimal> marginPercentages = {};
+    
+    foreach string district in districts {
+        int maxVotes = 0;
+        int secondMaxVotes = 0;
+        string winnerCandidateId = "";
+        
+        // Find winner and runner-up in this district
+        foreach store:CandidateDistrictVoteSummary candidate in allCandidates {
+            int votes = getDistrictVotesFromSummary(candidate, district);
+            if votes > maxVotes {
+                secondMaxVotes = maxVotes;
+                maxVotes = votes;
+                winnerCandidateId = candidate.candidateId;
+            } else if votes > secondMaxVotes {
+                secondMaxVotes = votes;
+            }
+        }
+        
+        if winnerCandidateId != "" && maxVotes > 0 {
+            // Get candidate name
+            store:Candidate|persist:Error candidateResult = dbClient->/candidates/[winnerCandidateId].get();
+            string candidateName = candidateResult is store:Candidate ? candidateResult.candidateName : "Unknown";
+            
+            districtWinners[district] = {
+                candidateId: winnerCandidateId,
+                candidateName: candidateName,
+                votes: maxVotes
+            };
+            
+            // Calculate margin percentage
+            decimal marginPercentage = 0.0;
+            if maxVotes > 0 && secondMaxVotes > 0 {
+                marginPercentage = <decimal>(maxVotes - secondMaxVotes) / <decimal>maxVotes * 100.0;
+            }
+            marginPercentages[district] = marginPercentage;
+        }
+    }
+    
+    return {
+        electionId: electionId,
+        districtWinners: districtWinners,
+        marginPercentages: marginPercentages
+    };
+}
+
 
 public function calculateCandidateDistrictAnalysis(string electionId, store:Client dbClient) returns CandidateDistrictAnalysis[]|error {
     
@@ -149,35 +227,35 @@ public function calculateCandidateDistrictAnalysis(string electionId, store:Clie
 
     error? processError = resultStream.forEach(function(store:CandidateDistrictVoteSummary candidateData) {
         string candidateId = candidateData.candidateId;
-        int totalVotes = candidateData.Totals;
+        int totalVotes = candidateData.totals;
         
-        // Create district votes map
+        // Create district votes map (using lowercase field names)
         map<int> districtVotes = {
-            "Ampara": candidateData.Ampara,
-            "Anuradhapura": candidateData.Anuradhapura,
-            "Badulla": candidateData.Badulla,
-            "Batticaloa": candidateData.Batticaloa,
-            "Colombo": candidateData.Colombo,
-            "Galle": candidateData.Galle,
-            "Gampaha": candidateData.Gampaha,
-            "Hambantota": candidateData.Hambantota,
-            "Jaffna": candidateData.Jaffna,
-            "Kalutara": candidateData.Kalutara,
-            "Kandy": candidateData.Kandy,
-            "Kegalle": candidateData.Kegalle,
-            "Kilinochchi": candidateData.Kilinochchi,
-            "Kurunegala": candidateData.Kurunegala,
-            "Mannar": candidateData.Mannar,
-            "Matale": candidateData.Matale,
-            "Matara": candidateData.Matara,
-            "Monaragala": candidateData.Monaragala,
-            "Mullaitivu": candidateData.Mullaitivu,
-            "NuwaraEliya": candidateData.NuwaraEliya,
-            "Polonnaruwa": candidateData.Polonnaruwa,
-            "Puttalam": candidateData.Puttalam,
-            "Ratnapura": candidateData.Ratnapura,
-            "Trincomalee": candidateData.Trincomalee,
-            "Vavuniya": candidateData.Vavuniya
+            "Ampara": candidateData.ampara,
+            "Anuradhapura": candidateData.anuradhapura,
+            "Badulla": candidateData.badulla,
+            "Batticaloa": candidateData.batticaloa,
+            "Colombo": candidateData.colombo,
+            "Galle": candidateData.galle,
+            "Gampaha": candidateData.gampaha,
+            "Hambantota": candidateData.hambantota,
+            "Jaffna": candidateData.jaffna,
+            "Kalutara": candidateData.kalutara,
+            "Kandy": candidateData.kandy,
+            "Kegalle": candidateData.kegalle,
+            "Kilinochchi": candidateData.kilinochchi,
+            "Kurunegala": candidateData.kurunegala,
+            "Mannar": candidateData.mannar,
+            "Matale": candidateData.matale,
+            "Matara": candidateData.matara,
+            "Monaragala": candidateData.monaragala,
+            "Mullaitivu": candidateData.mullaitivu,
+            "NuwaraEliya": candidateData.nuwaraeliya,
+            "Polonnaruwa": candidateData.polonnaruwa,
+            "Puttalam": candidateData.puttalam,
+            "Ratnapura": candidateData.ratnapura,
+            "Trincomalee": candidateData.trincomalee,
+            "Vavuniya": candidateData.vavuniya
         };
         
         // Calculate district percentages
@@ -216,79 +294,79 @@ public function calculateDistrictVoteTotals(string electionId, CandidateDistrict
     // Initialize district totals
     DistrictVoteTotals districtTotals = {
         electionId: electionId,
-        Ampara: 0,
-        Anuradhapura: 0,
-        Badulla: 0,
-        Batticaloa: 0,
-        Colombo: 0,
-        Galle: 0,
-        Gampaha: 0,
-        Hambantota: 0,
-        Jaffna: 0,
-        Kalutara: 0,
-        Kandy: 0,
-        Kegalle: 0,
-        Kilinochchi: 0,
-        Kurunegala: 0,
-        Mannar: 0,
-        Matale: 0,
-        Matara: 0,
-        Monaragala: 0,
-        Mullaitivu: 0,
-        NuwaraEliya: 0,
-        Polonnaruwa: 0,
-        Puttalam: 0,
-        Ratnapura: 0,
-        Trincomalee: 0,
-        Vavuniya: 0,
-        GrandTotal: 0
+        ampara: 0,
+        anuradhapura: 0,
+        badulla: 0,
+        batticaloa: 0,
+        colombo: 0,
+        galle: 0,
+        gampaha: 0,
+        hambantota: 0,
+        jaffna: 0,
+        kalutara: 0,
+        kandy: 0,
+        kegalle: 0,
+        kilinochchi: 0,
+        kurunegala: 0,
+        mannar: 0,
+        matale: 0,
+        matara: 0,
+        monaragala: 0,
+        mullaitivu: 0,
+        nuwaraeliya: 0,
+        polonnaruwa: 0,
+        puttalam: 0,
+        ratnapura: 0,
+        trincomalee: 0,
+        vavuniya: 0,
+        grandTotal: 0
     };
     
     // Filter records for the specific election and sum up votes by district
     foreach CandidateDistrictVoteSummary candidate in candidateVotes {
         if (candidate.electionId == electionId) {
-            districtTotals.Ampara += candidate.Ampara;
-            districtTotals.Anuradhapura += candidate.Anuradhapura;
-            districtTotals.Badulla += candidate.Badulla;
-            districtTotals.Batticaloa += candidate.Batticaloa;
-            districtTotals.Colombo += candidate.Colombo;
-            districtTotals.Galle += candidate.Galle;
-            districtTotals.Gampaha += candidate.Gampaha;
-            districtTotals.Hambantota += candidate.Hambantota;
-            districtTotals.Jaffna += candidate.Jaffna;
-            districtTotals.Kalutara += candidate.Kalutara;
-            districtTotals.Kandy += candidate.Kandy;
-            districtTotals.Kegalle += candidate.Kegalle;
-            districtTotals.Kilinochchi += candidate.Kilinochchi;
-            districtTotals.Kurunegala += candidate.Kurunegala;
-            districtTotals.Mannar += candidate.Mannar;
-            districtTotals.Matale += candidate.Matale;
-            districtTotals.Matara += candidate.Matara;
-            districtTotals.Monaragala += candidate.Monaragala;
-            districtTotals.Mullaitivu += candidate.Mullaitivu;
-            districtTotals.NuwaraEliya += candidate.NuwaraEliya;
-            districtTotals.Polonnaruwa += candidate.Polonnaruwa;
-            districtTotals.Puttalam += candidate.Puttalam;
-            districtTotals.Ratnapura += candidate.Ratnapura;
-            districtTotals.Trincomalee += candidate.Trincomalee;
-            districtTotals.Vavuniya += candidate.Vavuniya;
+            districtTotals.ampara += candidate.ampara;
+            districtTotals.anuradhapura += candidate.anuradhapura;
+            districtTotals.badulla += candidate.badulla;
+            districtTotals.batticaloa += candidate.batticaloa;
+            districtTotals.colombo += candidate.colombo;
+            districtTotals.galle += candidate.galle;
+            districtTotals.gampaha += candidate.gampaha;
+            districtTotals.hambantota += candidate.hambantota;
+            districtTotals.jaffna += candidate.jaffna;
+            districtTotals.kalutara += candidate.kalutara;
+            districtTotals.kandy += candidate.kandy;
+            districtTotals.kegalle += candidate.kegalle;
+            districtTotals.kilinochchi += candidate.kilinochchi;
+            districtTotals.kurunegala += candidate.kurunegala;
+            districtTotals.mannar += candidate.mannar;
+            districtTotals.matale += candidate.matale;
+            districtTotals.matara += candidate.matara;
+            districtTotals.monaragala += candidate.monaragala;
+            districtTotals.mullaitivu += candidate.mullaitivu;
+            districtTotals.nuwaraeliya += candidate.nuwaraeliya;
+            districtTotals.polonnaruwa += candidate.polonnaruwa;
+            districtTotals.puttalam += candidate.puttalam;
+            districtTotals.ratnapura += candidate.ratnapura;
+            districtTotals.trincomalee += candidate.trincomalee;
+            districtTotals.vavuniya += candidate.vavuniya;
         }
     }
     
     // Calculate grand total
-    districtTotals.GrandTotal = districtTotals.Ampara + districtTotals.Anuradhapura + 
-                               districtTotals.Badulla + districtTotals.Batticaloa + 
-                               districtTotals.Colombo + districtTotals.Galle + 
-                               districtTotals.Gampaha + districtTotals.Hambantota + 
-                               districtTotals.Jaffna + districtTotals.Kalutara + 
-                               districtTotals.Kandy + districtTotals.Kegalle + 
-                               districtTotals.Kilinochchi + districtTotals.Kurunegala + 
-                               districtTotals.Mannar + districtTotals.Matale + 
-                               districtTotals.Matara + districtTotals.Monaragala + 
-                               districtTotals.Mullaitivu + districtTotals.NuwaraEliya + 
-                               districtTotals.Polonnaruwa + districtTotals.Puttalam + 
-                               districtTotals.Ratnapura + districtTotals.Trincomalee + 
-                               districtTotals.Vavuniya;
+    districtTotals.grandTotal = districtTotals.ampara + districtTotals.anuradhapura + 
+                               districtTotals.badulla + districtTotals.batticaloa + 
+                               districtTotals.colombo + districtTotals.galle + 
+                               districtTotals.gampaha + districtTotals.hambantota + 
+                               districtTotals.jaffna + districtTotals.kalutara + 
+                               districtTotals.kandy + districtTotals.kegalle + 
+                               districtTotals.kilinochchi + districtTotals.kurunegala + 
+                               districtTotals.mannar + districtTotals.matale + 
+                               districtTotals.matara + districtTotals.monaragala + 
+                               districtTotals.mullaitivu + districtTotals.nuwaraeliya + 
+                               districtTotals.polonnaruwa + districtTotals.puttalam + 
+                               districtTotals.ratnapura + districtTotals.trincomalee + 
+                               districtTotals.vavuniya;
     
     return districtTotals;
 }
@@ -313,7 +391,7 @@ public function getComprehensiveCandidateData(string electionId, store:Client db
     
     // Get vote summaries first
     sql:ParameterizedQuery whereClause = `election_id = ${electionId}`;
-    sql:ParameterizedQuery orderByClause = `totals DESC`;  // FIXED: Changed from "Totals" to "totals"
+    sql:ParameterizedQuery orderByClause = `totals DESC`;
 
     stream<store:CandidateDistrictVoteSummary, persist:Error?> voteStream = 
         dbClient->/candidatedistrictvotesummaries.get(
@@ -339,7 +417,7 @@ public function getComprehensiveCandidateData(string electionId, store:Client db
     // Calculate total votes across all candidates for percentage calculation
     int grandTotalVotes = 0;
     foreach store:CandidateDistrictVoteSummary vs in voteSummaries {
-        grandTotalVotes += vs.Totals;
+        grandTotalVotes += vs.totals;
     }
     
     // Process each candidate
@@ -348,7 +426,7 @@ public function getComprehensiveCandidateData(string electionId, store:Client db
     foreach int i in 0 ..< voteSummaries.length() {
         store:CandidateDistrictVoteSummary vs = voteSummaries[i];
         string candidateId = vs.candidateId;
-        int totalVotes = vs.Totals;
+        int totalVotes = vs.totals;
         
         // Get candidate details
         store:Candidate|persist:Error candidateResult = dbClient->/candidates/[candidateId].get();
@@ -438,31 +516,31 @@ function calculateDistrictsWonFromVoteSummaries(string candidateId, store:Candid
 // Helper function to get votes for a specific district from vote summary
 function getDistrictVotesFromSummary(store:CandidateDistrictVoteSummary vs, string district) returns int {
     match district {
-        "Ampara" => { return vs.Ampara; }
-        "Anuradhapura" => { return vs.Anuradhapura; }
-        "Badulla" => { return vs.Badulla; }
-        "Batticaloa" => { return vs.Batticaloa; }
-        "Colombo" => { return vs.Colombo; }
-        "Galle" => { return vs.Galle; }
-        "Gampaha" => { return vs.Gampaha; }
-        "Hambantota" => { return vs.Hambantota; }
-        "Jaffna" => { return vs.Jaffna; }
-        "Kalutara" => { return vs.Kalutara; }
-        "Kandy" => { return vs.Kandy; }
-        "Kegalle" => { return vs.Kegalle; }
-        "Kilinochchi" => { return vs.Kilinochchi; }
-        "Kurunegala" => { return vs.Kurunegala; }
-        "Mannar" => { return vs.Mannar; }
-        "Matale" => { return vs.Matale; }
-        "Matara" => { return vs.Matara; }
-        "Monaragala" => { return vs.Monaragala; }
-        "Mullaitivu" => { return vs.Mullaitivu; }
-        "NuwaraEliya" => { return vs.NuwaraEliya; }
-        "Polonnaruwa" => { return vs.Polonnaruwa; }
-        "Puttalam" => { return vs.Puttalam; }
-        "Ratnapura" => { return vs.Ratnapura; }
-        "Trincomalee" => { return vs.Trincomalee; }
-        "Vavuniya" => { return vs.Vavuniya; }
+        "Ampara" => { return vs.ampara; }
+        "Anuradhapura" => { return vs.anuradhapura; }
+        "Badulla" => { return vs.badulla; }
+        "Batticaloa" => { return vs.batticaloa; }
+        "Colombo" => { return vs.colombo; }
+        "Galle" => { return vs.galle; }
+        "Gampaha" => { return vs.gampaha; }
+        "Hambantota" => { return vs.hambantota; }
+        "Jaffna" => { return vs.jaffna; }
+        "Kalutara" => { return vs.kalutara; }
+        "Kandy" => { return vs.kandy; }
+        "Kegalle" => { return vs.kegalle; }
+        "Kilinochchi" => { return vs.kilinochchi; }
+        "Kurunegala" => { return vs.kurunegala; }
+        "Mannar" => { return vs.mannar; }
+        "Matale" => { return vs.matale; }
+        "Matara" => { return vs.matara; }
+        "Monaragala" => { return vs.monaragala; }
+        "Mullaitivu" => { return vs.mullaitivu; }
+        "NuwaraEliya" => { return vs.nuwaraeliya; }
+        "Polonnaruwa" => { return vs.polonnaruwa; }
+        "Puttalam" => { return vs.puttalam; }
+        "Ratnapura" => { return vs.ratnapura; }
+        "Trincomalee" => { return vs.trincomalee; }
+        "Vavuniya" => { return vs.vavuniya; }
         _ => { return 0; }
     }
 }
@@ -569,48 +647,48 @@ public function calculateDistrictVoteTotalsFromDB(string electionId, store:Clien
     // Extract data and calculate grand total
     DistrictVoteTotals districtTotals = {
         electionId: electionId,
-        Ampara: <int>data["ampara"],
-        Anuradhapura: <int>data["anuradhapura"],
-        Badulla: <int>data["badulla"],
-        Batticaloa: <int>data["batticaloa"],
-        Colombo: <int>data["colombo"],
-        Galle: <int>data["galle"],
-        Gampaha: <int>data["gampaha"],
-        Hambantota: <int>data["hambantota"],
-        Jaffna: <int>data["jaffna"],
-        Kalutara: <int>data["kalutara"],
-        Kandy: <int>data["kandy"],
-        Kegalle: <int>data["kegalle"],
-        Kilinochchi: <int>data["kilinochchi"],
-        Kurunegala: <int>data["kurunegala"],
-        Mannar: <int>data["mannar"],
-        Matale: <int>data["matale"],
-        Matara: <int>data["matara"],
-        Monaragala: <int>data["monaragala"],
-        Mullaitivu: <int>data["mullaitivu"],
-        NuwaraEliya: <int>data["nuwaraeliya"],
-        Polonnaruwa: <int>data["polonnaruwa"],
-        Puttalam: <int>data["puttalam"],
-        Ratnapura: <int>data["ratnapura"],
-        Trincomalee: <int>data["trincomalee"],
-        Vavuniya: <int>data["vavuniya"],
-        GrandTotal: 0
+        ampara: <int>data["ampara"],
+        anuradhapura: <int>data["anuradhapura"],
+        badulla: <int>data["badulla"],
+        batticaloa: <int>data["batticaloa"],
+        colombo: <int>data["colombo"],
+        galle: <int>data["galle"],
+        gampaha: <int>data["gampaha"],
+        hambantota: <int>data["hambantota"],
+        jaffna: <int>data["jaffna"],
+        kalutara: <int>data["kalutara"],
+        kandy: <int>data["kandy"],
+        kegalle: <int>data["kegalle"],
+        kilinochchi: <int>data["kilinochchi"],
+        kurunegala: <int>data["kurunegala"],
+        mannar: <int>data["mannar"],
+        matale: <int>data["matale"],
+        matara: <int>data["matara"],
+        monaragala: <int>data["monaragala"],
+        mullaitivu: <int>data["mullaitivu"],
+        nuwaraeliya: <int>data["nuwaraeliya"],
+        polonnaruwa: <int>data["polonnaruwa"],
+        puttalam: <int>data["puttalam"],
+        ratnapura: <int>data["ratnapura"],
+        trincomalee: <int>data["trincomalee"],
+        vavuniya: <int>data["vavuniya"],
+        grandTotal: 0
     };
     
     // Calculate grand total
-    districtTotals.GrandTotal = districtTotals.Ampara + districtTotals.Anuradhapura + 
-                               districtTotals.Badulla + districtTotals.Batticaloa + 
-                               districtTotals.Colombo + districtTotals.Galle + 
-                               districtTotals.Gampaha + districtTotals.Hambantota + 
-                               districtTotals.Jaffna + districtTotals.Kalutara + 
-                               districtTotals.Kandy + districtTotals.Kegalle + 
-                               districtTotals.Kilinochchi + districtTotals.Kurunegala + 
-                               districtTotals.Mannar + districtTotals.Matale + 
-                               districtTotals.Matara + districtTotals.Monaragala + 
-                               districtTotals.Mullaitivu + districtTotals.NuwaraEliya + 
-                               districtTotals.Polonnaruwa + districtTotals.Puttalam + 
-                               districtTotals.Ratnapura + districtTotals.Trincomalee + 
-                               districtTotals.Vavuniya;
+    districtTotals.grandTotal = districtTotals.ampara + districtTotals.anuradhapura + 
+                               districtTotals.badulla + districtTotals.batticaloa + 
+                               districtTotals.colombo + districtTotals.galle + 
+                               districtTotals.gampaha + districtTotals.hambantota + 
+                               districtTotals.jaffna + districtTotals.kalutara + 
+                               districtTotals.kandy + districtTotals.kegalle + 
+                               districtTotals.kilinochchi + districtTotals.kurunegala + 
+                               districtTotals.mannar + districtTotals.matale + 
+                               districtTotals.matara + districtTotals.monaragala + 
+                               districtTotals.mullaitivu + districtTotals.nuwaraeliya + 
+                               districtTotals.polonnaruwa + districtTotals.puttalam + 
+                               districtTotals.ratnapura + districtTotals.trincomalee + 
+                               districtTotals.vavuniya;
     
     return districtTotals;
 }
@@ -622,19 +700,19 @@ public function batchUpdateCandidateTotals(string electionId, store:Client dbCli
         dbClient->/candidatedistrictvotesummaries.get(whereClause = whereClause);
     
     error? processError = resultStream.forEach(function(store:CandidateDistrictVoteSummary candidate) {
-        int totalVotes = candidate.Ampara + candidate.Anuradhapura + candidate.Badulla + 
-                        candidate.Batticaloa + candidate.Colombo + candidate.Galle + 
-                        candidate.Gampaha + candidate.Hambantota + candidate.Jaffna + 
-                        candidate.Kalutara + candidate.Kandy + candidate.Kegalle + 
-                        candidate.Kilinochchi + candidate.Kurunegala + candidate.Mannar + 
-                        candidate.Matale + candidate.Matara + candidate.Monaragala + 
-                        candidate.Mullaitivu + candidate.NuwaraEliya + candidate.Polonnaruwa + 
-                        candidate.Puttalam + candidate.Ratnapura + candidate.Trincomalee + 
-                        candidate.Vavuniya;
+        int totalVotes = candidate.ampara + candidate.anuradhapura + candidate.badulla + 
+                        candidate.batticaloa + candidate.colombo + candidate.galle + 
+                        candidate.gampaha + candidate.hambantota + candidate.jaffna + 
+                        candidate.kalutara + candidate.kandy + candidate.kegalle + 
+                        candidate.kilinochchi + candidate.kurunegala + candidate.mannar + 
+                        candidate.matale + candidate.matara + candidate.monaragala + 
+                        candidate.mullaitivu + candidate.nuwaraeliya + candidate.polonnaruwa + 
+                        candidate.puttalam + candidate.ratnapura + candidate.trincomalee + 
+                        candidate.vavuniya;
         
-        if totalVotes != candidate.Totals {
+        if totalVotes != candidate.totals {
             // Update the total if it's different
-            store:CandidateDistrictVoteSummaryUpdate updateData = { Totals: totalVotes };
+            store:CandidateDistrictVoteSummaryUpdate updateData = { totals: totalVotes };
             var updateResult = dbClient->/candidatedistrictvotesummaries/[candidate.electionId]/[candidate.candidateId].put(updateData);
             
             // Handle the update result
@@ -644,7 +722,7 @@ public function batchUpdateCandidateTotals(string electionId, store:Client dbCli
                 // but you could also return the error to stop processing
             }
         }
-    });
+    }); // Added missing closing brace and semicolon
     
     check resultStream.close();
     
@@ -653,165 +731,4 @@ public function batchUpdateCandidateTotals(string electionId, store:Client dbCli
     }
     
     return ();
-}
-
-// Function to get detailed district-wise winner analysis
-public function getDistrictWinnerAnalysis(string electionId, store:Client dbClient) returns record {|
-    string electionId;
-    map<record {| string candidateId; string candidateName; int votes; |}> districtWinners;
-    map<decimal> marginPercentages;
-|} |error {
-    
-    sql:ParameterizedQuery whereClause = `election_id = ${electionId}`;
-    stream<store:CandidateDistrictVoteSummary, persist:Error?> resultStream = 
-        dbClient->/candidatedistrictvotesummaries.get(whereClause = whereClause);
-    
-    store:CandidateDistrictVoteSummary[] allCandidates = [];
-    error? processError = resultStream.forEach(function(store:CandidateDistrictVoteSummary candidate) {
-        allCandidates.push(candidate);
-    });
-    
-    check resultStream.close();
-    
-    if processError is error {
-        return processError;
-    }
-    
-    string[] districts = [
-        "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo",
-        "Galle", "Gampaha", "Hambantota", "Jaffna", "Kalutara",
-        "Kandy", "Kegalle", "Kilinochchi", "Kurunegala", "Mannar",
-        "Matale", "Matara", "Monaragala", "Mullaitivu", "NuwaraEliya",
-        "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"
-    ];
-    
-    map<record {| string candidateId; string candidateName; int votes; |}> districtWinners = {};
-    map<decimal> marginPercentages = {};
-    
-    foreach string district in districts {
-        int maxVotes = 0;
-        int secondMaxVotes = 0;
-        string winnerCandidateId = "";
-        
-        // Find winner and runner-up in this district
-        foreach store:CandidateDistrictVoteSummary candidate in allCandidates {
-            int votes = getDistrictVotesFromSummary(candidate, district);
-            if votes > maxVotes {
-                secondMaxVotes = maxVotes;
-                maxVotes = votes;
-                winnerCandidateId = candidate.candidateId;
-            } else if votes > secondMaxVotes {
-                secondMaxVotes = votes;
-            }
-        }
-        
-        if winnerCandidateId != "" && maxVotes > 0 {
-            // Get candidate name
-            store:Candidate|persist:Error candidateResult = dbClient->/candidates/[winnerCandidateId].get();
-            string candidateName = candidateResult is store:Candidate ? candidateResult.candidateName : "Unknown";
-            
-            districtWinners[district] = {
-                candidateId: winnerCandidateId,
-                candidateName: candidateName,
-                votes: maxVotes
-            };
-            
-            // Calculate margin percentage
-            decimal marginPercentage = 0.0;
-            if maxVotes > 0 && secondMaxVotes > 0 {
-                marginPercentage = <decimal>(maxVotes - secondMaxVotes) / <decimal>maxVotes * 100.0;
-            }
-            marginPercentages[district] = marginPercentage;
-        }
-    }
-    
-    return {
-        electionId: electionId,
-        districtWinners: districtWinners,
-        marginPercentages: marginPercentages
-    };
-}
-
-// Function to validate election data integrity
-public function validateElectionDataIntegrity(string electionId, store:Client dbClient) returns record {|
-    boolean isValid;
-    string[] errors;
-    record {|
-        int candidatesWithMismatchedTotals;
-        int candidatesWithNegativeVotes;
-        int candidatesWithMissingData;
-    |} statistics;
-|} |error {
-    
-    string[] errors = [];
-    int candidatesWithMismatchedTotals = 0;
-    int candidatesWithNegativeVotes = 0;
-    int candidatesWithMissingData = 0;
-    
-    sql:ParameterizedQuery whereClause = `election_id = ${electionId}`;
-    stream<store:CandidateDistrictVoteSummary, persist:Error?> resultStream = 
-        dbClient->/candidatedistrictvotesummaries.get(whereClause = whereClause);
-    
-    error? processError = resultStream.forEach(function(store:CandidateDistrictVoteSummary candidate) {
-        // Calculate actual total from district votes
-        int calculatedTotal = candidate.Ampara + candidate.Anuradhapura + candidate.Badulla + 
-                             candidate.Batticaloa + candidate.Colombo + candidate.Galle + 
-                             candidate.Gampaha + candidate.Hambantota + candidate.Jaffna + 
-                             candidate.Kalutara + candidate.Kandy + candidate.Kegalle + 
-                             candidate.Kilinochchi + candidate.Kurunegala + candidate.Mannar + 
-                             candidate.Matale + candidate.Matara + candidate.Monaragala + 
-                             candidate.Mullaitivu + candidate.NuwaraEliya + candidate.Polonnaruwa + 
-                             candidate.Puttalam + candidate.Ratnapura + candidate.Trincomalee + 
-                             candidate.Vavuniya;
-        
-        // Check for mismatched totals
-        if calculatedTotal != candidate.Totals {
-            candidatesWithMismatchedTotals += 1;
-            errors.push(string `Candidate ${candidate.candidateId}: Total mismatch - calculated: ${calculatedTotal}, stored: ${candidate.Totals}`);
-        }
-        
-        // Check for negative votes
-        int[] districtVotes = [
-            candidate.Ampara, candidate.Anuradhapura, candidate.Badulla, candidate.Batticaloa, 
-            candidate.Colombo, candidate.Galle, candidate.Gampaha, candidate.Hambantota, 
-            candidate.Jaffna, candidate.Kalutara, candidate.Kandy, candidate.Kegalle, 
-            candidate.Kilinochchi, candidate.Kurunegala, candidate.Mannar, candidate.Matale, 
-            candidate.Matara, candidate.Monaragala, candidate.Mullaitivu, candidate.NuwaraEliya, 
-            candidate.Polonnaruwa, candidate.Puttalam, candidate.Ratnapura, candidate.Trincomalee, 
-            candidate.Vavuniya, candidate.Totals
-        ];
-        
-        foreach int votes in districtVotes {
-            if votes < 0 {
-                candidatesWithNegativeVotes += 1;
-                errors.push(string `Candidate ${candidate.candidateId}: Negative votes detected`);
-                break;
-            }
-        }
-        
-        // Check for missing candidate data
-        store:Candidate|persist:Error candidateResult = dbClient->/candidates/[candidate.candidateId].get();
-        if candidateResult is persist:Error {
-            candidatesWithMissingData += 1;
-            errors.push(string `Candidate ${candidate.candidateId}: Missing candidate details`);
-        }
-    });
-    
-    check resultStream.close();
-    
-    if processError is error {
-        return processError;
-    }
-    
-    boolean isValid = errors.length() == 0;
-    
-    return {
-        isValid: isValid,
-        errors: errors,
-        statistics: {
-            candidatesWithMismatchedTotals: candidatesWithMismatchedTotals,
-            candidatesWithNegativeVotes: candidatesWithNegativeVotes,
-            candidatesWithMissingData: candidatesWithMissingData
-        }
-    };
 }
