@@ -1,3 +1,5 @@
+import online_election.store;
+
 import ballerina/time;
 
 # Description for elections to be insterted.
@@ -13,7 +15,7 @@ import ballerina/time;
 # + startTime - election starting time
 # + endTime - election ending time
 # + status - Scheduled / Upcoming / Active / Completed / Cancelled
-public type ElectionConfig record {|
+public type ElectionCreate record {|
     string electionName;
     string description;
     time:Date startDate;
@@ -25,4 +27,28 @@ public type ElectionConfig record {|
     time:TimeOfDay startTime;
     time:TimeOfDay endTime;
     string status;
+|};
+
+// Updated type to include optional candidates
+public type ElectionCreateWithCandidates record {|
+    *ElectionCreate;
+    string[]? candidateIds?;
+|};
+
+public type ElectionUpdateWithCandidates record {|
+    *store:ElectionUpdate;
+    string[]? candidateIds?;
+|};
+
+public type ElectionWithCandidates record {|
+    *store:Election;
+    EnrolledCandidateWithDetails[]? enrolledCandidates?;
+|};
+
+public type EnrolledCandidateWithDetails record {|
+    string electionId;
+    string candidateId;
+    int numberOfVotes?;
+    string? candidateName?;
+    string? partyName?;
 |};

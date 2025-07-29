@@ -2,6 +2,31 @@ import ballerina/persist as _;
 import ballerina/time;
 import ballerinax/persist.sql;
 
+# + candidateId - candidateId (primary key)
+# + candidateName - candidateName
+# + partyName - partyName
+# + partySymbol - partySymbol
+# + partyColor - partyColor
+# + candidateImage - candidateImage
+# + isActive - isActive
+
+public type Candidate record {|
+    @sql:Name {value: "candidate_id"}
+    readonly string candidateId;
+    @sql:Name {value: "candidate_name"}
+    string candidateName;
+    @sql:Name {value: "party_name"}
+    string partyName;
+    @sql:Name {value: "party_symbol"}
+    string? partySymbol;
+    @sql:Name {value: "party_color"}
+    string partyColor;
+    @sql:Name {value: "candidate_image"}
+    string? candidateImage;
+    @sql:Name {value: "is_active"}
+    boolean isActive;
+|};
+
 # ChiefOccupant Table
 #
 # + id - Auto-incrementing Primary Key
@@ -152,6 +177,15 @@ public type Election record {|
     string status;
 |};
 
+# Description.
+#
+# + id - field description  
+# + username - field description  
+# + email - field description  
+# + passwordHash - field description  
+# + role - field description  
+# + createdAt - field description  
+# + isActive - field description
 public type AdminUsers record {|
     readonly string id;
     string username;
@@ -217,4 +251,118 @@ public type DeleteMemberRequest record {|
     string requestStatus; 
     @sql:Name {value: "required_document_path"}
     string? requiredDocumentPath;
+|};
+# Description.
+#
+# + electionId - election id
+# + candidateId - candidate id
+# + numberOfVotes - number of votes the candidate got for the specific election
+public type EnrolCandidates record {|
+    @sql:Name {value: "election_id"}
+    readonly string electionId;
+    @sql:Name {value: "candidate_id"}
+    readonly string candidateId;
+    @sql:Name {value: "number_of_votes"}
+    int? numberOfVotes;
+|};
+
+# Description for votes to be inserted.
+#
+# + id - Vote ID (Primary Key)
+# + voterId - Voter ID (foreign key) - can reference either ChiefOccupant or HouseholdMembers
+# + electionId - Election ID (foreign key)
+# + candidateId - Candidate ID (foreign key)
+# + timestamp - Vote timestamp
+# + district - Voter's district
+
+public type Vote record {|
+    readonly string id;
+    @sql:Name { value: "voter_id" }
+    string voterId;
+    @sql:Name { value: "election_id" }
+    string electionId;
+    @sql:Name { value: "candidate_id" }
+    string candidateId;
+    string district;
+    string timestamp;
+|};
+
+# Description for enrol to be inserted.
+
+# + voterId - Voter ID (foreign key) - can reference either ChiefOccupant or HouseholdMembers
+# + electionId - Election ID (foreign key)
+# + enrollementDate - Date of enrolment
+
+public type Enrolment record {|
+
+    @sql:Name { value: "voter_id" }
+    readonly string voterId;
+    @sql:Name { value: "election_id" }
+    readonly string electionId;
+    @sql:Name {value: "enrollement_date"}
+    time:Utc enrollementDate;
+|};
+
+# Description.
+#
+# + electionId - foreign key reference to the Election record
+# + candidateId - foreign key reference to the Candidate record
+# + Ampara - number of votes in the Ampara district
+# + Anuradhapura - number of votes in the Anuradhapura district
+# + Badulla - number of votes in the Badulla district
+# + Batticaloa - number of votes in the Batticaloa district
+# + Colombo - field description  
+# + Galle - field description  
+# + Gampaha - field description  
+# + Hambantota - field description  
+# + Jaffna - field description  
+# + Kalutara - field description  
+# + Kandy - field description  
+# + Kegalle - field description  
+# + Kilinochchi - field description  
+# + Kurunegala - field description  
+# + Mannar - field description  
+# + Matale - field description  
+# + Matara - field description  
+# + Monaragala - field description  
+# + Mullaitivu - field description  
+# + NuwaraEliya - field description  
+# + Polonnaruwa - field description  
+# + Puttalam - field description  
+# + Ratnapura - field description  
+# + Trincomalee - field description  
+# + Vavuniya - field description  
+# + Totals - field description
+public type CandidateDistrictVoteSummary record {|
+    @sql:Name { value: "election_id" }
+    readonly string electionId;
+
+    @sql:Name { value: "candidate_id" }
+    readonly string candidateId;
+    int Ampara;
+    int Anuradhapura;
+    int Badulla;
+    int Batticaloa;
+    int Colombo;
+    int Galle;
+    int Gampaha;
+    int Hambantota;
+    int Jaffna;
+    int Kalutara;
+    int Kandy;
+    int Kegalle;
+    int Kilinochchi;
+    int Kurunegala;
+    int Mannar;
+    int Matale;
+    int Matara;
+    int Monaragala;
+    int Mullaitivu;
+    int NuwaraEliya;
+    int Polonnaruwa;
+    int Puttalam;
+    int Ratnapura;
+    int Trincomalee;
+    int Vavuniya;
+    int Totals;
 |};

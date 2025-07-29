@@ -5,6 +5,39 @@
 
 import ballerina/time;
 
+public type Candidate record {|
+    readonly string candidateId;
+    string candidateName;
+    string partyName;
+    string? partySymbol;
+    string partyColor;
+    string? candidateImage;
+    boolean isActive;
+|};
+
+public type CandidateOptionalized record {|
+    string candidateId?;
+    string candidateName?;
+    string partyName?;
+    string? partySymbol?;
+    string partyColor?;
+    string? candidateImage?;
+    boolean isActive?;
+|};
+
+public type CandidateTargetType typedesc<CandidateOptionalized>;
+
+public type CandidateInsert Candidate;
+
+public type CandidateUpdate record {|
+    string candidateName?;
+    string partyName?;
+    string? partySymbol?;
+    string partyColor?;
+    string? candidateImage?;
+    boolean isActive?;
+|};
+
 public type ChiefOccupant record {|
     readonly string id;
     string fullName;
@@ -330,5 +363,170 @@ public type DeleteMemberRequestUpdate record {|
     string? householdMemberId?;
     string requestStatus?;
     string? requiredDocumentPath?;
+|};
+
+public type EnrolCandidates record {|
+    readonly string electionId;
+    readonly string candidateId;
+    int? numberOfVotes;
+|};
+
+public type EnrolCandidatesOptionalized record {|
+    string electionId?;
+    string candidateId?;
+    int? numberOfVotes?;
+|};
+
+public type EnrolCandidatesTargetType typedesc<EnrolCandidatesOptionalized>;
+
+public type EnrolCandidatesInsert EnrolCandidates;
+
+public type EnrolCandidatesUpdate record {|
+    int? numberOfVotes?;
+|};
+
+public type Vote record {|
+    readonly string id;
+    string voterId;
+    string electionId;
+    string candidateId;
+    string district;
+    string timestamp;
+|};
+
+public type VoteOptionalized record {|
+    string id?;
+    string voterId?;
+    string electionId?;
+    string candidateId?;
+    string district?;
+    string timestamp?;
+|};
+
+public type VoteTargetType typedesc<VoteOptionalized>;
+
+public type VoteInsert Vote;
+
+public type VoteUpdate record {|
+    string voterId?;
+    string electionId?;
+    string candidateId?;
+    string district?;
+    string timestamp?;
+|};
+
+public type Enrolment record {|
+    readonly string voterId;
+    readonly string electionId;
+    time:Utc enrollementDate;
+|};
+
+public type EnrolmentOptionalized record {|
+    string voterId?;
+    string electionId?;
+    time:Utc enrollementDate?;
+|};
+
+public type EnrolmentTargetType typedesc<EnrolmentOptionalized>;
+
+public type EnrolmentInsert Enrolment;
+
+public type EnrolmentUpdate record {|
+    time:Utc enrollementDate?;
+|};
+
+public type CandidateDistrictVoteSummary record {|
+    readonly string electionId;
+    readonly string candidateId;
+    int Ampara;
+    int Anuradhapura;
+    int Badulla;
+    int Batticaloa;
+    int Colombo;
+    int Galle;
+    int Gampaha;
+    int Hambantota;
+    int Jaffna;
+    int Kalutara;
+    int Kandy;
+    int Kegalle;
+    int Kilinochchi;
+    int Kurunegala;
+    int Mannar;
+    int Matale;
+    int Matara;
+    int Monaragala;
+    int Mullaitivu;
+    int NuwaraEliya;
+    int Polonnaruwa;
+    int Puttalam;
+    int Ratnapura;
+    int Trincomalee;
+    int Vavuniya;
+    int Totals;
+|};
+
+public type CandidateDistrictVoteSummaryOptionalized record {|
+    string electionId?;
+    string candidateId?;
+    int Ampara?;
+    int Anuradhapura?;
+    int Badulla?;
+    int Batticaloa?;
+    int Colombo?;
+    int Galle?;
+    int Gampaha?;
+    int Hambantota?;
+    int Jaffna?;
+    int Kalutara?;
+    int Kandy?;
+    int Kegalle?;
+    int Kilinochchi?;
+    int Kurunegala?;
+    int Mannar?;
+    int Matale?;
+    int Matara?;
+    int Monaragala?;
+    int Mullaitivu?;
+    int NuwaraEliya?;
+    int Polonnaruwa?;
+    int Puttalam?;
+    int Ratnapura?;
+    int Trincomalee?;
+    int Vavuniya?;
+    int Totals?;
+|};
+
+public type CandidateDistrictVoteSummaryTargetType typedesc<CandidateDistrictVoteSummaryOptionalized>;
+
+public type CandidateDistrictVoteSummaryInsert CandidateDistrictVoteSummary;
+
+public type CandidateDistrictVoteSummaryUpdate record {|
+    int Ampara?;
+    int Anuradhapura?;
+    int Badulla?;
+    int Batticaloa?;
+    int Colombo?;
+    int Galle?;
+    int Gampaha?;
+    int Hambantota?;
+    int Jaffna?;
+    int Kalutara?;
+    int Kandy?;
+    int Kegalle?;
+    int Kilinochchi?;
+    int Kurunegala?;
+    int Mannar?;
+    int Matale?;
+    int Matara?;
+    int Monaragala?;
+    int Mullaitivu?;
+    int NuwaraEliya?;
+    int Polonnaruwa?;
+    int Puttalam?;
+    int Ratnapura?;
+    int Trincomalee?;
+    int Vavuniya?;
+    int Totals?;
 |};
 

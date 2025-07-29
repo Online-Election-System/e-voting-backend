@@ -83,6 +83,9 @@ dependencies = [
 	{org = "ballerina", name = "os"},
 	{org = "ballerina", name = "time"}
 ]
+modules = [
+	{org = "ballerina", packageName = "file", moduleName = "file"}
+]
 
 [[package]]
 org = "ballerina"
@@ -381,6 +384,17 @@ modules = [
 
 [[package]]
 org = "ballerinax"
+name = "cdc"
+version = "1.0.3"
+dependencies = [
+	{org = "ballerina", name = "crypto"},
+	{org = "ballerina", name = "data.jsondata"},
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerinai", name = "observe"}
+]
+
+[[package]]
+org = "ballerinax"
 name = "persist.sql"
 version = "1.6.0"
 dependencies = [
@@ -397,13 +411,14 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "postgresql"
-version = "1.15.0"
+version = "1.16.1"
 dependencies = [
 	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "sql"},
-	{org = "ballerina", name = "time"}
+	{org = "ballerina", name = "time"},
+	{org = "ballerinax", name = "cdc"}
 ]
 modules = [
 	{org = "ballerinax", packageName = "postgresql", moduleName = "postgresql"}
@@ -424,6 +439,7 @@ version = "0.1.0"
 dependencies = [
 	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "email"},
+	{org = "ballerina", name = "file"},
 	{org = "ballerina", name = "http"},
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"},
@@ -444,8 +460,11 @@ modules = [
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election"},
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.HouseholdManagement"},
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.auth"},
+	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.candidate"},
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.common"},
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.election"},
-	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.store"}
+	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.results"},
+	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.store"},
+	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.vote"}
 ]
 
