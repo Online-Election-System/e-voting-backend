@@ -266,7 +266,7 @@ public type Enrolment record {|
 # + matara - field description
 # + monaragala - field description
 # + mullaitivu - field description
-# + nuwaraEliya - field description
+# + nuwaraeliya - field description
 # + polonnaruwa - field description
 # + puttalam - field description
 # + ratnapura - field description
@@ -298,7 +298,7 @@ public type CandidateDistrictVoteSummary record {|
     int matara;
     int monaragala;
     int mullaitivu;
-    int nuwaraEliya;
+    int nuwaraeliya;
     int polonnaruwa;
     int puttalam;
     int ratnapura;

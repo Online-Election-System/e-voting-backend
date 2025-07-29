@@ -163,7 +163,7 @@ public function getDistrictWinnerAnalysis(string electionId, store:Client dbClie
         "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo",
         "Galle", "Gampaha", "Hambantota", "Jaffna", "Kalutara",
         "Kandy", "Kegalle", "Kilinochchi", "Kurunegala", "Mannar",
-        "Matale", "Matara", "Monaragala", "Mullaitivu", "NuwaraEliya",
+        "Matale", "Matara", "Monaragala", "Mullaitivu", "Nuwaraeliya",
         "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"
     ];
     
@@ -251,7 +251,7 @@ public function calculateCandidateDistrictAnalysis(string electionId, store:Clie
             "Matara": candidateData.matara,
             "Monaragala": candidateData.monaragala,
             "Mullaitivu": candidateData.mullaitivu,
-            "NuwaraEliya": candidateData.nuwaraeliya,
+            "Nuwaraeliya": candidateData.nuwaraeliya,
             "Polonnaruwa": candidateData.polonnaruwa,
             "Puttalam": candidateData.puttalam,
             "Ratnapura": candidateData.ratnapura,
@@ -485,7 +485,7 @@ function calculateDistrictsWonFromVoteSummaries(string candidateId, store:Candid
         "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo",
         "Galle", "Gampaha", "Hambantota", "Jaffna", "Kalutara",
         "Kandy", "Kegalle", "Kilinochchi", "Kurunegala", "Mannar",
-        "Matale", "Matara", "Monaragala", "Mullaitivu", "NuwaraEliya",
+        "Matale", "Matara", "Monaragala", "Mullaitivu", "Nuwaraeliya",
         "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"
     ];
     
@@ -536,7 +536,7 @@ function getDistrictVotesFromSummary(store:CandidateDistrictVoteSummary vs, stri
         "Matara" => { return vs.matara; }
         "Monaragala" => { return vs.monaragala; }
         "Mullaitivu" => { return vs.mullaitivu; }
-        "NuwaraEliya" => { return vs.nuwaraeliya; }
+        "Nuwaraeliya" => { return vs.nuwaraeliya; }
         "Polonnaruwa" => { return vs.polonnaruwa; }
         "Puttalam" => { return vs.puttalam; }
         "Ratnapura" => { return vs.ratnapura; }
