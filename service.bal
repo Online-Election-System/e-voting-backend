@@ -4,10 +4,12 @@ import online_election.election;
 import online_election.results;
 import online_election.vote;
 import online_election.store;
-import ballerina/http;
-import ballerina/persist;
 import online_election.HouseholdManagement;
 
+import ballerina/http;
+import ballerina/persist;
+import online_election.verification;
+import online_election.enrollment;
 
 listener http:Listener SharedListener = new (8080);
 
@@ -613,7 +615,6 @@ service /results/api/v1 on SharedListener {
             "message": "Election winner determined"
         };
     }
-
     // Get top N candidates
     resource function get elections/[string electionId]/candidates/top/[int count]() returns results:CandidateTotal[]|error {
         results:CandidateTotal[]|error allCandidates = results:getSortedCandidatesByTotal(electionId, results:dbClient);
@@ -726,23 +727,23 @@ service /results/api/v1 on SharedListener {
         };
     }
     
-    // Get candidate results for a specific district
-    resource function get election/[string electionId]/district/[string districtId]/results()
-    returns results:DistrictResults|http:NotFound|error {
-        return check results:getDistrictResults(electionId, districtId);
-    }
+    // // Get candidate results for a specific district
+    // resource function get election/[string electionId]/district/[string districtId]/results()
+    // returns results:DistrictResults|http:NotFound|error {
+    //     return check results:getDistrictResults(electionId, districtId);
+    // }
 
-    // Get results for all districts in an election
-    resource function get election/[string electionId]/districts/results()
-    returns results:ElectionDistrictResults|http:NotFound|error {
-        return check results:getAllDistrictResults(electionId);
-    }
+    // // Get results for all districts in an election
+    // resource function get election/[string electionId]/districts/results()
+    // returns results:ElectionDistrictResults|http:NotFound|error {
+    //     return check results:getAllDistrictResults(electionId);
+    // }
 
-    // Get candidate performance across all districts
-    resource function get election/[string electionId]/candidate/[string candidateId]/districts()
-    returns results:CandidateDistrictPerformance|http:NotFound|error {
-        return check results:getCandidateDistrictPerformance(electionId, candidateId);
-    }
+    // // Get candidate performance across all districts
+    // resource function get election/[string electionId]/candidate/[string candidateId]/districts()
+    // returns results:CandidateDistrictPerformance|http:NotFound|error {
+    //     return check results:getCandidateDistrictPerformance(electionId, candidateId);
+    // }
 
     // Get election summary with district winners
     resource function get election/[string electionId]/summary()
@@ -750,52 +751,116 @@ service /results/api/v1 on SharedListener {
         return check results:getElectionSummaryies(electionId, results:dbClient);
     }
 
-    // Get top performing districts for a candidate
-    resource function get election/[string electionId]/candidate/[string candidateId]/top\-districts(int 'limit = 10)
-    returns results:CandidateTopDistricts|http:NotFound|error {
-        return check results:getCandidateTopDistricts(electionId, candidateId, 'limit);
+    // // Get top performing districts for a candidate
+    // resource function get election/[string electionId]/candidate/[string candidateId]/top\-districts(int 'limit = 10)
+    // returns results:CandidateTopDistricts|http:NotFound|error {
+    //     return check results:getCandidateTopDistricts(electionId, candidateId, 'limit);
+    // }
+
+    // // Get district rankings by total votes
+    // resource function get election/[string electionId]/districts/rankings()
+    // returns results:DistrictRankings|http:NotFound|error {
+    //     return check results:getDistrictRankings(electionId);
+    // }
+
+    // // Get candidate standings (overall election results)
+    // resource function get election/[string electionId]/candidates/standings()
+    // returns results:CandidateStandings|http:NotFound|error {
+    //     return check results:getCandidateStandings(electionId);
+    // }
+
+    // // Compare candidates in specific districts
+    // resource function post election/[string electionId]/districts/compare(@http:Payload results:DistrictComparisonRequest request)
+    // returns results:DistrictComparison|http:BadRequest|error {
+    //     return check results:compareDistrictResults(electionId, request);
+    // }
+
+    // // Get vote distribution by district (pie chart data)
+    // resource function get election/[string electionId]/district/[string districtId]/distribution()
+    // returns results:VoteDistribution|http:NotFound|error {
+    //     return check results:getVoteDistribution(electionId, districtId);
+    // }
+
+    // // Get candidate margin analysis by district
+    // resource function get election/[string electionId]/candidate/[string candidateId]/margins()
+    // returns results:CandidateMargins|http:NotFound|error {
+    //     return check results:getCandidateMargins(electionId, candidateId);
+    // }
+
+    // // Get districts where candidate won/lost by specific margin
+    // resource function get election/[string electionId]/candidate/[string candidateId]/margins/analysis(decimal marginThreshold = 5.0)
+    // returns results:MarginAnalysis|http:NotFound|error {
+    //     return check results:getMarginAnalysis(electionId, candidateId, marginThreshold);
+    // }
+
+    // // Get real-time results (if election is ongoing)
+    // resource function get election/[string electionId]/live/results()
+    // returns results:LiveResults|http:NotFound|error {
+    //     return check results:getLiveResults(electionId);
+    // }
+}
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["http://localhost:3000"], // Your frontend URL
+        allowMethods: ["GET", "POST", "PUT", "DELETE"],
+        allowHeaders: ["Content-Type", "Authorization"]
+    }
+}
+service /api/v1 on SharedListener {
+
+    // == REGISTRATION REVIEW ENDPOINTS ==
+
+    // CORRECTED: All function calls now use the 'verification:' prefix.
+    resource function get registrations/applications(string? nameOrNic, string? statusFilter) 
+    returns verification:RegistrationApplication[]|error {
+        return verification:getRegistrationApplications(nameOrNic, statusFilter);
     }
 
-    // Get district rankings by total votes
-    resource function get election/[string electionId]/districts/rankings()
-    returns results:DistrictRankings|http:NotFound|error {
-        return check results:getDistrictRankings(electionId);
+    resource function get registrations/counts() 
+    returns verification:StatusCounts|error {
+        return verification:getApplicationCounts();
     }
 
-    // Get candidate standings (overall election results)
-    resource function get election/[string electionId]/candidates/standings()
-    returns results:CandidateStandings|http:NotFound|error {
-        return check results:getCandidateStandings(electionId);
+    resource function get registrations/applications/[string nic]() 
+    returns verification:RegistrationDetails|http:NotFound|error {
+        return verification:getRegistrationDetails(nic);
     }
 
-    // Compare candidates in specific districts
-    resource function post election/[string electionId]/districts/compare(@http:Payload results:DistrictComparisonRequest request)
-    returns results:DistrictComparison|http:BadRequest|error {
-        return check results:compareDistrictResults(electionId, request);
+    resource function post registrations/applications/[string nic]/review(verification:ReviewRequest reviewData) 
+    returns http:Ok|http:Forbidden|error {
+        return verification:reviewApplication(nic, reviewData);
     }
 
-    // Get vote distribution by district (pie chart data)
-    resource function get election/[string electionId]/district/[string districtId]/distribution()
-    returns results:VoteDistribution|http:NotFound|error {
-        return check results:getVoteDistribution(electionId, districtId);
+    // === VOTER ENDPOINTS ===
+
+    // resource function post voter/login(@http:Payload enrollment:LoginRequest payload) 
+    // returns enrollment:ApiResponse|error {
+    //     return enrollment:loginVoter(payload);
+    // }
+
+    resource function get profile/[string nic]() 
+    returns enrollment:UserProfile|http:NotFound|error {
+        return enrollment:getUserProfile(nic);
     }
 
-    // Get candidate margin analysis by district
-    resource function get election/[string electionId]/candidate/[string candidateId]/margins()
-    returns results:CandidateMargins|http:NotFound|error {
-        return check results:getCandidateMargins(electionId, candidateId);
+    // === ELECTION & ENROLLMENT ENDPOINTS ===
+
+    resource function get elections(@http:Query string? voterId = (), @http:Query string? voterNic = ()) 
+    returns enrollment:ElectionWithEnrollment[]|error {
+        return enrollment:getAllElections(voterId, voterNic);
     }
 
-    // Get districts where candidate won/lost by specific margin
-    resource function get election/[string electionId]/candidate/[string candidateId]/margins/analysis(decimal marginThreshold = 5.0)
-    returns results:MarginAnalysis|http:NotFound|error {
-        return check results:getMarginAnalysis(electionId, candidateId, marginThreshold);
+    resource function get elections/[string electionId]/candidates() 
+    returns enrollment:ElectionDetailsWithCandidates|http:NotFound|error {
+        return enrollment:getElectionWithCandidates(electionId);
     }
-
-    // Get real-time results (if election is ongoing)
-    resource function get election/[string electionId]/live/results()
-    returns results:LiveResults|http:NotFound|error {
-        return check results:getLiveResults(electionId);
+    
+    // The verification and enrollment endpoint
+   resource function post elections/[string electionId]/enroll(
+            @http:Payload enrollment:VoterVerificationRequest verificationPayload
+    ) returns http:Created|enrollment:ApiResponse|error {
+        return enrollment:enrollInElection(electionId, verificationPayload);
     }
 }
 
