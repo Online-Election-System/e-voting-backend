@@ -40,6 +40,8 @@ public type Candidate record {|
 # + idCopyPath - File Path of ID Copy
 # + email - email of chiefoccupant
 # + role - Role of the user
+# + photoCopyPath-file path to photo
+
 
 public type ChiefOccupant record {|
     readonly string id;
@@ -57,6 +59,8 @@ public type ChiefOccupant record {|
     string email;
     @sql:Name {value: "id_copy_path"}
     string? idCopyPath;
+    @sql:Name {value: "photo_copy_path"}
+    string? photoCopyPath;
     string role;
 |};
 
@@ -94,18 +98,19 @@ public type HouseholdDetails record {|
 
 # HouseholdMembers Table
 #
-# + id - Auto-incrementing Primary Key
-# + chiefOccupantId - Foreign Key (ChiefOccupant)
-# + fullName - Full Name of Household Member
-# + nic - National Identity Card (Nullable)
-# + dob - Date of Birth (MM/DD/YYYY)
-# + gender - Gender (Male/Female)
-# + civilStatus - Marital Status
-# + relationshipWithChiefOccupant - Relationship with Chief Occupant
-# + idCopyPath - File Path of ID Copy
-# + approvedByChief - Chief Occupant Approval Status
-# + passwordHash - Hashed Password
-# + passwordchanged - if the password change
+# + id - Auto-incrementing Primary Key  
+# + chiefOccupantId - Foreign Key (ChiefOccupant)  
+# + fullName - Full Name of Household Member  
+# + nic - National Identity Card (Nullable)  
+# + dob - Date of Birth (MM/DD/YYYY)  
+# + gender - Gender (Male/Female)  
+# + civilStatus - Marital Status  
+# + relationshipWithChiefOccupant - Relationship with Chief Occupant  
+# + idCopyPath - File Path of ID Copy  
+# + photoCopyPath - field description  
+# + approvedByChief - Chief Occupant Approval Status  
+# + passwordHash - Hashed Password  
+# + passwordchanged - if the password change  
 # + role - Role of the user
 
 public type HouseholdMembers record {|
@@ -123,6 +128,8 @@ public type HouseholdMembers record {|
     string relationshipWithChiefOccupant;
     @sql:Name {value: "id_copy_path"}
     string? idCopyPath;
+    @sql:Name {value: "photo_copy_path"}
+    string? photoCopyPath;
     @sql:Name {value: "approved_by_chief"}
     boolean approvedByChief;
     @sql:Name {value: "Hased_password"}
@@ -192,6 +199,59 @@ public type AdminUsers record {|
     boolean isActive;
 |};
 
+public type AddMemberRequest record {|
+    @sql:Name {value: "add_request_id"}
+    readonly string addRequestId;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId;
+    @sql:Name {value: "nic_number"}
+    string nicNumber;
+    @sql:Name {value: "full_name"}
+    string fullName;
+    @sql:Name {value: "date_of_birth"}
+    string dateOfBirth;
+    string gender; 
+    @sql:Name {value: "civil_status"}
+    string civilStatus;
+    @sql:Name {value: "relationship_to_chief"}
+    string relationshipToChief;
+    @sql:Name {value: "chief_occupant_approval"}
+    string chiefOccupantApproval; 
+    @sql:Name {value: "request_status"}
+    string requestStatus;
+    @sql:Name {value: "nic_or_birth_certificate_path"}
+    string? nicOrBirthCertificatePath;
+|};
+
+public type UpdateMemberRequest record {|
+    @sql:Name {value: "update_request_id"}
+    readonly string updateRequestId;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId;
+    @sql:Name {value: "household_member_id"}
+    string? householdMemberId;
+    @sql:Name {value: "new_full_name"}
+    string? newFullName;
+    @sql:Name {value: "new_resident_area"}
+    string? newResidentArea;
+    @sql:Name {value: "request_status"}
+    string requestStatus;
+    @sql:Name {value: "relevant_certificate_path"}
+    string? relevantCertificatePath;
+|};
+
+public type DeleteMemberRequest record {|
+    @sql:Name {value: "delete_request_id"}
+    readonly string deleteRequestId;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId; 
+    @sql:Name {value: "household_member_id"}
+    string? householdMemberId; 
+    @sql:Name {value: "request_status"}
+    string requestStatus; 
+    @sql:Name {value: "required_document_path"}
+    string? requiredDocumentPath;
+|};
 # Description.
 #
 # + electionId - election id
@@ -247,64 +307,64 @@ public type Enrolment record {|
 #
 # + electionId - foreign key reference to the Election record
 # + candidateId - foreign key reference to the Candidate record
-# + Ampara - number of votes in the Ampara district
-# + Anuradhapura - number of votes in the Anuradhapura district
-# + Badulla - number of votes in the Badulla district
-# + Batticaloa - number of votes in the Batticaloa district
-# + Colombo - field description  
-# + Galle - field description  
-# + Gampaha - field description  
-# + Hambantota - field description  
-# + Jaffna - field description  
-# + Kalutara - field description  
-# + Kandy - field description  
-# + Kegalle - field description  
-# + Kilinochchi - field description  
-# + Kurunegala - field description  
-# + Mannar - field description  
-# + Matale - field description  
-# + Matara - field description  
-# + Monaragala - field description  
-# + Mullaitivu - field description  
-# + NuwaraEliya - field description  
-# + Polonnaruwa - field description  
-# + Puttalam - field description  
-# + Ratnapura - field description  
-# + Trincomalee - field description  
-# + Vavuniya - field description  
-# + Totals - field description
+# + ampara - number of votes in the Ampara district
+# + anuradhapura - number of votes in the Anuradhapura district
+# + badulla - number of votes in the Badulla district
+# + batticaloa - number of votes in the Batticaloa district
+# + colombo - field description
+# + galle - field description
+# + gampaha - field description
+# + hambantota - field description
+# + jaffna - field description
+# + kalutara - field description
+# + kandy - field description
+# + kegalle - field description
+# + kilinochchi - field description
+# + kurunegala - field description
+# + mannar - field description
+# + matale - field description
+# + matara - field description
+# + monaragala - field description
+# + mullaitivu - field description
+# + nuwaraEliya - field description
+# + polonnaruwa - field description
+# + puttalam - field description
+# + ratnapura - field description
+# + trincomalee - field description
+# + vavuniya - field description
+# + totals - field description
 public type CandidateDistrictVoteSummary record {|
     @sql:Name { value: "election_id" }
     readonly string electionId;
 
     @sql:Name { value: "candidate_id" }
     readonly string candidateId;
-    int Ampara;
-    int Anuradhapura;
-    int Badulla;
-    int Batticaloa;
-    int Colombo;
-    int Galle;
-    int Gampaha;
-    int Hambantota;
-    int Jaffna;
-    int Kalutara;
-    int Kandy;
-    int Kegalle;
-    int Kilinochchi;
-    int Kurunegala;
-    int Mannar;
-    int Matale;
-    int Matara;
-    int Monaragala;
-    int Mullaitivu;
-    int NuwaraEliya;
-    int Polonnaruwa;
-    int Puttalam;
-    int Ratnapura;
-    int Trincomalee;
-    int Vavuniya;
-    int Totals;
+    int ampara;
+    int anuradhapura;
+    int badulla;
+    int batticaloa;
+    int colombo;
+    int galle;
+    int gampaha;
+    int hambantota;
+    int jaffna;
+    int kalutara;
+    int kandy;
+    int kegalle;
+    int kilinochchi;
+    int kurunegala;
+    int mannar;
+    int matale;
+    int matara;
+    int monaragala;
+    int mullaitivu;
+    int nuwaraEliya;
+    int polonnaruwa;
+    int puttalam;
+    int ratnapura;
+    int trincomalee;
+    int vavuniya;
+    int totals;
 |};
 
 # Comprehensive Audit Log Table

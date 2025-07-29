@@ -4,6 +4,7 @@ import online_election.election;
 import online_election.results;
 import online_election.vote;
 import online_election.store;
+import online_election.HouseholdManagement;
 
 
 import ballerina/http;
@@ -122,16 +123,7 @@ service /voter\-registration/api/v1 on SharedListener {
 
         return response;
     }
-
-    // Get complete voter profile with household details
-    @http:ResourceConfig {
-        cors: {
-            allowOrigins: ["http://localhost:3000"],
-            allowCredentials: true,
-            allowHeaders: ["Content-Type", "Authorization"],
-            allowMethods: ["GET", "OPTIONS"]
-        }
-    }
+    
     resource function get profile/[string voterId]() returns json|error {
         return check vote:getCompleteVoterProfile(voterId);
     }
@@ -163,8 +155,17 @@ service /voter\-registration/api/v1 on SharedListener {
         return check auth:logout(request);
     }
 
-    // Change Password - Public (no auth required)
-    resource function put change\-password(auth:ChangePasswordRequest req)
+    // Protected endpoint - requires authentication
+    // Change Password
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        }
+    }
+    resource function put change\-password(http:Request request, auth:ChangePasswordRequest req)
     returns http:Ok|http:Unauthorized|json|error|http:Response {
         return check auth:putChangePassword(req);
     }
@@ -526,6 +527,61 @@ service /vote/api/v1 on SharedListener {
         }
 
         return check vote:getVotesByHousehold(chiefOccupantId, electionId);
+    }
+}
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["http://localhost:3000"],
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowHeaders: ["Content-Type", "Authorization"],
+        allowCredentials: true
+    }
+}
+service /household\-management/api/v1 on SharedListener {
+
+    // Add member request
+    resource function post add\-member(HouseholdManagement:AddMemberRequest req)
+        returns json|error{
+        string[]|error result = HouseholdManagement:submitAddMemberRequest(req);
+        if result is error {
+            return { message: result.message() };
+        }
+        return { message: "Add member request submitted", requestId: result[0] };
+    }
+
+    // Update member request
+    resource function post update\-member(HouseholdManagement:UpdateMemberRequest req)
+        returns json|error {
+        string[]|error result = HouseholdManagement:submitUpdateMemberRequest(req);
+        if result is error {
+            return { message: result.message() };
+        }
+        return { message: "Update member request submitted", requestId: result[0] };
+    }
+
+    // Delete member request
+    resource function post delete\-member(HouseholdManagement:DeleteMemberRequest req)
+        returns json|error{
+        string[]|error result = HouseholdManagement:submitDeleteMemberRequest(req);
+        if result is error {
+            return { message: result.message() };
+        }
+        return { message: "Delete member request submitted", requestId: result[0] };
+    }
+    // GET resource for household members
+    resource function get household/[string chiefOccupantId]/members() 
+        returns json|error {
+        json|error result = HouseholdManagement:getHouseholdMembers(chiefOccupantId);
+        if result is error {
+            return error("Failed to get household members: " + result.message());
+        }
+        return result;
+    }
+
+    // OPTIONS resource (empty implementation)
+    resource function options household/[string chiefOccupantId]/members() 
+        returns http:Accepted {
+        return http:ACCEPTED;
     }
 }
 

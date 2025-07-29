@@ -1,7 +1,7 @@
 import online_election.common;
 import online_election.store;
 import online_election.auth;
-import online_election.results; // ✨ NEW: Import results module
+import online_election.results; // NEW: Import results module
 import online_election.candidate;
 
 import ballerina/http;
@@ -227,7 +227,7 @@ public function debugResultsUpdate(string electionId, string candidateId, string
     
     if existingSummary is store:CandidateDistrictVoteSummary {
         io:println("Existing summary found for candidate: ", candidateId);
-        io:println("Current totals: ", existingSummary.Totals.toString());
+        io:println("Current totals: ", existingSummary.totals.toString());
     } else {
         io:println("No existing summary found for candidate: ", candidateId);
         io:println("Error: ", existingSummary.message());

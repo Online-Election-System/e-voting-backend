@@ -16,6 +16,9 @@ const HOUSEHOLD_DETAILS = "householddetails";
 const HOUSEHOLD_MEMBERS = "householdmembers";
 const ELECTION = "elections";
 const ADMIN_USERS = "adminusers";
+const ADD_MEMBER_REQUEST = "addmemberrequests";
+const UPDATE_MEMBER_REQUEST = "updatememberrequests";
+const DELETE_MEMBER_REQUEST = "deletememberrequests";
 const ENROL_CANDIDATES = "enrolcandidates";
 const VOTE = "votes";
 const ENROLMENT = "enrolments";
@@ -58,6 +61,7 @@ public isolated client class Client {
                 passwordHash: {columnName: "password_hash"},
                 email: {columnName: "email"},
                 idCopyPath: {columnName: "id_copy_path"},
+                photoCopyPath: {columnName: "photo_copy_path"},
                 role: {columnName: "role"}
             },
             keyFields: ["id"]
@@ -91,6 +95,7 @@ public isolated client class Client {
                 civilStatus: {columnName: "civil_status"},
                 relationshipWithChiefOccupant: {columnName: "relationship_with_chief_occupant"},
                 idCopyPath: {columnName: "id_copy_path"},
+                photoCopyPath: {columnName: "photo_copy_path"},
                 approvedByChief: {columnName: "approved_by_chief"},
                 passwordHash: {columnName: "Hased_password"},
                 passwordchanged: {columnName: "passwordchanged"},
@@ -131,6 +136,50 @@ public isolated client class Client {
             },
             keyFields: ["id"]
         },
+        [ADD_MEMBER_REQUEST]: {
+            entityName: "AddMemberRequest",
+            tableName: "AddMemberRequest",
+            fieldMetadata: {
+                addRequestId: {columnName: "add_request_id"},
+                chiefOccupantId: {columnName: "chief_occupant_id"},
+                nicNumber: {columnName: "nic_number"},
+                fullName: {columnName: "full_name"},
+                dateOfBirth: {columnName: "date_of_birth"},
+                gender: {columnName: "gender"},
+                civilStatus: {columnName: "civil_status"},
+                relationshipToChief: {columnName: "relationship_to_chief"},
+                chiefOccupantApproval: {columnName: "chief_occupant_approval"},
+                requestStatus: {columnName: "request_status"},
+                nicOrBirthCertificatePath: {columnName: "nic_or_birth_certificate_path"}
+            },
+            keyFields: ["addRequestId"]
+        },
+        [UPDATE_MEMBER_REQUEST]: {
+            entityName: "UpdateMemberRequest",
+            tableName: "UpdateMemberRequest",
+            fieldMetadata: {
+                updateRequestId: {columnName: "update_request_id"},
+                chiefOccupantId: {columnName: "chief_occupant_id"},
+                householdMemberId: {columnName: "household_member_id"},
+                newFullName: {columnName: "new_full_name"},
+                newResidentArea: {columnName: "new_resident_area"},
+                requestStatus: {columnName: "request_status"},
+                relevantCertificatePath: {columnName: "relevant_certificate_path"}
+            },
+            keyFields: ["updateRequestId"]
+        },
+        [DELETE_MEMBER_REQUEST]: {
+            entityName: "DeleteMemberRequest",
+            tableName: "DeleteMemberRequest",
+            fieldMetadata: {
+                deleteRequestId: {columnName: "delete_request_id"},
+                chiefOccupantId: {columnName: "chief_occupant_id"},
+                householdMemberId: {columnName: "household_member_id"},
+                requestStatus: {columnName: "request_status"},
+                requiredDocumentPath: {columnName: "required_document_path"}
+            },
+            keyFields: ["deleteRequestId"]
+        },
         [ENROL_CANDIDATES]: {
             entityName: "EnrolCandidates",
             tableName: "EnrolCandidates",
@@ -170,32 +219,32 @@ public isolated client class Client {
             fieldMetadata: {
                 electionId: {columnName: "election_id"},
                 candidateId: {columnName: "candidate_id"},
-                Ampara: {columnName: "Ampara"},
-                Anuradhapura: {columnName: "Anuradhapura"},
-                Badulla: {columnName: "Badulla"},
-                Batticaloa: {columnName: "Batticaloa"},
-                Colombo: {columnName: "Colombo"},
-                Galle: {columnName: "Galle"},
-                Gampaha: {columnName: "Gampaha"},
-                Hambantota: {columnName: "Hambantota"},
-                Jaffna: {columnName: "Jaffna"},
-                Kalutara: {columnName: "Kalutara"},
-                Kandy: {columnName: "Kandy"},
-                Kegalle: {columnName: "Kegalle"},
-                Kilinochchi: {columnName: "Kilinochchi"},
-                Kurunegala: {columnName: "Kurunegala"},
-                Mannar: {columnName: "Mannar"},
-                Matale: {columnName: "Matale"},
-                Matara: {columnName: "Matara"},
-                Monaragala: {columnName: "Monaragala"},
-                Mullaitivu: {columnName: "Mullaitivu"},
-                NuwaraEliya: {columnName: "NuwaraEliya"},
-                Polonnaruwa: {columnName: "Polonnaruwa"},
-                Puttalam: {columnName: "Puttalam"},
-                Ratnapura: {columnName: "Ratnapura"},
-                Trincomalee: {columnName: "Trincomalee"},
-                Vavuniya: {columnName: "Vavuniya"},
-                Totals: {columnName: "Totals"}
+                ampara: {columnName: "ampara"},
+                anuradhapura: {columnName: "anuradhapura"},
+                badulla: {columnName: "badulla"},
+                batticaloa: {columnName: "batticaloa"},
+                colombo: {columnName: "colombo"},
+                galle: {columnName: "galle"},
+                gampaha: {columnName: "gampaha"},
+                hambantota: {columnName: "hambantota"},
+                jaffna: {columnName: "jaffna"},
+                kalutara: {columnName: "kalutara"},
+                kandy: {columnName: "kandy"},
+                kegalle: {columnName: "kegalle"},
+                kilinochchi: {columnName: "kilinochchi"},
+                kurunegala: {columnName: "kurunegala"},
+                mannar: {columnName: "mannar"},
+                matale: {columnName: "matale"},
+                matara: {columnName: "matara"},
+                monaragala: {columnName: "monaragala"},
+                mullaitivu: {columnName: "mullaitivu"},
+                nuwaraEliya: {columnName: "nuwaraEliya"},
+                polonnaruwa: {columnName: "polonnaruwa"},
+                puttalam: {columnName: "puttalam"},
+                ratnapura: {columnName: "ratnapura"},
+                trincomalee: {columnName: "trincomalee"},
+                vavuniya: {columnName: "vavuniya"},
+                totals: {columnName: "totals"}
             },
             keyFields: ["electionId", "candidateId"]
         },
@@ -256,6 +305,9 @@ public isolated client class Client {
             [HOUSEHOLD_MEMBERS]: check new (dbClient, self.metadata.get(HOUSEHOLD_MEMBERS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [ELECTION]: check new (dbClient, self.metadata.get(ELECTION).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [ADMIN_USERS]: check new (dbClient, self.metadata.get(ADMIN_USERS).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [ADD_MEMBER_REQUEST]: check new (dbClient, self.metadata.get(ADD_MEMBER_REQUEST).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [UPDATE_MEMBER_REQUEST]: check new (dbClient, self.metadata.get(UPDATE_MEMBER_REQUEST).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [DELETE_MEMBER_REQUEST]: check new (dbClient, self.metadata.get(DELETE_MEMBER_REQUEST).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [ENROL_CANDIDATES]: check new (dbClient, self.metadata.get(ENROL_CANDIDATES).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [VOTE]: check new (dbClient, self.metadata.get(VOTE).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [ENROLMENT]: check new (dbClient, self.metadata.get(ENROLMENT).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
@@ -495,6 +547,123 @@ public isolated client class Client {
             sqlClient = self.persistClients.get(ADMIN_USERS);
         }
         _ = check sqlClient.runDeleteQuery(id);
+        return result;
+    }
+
+    isolated resource function get addmemberrequests(AddMemberRequestTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get addmemberrequests/[string addRequestId](AddMemberRequestTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post addmemberrequests(AddMemberRequestInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ADD_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from AddMemberRequestInsert inserted in data
+            select inserted.addRequestId;
+    }
+
+    isolated resource function put addmemberrequests/[string addRequestId](AddMemberRequestUpdate value) returns AddMemberRequest|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ADD_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runUpdateQuery(addRequestId, value);
+        return self->/addmemberrequests/[addRequestId].get();
+    }
+
+    isolated resource function delete addmemberrequests/[string addRequestId]() returns AddMemberRequest|persist:Error {
+        AddMemberRequest result = check self->/addmemberrequests/[addRequestId].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ADD_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runDeleteQuery(addRequestId);
+        return result;
+    }
+
+    isolated resource function get updatememberrequests(UpdateMemberRequestTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get updatememberrequests/[string updateRequestId](UpdateMemberRequestTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post updatememberrequests(UpdateMemberRequestInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(UPDATE_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from UpdateMemberRequestInsert inserted in data
+            select inserted.updateRequestId;
+    }
+
+    isolated resource function put updatememberrequests/[string updateRequestId](UpdateMemberRequestUpdate value) returns UpdateMemberRequest|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(UPDATE_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runUpdateQuery(updateRequestId, value);
+        return self->/updatememberrequests/[updateRequestId].get();
+    }
+
+    isolated resource function delete updatememberrequests/[string updateRequestId]() returns UpdateMemberRequest|persist:Error {
+        UpdateMemberRequest result = check self->/updatememberrequests/[updateRequestId].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(UPDATE_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runDeleteQuery(updateRequestId);
+        return result;
+    }
+
+    isolated resource function get deletememberrequests(DeleteMemberRequestTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get deletememberrequests/[string deleteRequestId](DeleteMemberRequestTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post deletememberrequests(DeleteMemberRequestInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(DELETE_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from DeleteMemberRequestInsert inserted in data
+            select inserted.deleteRequestId;
+    }
+
+    isolated resource function put deletememberrequests/[string deleteRequestId](DeleteMemberRequestUpdate value) returns DeleteMemberRequest|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(DELETE_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runUpdateQuery(deleteRequestId, value);
+        return self->/deletememberrequests/[deleteRequestId].get();
+    }
+
+    isolated resource function delete deletememberrequests/[string deleteRequestId]() returns DeleteMemberRequest|persist:Error {
+        DeleteMemberRequest result = check self->/deletememberrequests/[deleteRequestId].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(DELETE_MEMBER_REQUEST);
+        }
+        _ = check sqlClient.runDeleteQuery(deleteRequestId);
         return result;
     }
 
