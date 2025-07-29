@@ -393,36 +393,6 @@ public type RegistrationReviewUpdate record {|
     time:Utc? reviewedAt?;
 |};
 
-public type RemovalRequestReview record {|
-    readonly string id;
-    int removalRequestId;
-    string reviewedBy;
-    string status;
-    string? comments;
-    time:Utc? reviewedAt;
-|};
-
-public type RemovalRequestReviewOptionalized record {|
-    string id?;
-    int removalRequestId?;
-    string reviewedBy?;
-    string status?;
-    string? comments?;
-    time:Utc? reviewedAt?;
-|};
-
-public type RemovalRequestReviewTargetType typedesc<RemovalRequestReviewOptionalized>;
-
-public type RemovalRequestReviewInsert RemovalRequestReview;
-
-public type RemovalRequestReviewUpdate record {|
-    int removalRequestId?;
-    string reviewedBy?;
-    string status?;
-    string? comments?;
-    time:Utc? reviewedAt?;
-|};
-
 public type GramaNiladhari record {|
     readonly string id;
     string fullName;
@@ -553,5 +523,100 @@ public type VoterUpdate record {|
     string pollingStation?;
     time:Date registrationDate?;
     string status?;
+|};
+
+public type CandidateDistrictVoteSummary record {|
+    readonly string electionId;
+    readonly string candidateId;
+    int Ampara;
+    int Anuradhapura;
+    int Badulla;
+    int Batticaloa;
+    int Colombo;
+    int Galle;
+    int Gampaha;
+    int Hambantota;
+    int Jaffna;
+    int Kalutara;
+    int Kandy;
+    int Kegalle;
+    int Kilinochchi;
+    int Kurunegala;
+    int Mannar;
+    int Matale;
+    int Matara;
+    int Monaragala;
+    int Mullaitivu;
+    int NuwaraEliya;
+    int Polonnaruwa;
+    int Puttalam;
+    int Ratnapura;
+    int Trincomalee;
+    int Vavuniya;
+    int Totals;
+|};
+
+public type CandidateDistrictVoteSummaryOptionalized record {|
+    string electionId?;
+    string candidateId?;
+    int Ampara?;
+    int Anuradhapura?;
+    int Badulla?;
+    int Batticaloa?;
+    int Colombo?;
+    int Galle?;
+    int Gampaha?;
+    int Hambantota?;
+    int Jaffna?;
+    int Kalutara?;
+    int Kandy?;
+    int Kegalle?;
+    int Kilinochchi?;
+    int Kurunegala?;
+    int Mannar?;
+    int Matale?;
+    int Matara?;
+    int Monaragala?;
+    int Mullaitivu?;
+    int NuwaraEliya?;
+    int Polonnaruwa?;
+    int Puttalam?;
+    int Ratnapura?;
+    int Trincomalee?;
+    int Vavuniya?;
+    int Totals?;
+|};
+
+public type CandidateDistrictVoteSummaryTargetType typedesc<CandidateDistrictVoteSummaryOptionalized>;
+
+public type CandidateDistrictVoteSummaryInsert CandidateDistrictVoteSummary;
+
+public type CandidateDistrictVoteSummaryUpdate record {|
+    int Ampara?;
+    int Anuradhapura?;
+    int Badulla?;
+    int Batticaloa?;
+    int Colombo?;
+    int Galle?;
+    int Gampaha?;
+    int Hambantota?;
+    int Jaffna?;
+    int Kalutara?;
+    int Kandy?;
+    int Kegalle?;
+    int Kilinochchi?;
+    int Kurunegala?;
+    int Mannar?;
+    int Matale?;
+    int Matara?;
+    int Monaragala?;
+    int Mullaitivu?;
+    int NuwaraEliya?;
+    int Polonnaruwa?;
+    int Puttalam?;
+    int Ratnapura?;
+    int Trincomalee?;
+    int Vavuniya?;
+    int Totals?;
 |};
 

@@ -12,8 +12,8 @@ DROP TABLE IF EXISTS "Notification";
 DROP TABLE IF EXISTS "HouseholdMembers";
 DROP TABLE IF EXISTS "AdminUsers";
 DROP TABLE IF EXISTS "RemovalRequest";
+DROP TABLE IF EXISTS "CandidateDistrictVoteSummary";
 DROP TABLE IF EXISTS "GramaNiladhari";
-DROP TABLE IF EXISTS "RemovalRequestReview";
 DROP TABLE IF EXISTS "Voter";
 DROP TABLE IF EXISTS "ChiefOccupant";
 DROP TABLE IF EXISTS "HouseholdDetails";
@@ -70,16 +70,6 @@ CREATE TABLE "Voter" (
 	PRIMARY KEY("id")
 );
 
-CREATE TABLE "RemovalRequestReview" (
-	"id" VARCHAR(191) NOT NULL,
-	"removal_request_id" INT NOT NULL,
-	"reviewed_by" VARCHAR(191) NOT NULL,
-	"status" VARCHAR(191) NOT NULL,
-	"comments" VARCHAR(191),
-	"reviewed_at" TIMESTAMP,
-	PRIMARY KEY("id")
-);
-
 CREATE TABLE "GramaNiladhari" (
 	"id" VARCHAR(191) NOT NULL,
 	"full_name" VARCHAR(191) NOT NULL,
@@ -99,6 +89,38 @@ CREATE TABLE "GramaNiladhari" (
 	"qualifications" VARCHAR(191) NOT NULL,
 	"experience" VARCHAR(191) NOT NULL,
 	PRIMARY KEY("id")
+);
+
+CREATE TABLE "CandidateDistrictVoteSummary" (
+	"election_id" VARCHAR(191) NOT NULL,
+	"candidate_id" VARCHAR(191) NOT NULL,
+	"Ampara" INT NOT NULL,
+	"Anuradhapura" INT NOT NULL,
+	"Badulla" INT NOT NULL,
+	"Batticaloa" INT NOT NULL,
+	"Colombo" INT NOT NULL,
+	"Galle" INT NOT NULL,
+	"Gampaha" INT NOT NULL,
+	"Hambantota" INT NOT NULL,
+	"Jaffna" INT NOT NULL,
+	"Kalutara" INT NOT NULL,
+	"Kandy" INT NOT NULL,
+	"Kegalle" INT NOT NULL,
+	"Kilinochchi" INT NOT NULL,
+	"Kurunegala" INT NOT NULL,
+	"Mannar" INT NOT NULL,
+	"Matale" INT NOT NULL,
+	"Matara" INT NOT NULL,
+	"Monaragala" INT NOT NULL,
+	"Mullaitivu" INT NOT NULL,
+	"NuwaraEliya" INT NOT NULL,
+	"Polonnaruwa" INT NOT NULL,
+	"Puttalam" INT NOT NULL,
+	"Ratnapura" INT NOT NULL,
+	"Trincomalee" INT NOT NULL,
+	"Vavuniya" INT NOT NULL,
+	"Totals" INT NOT NULL,
+	PRIMARY KEY("election_id","candidate_id")
 );
 
 CREATE TABLE "RemovalRequest" (
