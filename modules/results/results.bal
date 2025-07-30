@@ -15,7 +15,7 @@ final readonly & string[] DISTRICTS = [
     "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo", 
     "Galle", "Gampaha", "Hambantota", "Jaffna", "Kalutara", 
     "Kandy", "Kegalle", "Kilinochchi", "Kurunegala", "Mannar", 
-    "Matale", "Matara", "Monaragala", "Mullaitivu", "NuwaraEliya", 
+    "Matale", "Matara", "Monaragala", "Mullaitivu", "Nuwaraeliya", 
     "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"
 ];
 
@@ -84,7 +84,7 @@ public function initializeElectionResults(string electionId) returns error? {
             matara: 0,
             monaragala: 0,
             mullaitivu: 0,
-            nuwaraEliya: 0,
+            nuwaraeliya: 0,
             polonnaruwa: 0,
             puttalam: 0,
             ratnapura: 0,
@@ -273,7 +273,7 @@ function getDistrictCount(store:CandidateDistrictVoteSummary summary, string dis
         "Matara" => { return summary.matara; }
         "Monaragala" => { return summary.monaragala; }
         "Mullaitivu" => { return summary.mullaitivu; }
-        "NuwaraEliya" => { return summary.nuwaraEliya; }
+        "Nuwaraeliya" => { return summary.nuwaraeliya; }
         "Polonnaruwa" => { return summary.polonnaruwa; }
         "Puttalam" => { return summary.puttalam; }
         "Ratnapura" => { return summary.ratnapura; }
@@ -305,7 +305,7 @@ function setDistrictCount(store:CandidateDistrictVoteSummary summary, string dis
         "Matara" => { summary.matara = count; }
         "Monaragala" => { summary.monaragala = count; }
         "Mullaitivu" => { summary.mullaitivu = count; }
-        "NuwaraEliya" => { summary.nuwaraEliya = count; }
+        "Nuwaraeliya" => { summary.nuwaraeliya = count; }
         "Polonnaruwa" => { summary.polonnaruwa = count; }
         "Puttalam" => { summary.puttalam = count; }
         "Ratnapura" => { summary.ratnapura = count; }
@@ -337,7 +337,7 @@ function createUpdateRecord(store:CandidateDistrictVoteSummary existing, string 
         matara: existing.matara,
         monaragala: existing.monaragala,
         mullaitivu: existing.mullaitivu,
-        nuwaraEliya: existing.nuwaraEliya,
+        nuwaraeliya: existing.nuwaraeliya,
         polonnaruwa: existing.polonnaruwa,
         puttalam: existing.puttalam,
         ratnapura: existing.ratnapura,
@@ -367,7 +367,7 @@ function createUpdateRecord(store:CandidateDistrictVoteSummary existing, string 
         "Matara" => { updateData.matara = newCount; }
         "Monaragala" => { updateData.monaragala = newCount; }
         "Mullaitivu" => { updateData.mullaitivu = newCount; }
-        "NuwaraEliya" => { updateData.nuwaraEliya = newCount; }
+        "Nuwaraeliya" => { updateData.nuwaraeliya = newCount; }
         "Polonnaruwa" => { updateData.polonnaruwa = newCount; }
         "Puttalam" => { updateData.puttalam = newCount; }
         "Ratnapura" => { updateData.ratnapura = newCount; }
@@ -546,7 +546,7 @@ function calculateElectionResultsForOngoing(string electionId) returns store:Can
             ampara: 0, anuradhapura: 0, badulla: 0, batticaloa: 0, colombo: 0,
             galle: 0, gampaha: 0, hambantota: 0, jaffna: 0, kalutara: 0,
             kandy: 0, kegalle: 0, kilinochchi: 0, kurunegala: 0, mannar: 0,
-            matale: 0, matara: 0, monaragala: 0, mullaitivu: 0, nuwaraEliya: 0,
+            matale: 0, matara: 0, monaragala: 0, mullaitivu: 0, nuwaraeliya: 0,
             polonnaruwa: 0, puttalam: 0, ratnapura: 0, trincomalee: 0, vavuniya: 0,
             totals: 0
         };
@@ -580,573 +580,573 @@ function calculateElectionResultsForOngoing(string electionId) returns store:Can
     return results;
 }
 
-// Business Logic Functions
+// // Business Logic Functions
 
-public function getDistrictResults(string electionId, string districtId) returns DistrictResults|error {
-    // Get election results summary
-    store:CandidateDistrictVoteSummary[]|error summaries = getElectionResults(electionId);
-    if summaries is error {
-        return error("Failed to get election results: " + summaries.message());
-    }
+// public function getDistrictResults(string electionId, string districtId) returns DistrictResults|error {
+//     // Get election results summary
+//     store:CandidateDistrictVoteSummary[]|error summaries = getElectionResults(electionId);
+//     if summaries is error {
+//         return error("Failed to get election results: " + summaries.message());
+//     }
 
-    string normalizedDistrict = normalizeDistrictName(districtId);
+//     string normalizedDistrict = normalizeDistrictName(districtId);
     
-    // Validate district exists
-    if !DISTRICTS.some(d => d == normalizedDistrict) {
-        return error("Invalid district: " + districtId);
-    }
+//     // Validate district exists
+//     if !DISTRICTS.some(d => d == normalizedDistrict) {
+//         return error("Invalid district: " + districtId);
+//     }
 
-    CandidateResult[] candidates = [];
-    int totalVotes = 0;
+//     CandidateResult[] candidates = [];
+//     int totalVotes = 0;
 
-    foreach store:CandidateDistrictVoteSummary summary in summaries {
-        // Get candidate details
-        store:Candidate|persist:Error candidate = db->/candidates/[summary.candidateId].get();
-        if candidate is persist:Error {
-            log:printWarn("Candidate not found", candidateId = summary.candidateId);
-            continue;
-        }
+//     foreach store:CandidateDistrictVoteSummary summary in summaries {
+//         // Get candidate details
+//         store:Candidate|persist:Error candidate = db->/candidates/[summary.candidateId].get();
+//         if candidate is persist:Error {
+//             log:printWarn("Candidate not found", candidateId = summary.candidateId);
+//             continue;
+//         }
 
-        // Get votes for this district
-        int votes = getDistrictCount(summary, normalizedDistrict);
-        totalVotes += votes;
+//         // Get votes for this district
+//         int votes = getDistrictCount(summary, normalizedDistrict);
+//         totalVotes += votes;
 
-        if votes > 0 {
-            candidates.push({
-                candidate_id: summary.candidateId,
-                candidate_name: candidate.candidateName,
-                party: candidate.partyName,
-                party_symbol: candidate.partySymbol,
-                party_color: candidate.partyColor,
-                votes: votes,
-                percentage: 0.0d, // Will be calculated after sorting
-                rank: 0 // Will be set after sorting
-            });
-        }
-    }
+//         if votes > 0 {
+//             candidates.push({
+//                 candidate_id: summary.candidateId,
+//                 candidate_name: candidate.candidateName,
+//                 party: candidate.partyName,
+//                 party_symbol: candidate.partySymbol,
+//                 party_color: candidate.partyColor,
+//                 votes: votes,
+//                 percentage: 0.0d, // Will be calculated after sorting
+//                 rank: 0 // Will be set after sorting
+//             });
+//         }
+//     }
 
-    // Calculate percentages and sort
-    candidates = sortCandidatesByVotes(candidates, totalVotes);
+//     // Calculate percentages and sort
+//     candidates = sortCandidatesByVotes(candidates, totalVotes);
 
-    return {
-        election_id: electionId,
-        district_id: districtId,
-        district_name: normalizedDistrict,
-        total_votes: totalVotes,
-        candidates: candidates
-    };
-}
+//     return {
+//         election_id: electionId,
+//         district_id: districtId,
+//         district_name: normalizedDistrict,
+//         total_votes: totalVotes,
+//         candidates: candidates
+//     };
+// }
 
-public function getAllDistrictResults(string electionId) returns ElectionDistrictResults|error {
-    map<DistrictResults> districtResults = {};
-    int totalElectionVotes = 0;
+// public function getAllDistrictResults(string electionId) returns ElectionDistrictResults|error {
+//     map<DistrictResults> districtResults = {};
+//     int totalElectionVotes = 0;
 
-    foreach string district in DISTRICTS {
-        DistrictResults|error result = getDistrictResults(electionId, district);
-        if result is DistrictResults {
-            districtResults[district] = result;
-            totalElectionVotes += result.total_votes;
-        }
-    }
+//     foreach string district in DISTRICTS {
+//         DistrictResults|error result = getDistrictResults(electionId, district);
+//         if result is DistrictResults {
+//             districtResults[district] = result;
+//             totalElectionVotes += result.total_votes;
+//         }
+//     }
 
-    return {
-        election_id: electionId,
-        districts: districtResults,
-        total_districts: districtResults.length(),
-        total_votes: totalElectionVotes
-    };
-}
+//     return {
+//         election_id: electionId,
+//         districts: districtResults,
+//         total_districts: districtResults.length(),
+//         total_votes: totalElectionVotes
+//     };
+// }
 
-public function getCandidateDistrictPerformance(string electionId, string candidateId) returns CandidateDistrictPerformance|error {
-    // Get candidate details
-    store:Candidate|persist:Error candidate = db->/candidates/[candidateId].get();
-    if candidate is persist:Error {
-        return error("Candidate not found: " + candidateId);
-    }
+// public function getCandidateDistrictPerformance(string electionId, string candidateId) returns CandidateDistrictPerformance|error {
+//     // Get candidate details
+//     store:Candidate|persist:Error candidate = db->/candidates/[candidateId].get();
+//     if candidate is persist:Error {
+//         return error("Candidate not found: " + candidateId);
+//     }
 
-    // Get candidate's vote summary
-    store:CandidateDistrictVoteSummary|persist:Error summary = 
-        db->/candidatedistrictvotesummaries/[electionId]/[candidateId].get();
-    if summary is persist:Error {
-        return error("Results not found for candidate: " + candidateId);
-    }
+//     // Get candidate's vote summary
+//     store:CandidateDistrictVoteSummary|persist:Error summary = 
+//         db->/candidatedistrictvotesummaries/[electionId]/[candidateId].get();
+//     if summary is persist:Error {
+//         return error("Results not found for candidate: " + candidateId);
+//     }
 
-    DistrictPerformance[] districts = [];
-    int districtsWon = 0;
-    int districtsSecond = 0;
-    int districtsThird = 0;
+//     DistrictPerformance[] districts = [];
+//     int districtsWon = 0;
+//     int districtsSecond = 0;
+//     int districtsThird = 0;
 
-    foreach string district in DISTRICTS {
-        // Get district results to determine rank
-        DistrictResults|error districtResult = getDistrictResults(electionId, district);
-        if districtResult is error {
-            continue;
-        }
+//     foreach string district in DISTRICTS {
+//         // Get district results to determine rank
+//         DistrictResults|error districtResult = getDistrictResults(electionId, district);
+//         if districtResult is error {
+//             continue;
+//         }
 
-        // Get candidate votes for this district
-        int votes = getDistrictCount(summary, district);
+//         // Get candidate votes for this district
+//         int votes = getDistrictCount(summary, district);
 
-        if votes > 0 {
-            // Find candidate's rank in this district
-            int rank = 1;
-            decimal percentage = 0.0d;
-            boolean won = false;
+//         if votes > 0 {
+//             // Find candidate's rank in this district
+//             int rank = 1;
+//             decimal percentage = 0.0d;
+//             boolean won = false;
 
-            foreach CandidateResult c in districtResult.candidates {
-                if c.candidate_id == candidateId {
-                    rank = c.rank;
-                    percentage = c.percentage;
-                    won = rank == 1;
-                    break;
-                }
-            }
+//             foreach CandidateResult c in districtResult.candidates {
+//                 if c.candidate_id == candidateId {
+//                     rank = c.rank;
+//                     percentage = c.percentage;
+//                     won = rank == 1;
+//                     break;
+//                 }
+//             }
 
-            districts.push({
-                district_id: district,
-                district_name: district,
-                votes: votes,
-                percentage: percentage,
-                rank: rank,
-                total_district_votes: districtResult.total_votes,
-                won: won
-            });
+//             districts.push({
+//                 district_id: district,
+//                 district_name: district,
+//                 votes: votes,
+//                 percentage: percentage,
+//                 rank: rank,
+//                 total_district_votes: districtResult.total_votes,
+//                 won: won
+//             });
 
-            // Count performance
-            if rank == 1 {
-                districtsWon += 1;
-            } else if rank == 2 {
-                districtsSecond += 1;
-            } else if rank == 3 {
-                districtsThird += 1;
-            }
-        }
-    }
+//             // Count performance
+//             if rank == 1 {
+//                 districtsWon += 1;
+//             } else if rank == 2 {
+//                 districtsSecond += 1;
+//             } else if rank == 3 {
+//                 districtsThird += 1;
+//             }
+//         }
+//     }
 
-    return {
-        election_id: electionId,
-        candidate_id: candidateId,
-        candidate_name: candidate.candidateName,
-        party: candidate.partyName,
-        districts: districts,
-        districts_won: districtsWon,
-        districts_second: districtsSecond,
-        districts_third: districtsThird
-    };
-}
+//     return {
+//         election_id: electionId,
+//         candidate_id: candidateId,
+//         candidate_name: candidate.candidateName,
+//         party: candidate.partyName,
+//         districts: districts,
+//         districts_won: districtsWon,
+//         districts_second: districtsSecond,
+//         districts_third: districtsThird
+//     };
+// }
 
-public function getElectionSummary(string electionId) returns ElectionSummary|error {
-    // Get all district results
-    ElectionDistrictResults|error allResults = getAllDistrictResults(electionId);
-    if allResults is error {
-        return error("Failed to get district results: " + allResults.message());
-    }
+// public function getElectionSummary(string electionId) returns ElectionSummary|error {
+//     // Get all district results
+//     ElectionDistrictResults|error allResults = getAllDistrictResults(electionId);
+//     if allResults is error {
+//         return error("Failed to get district results: " + allResults.message());
+//     }
 
-    // Get election results with candidate details
-    map<json>[]|error detailedResults = getElectionResultsWithDetails(electionId);
-    if detailedResults is error {
-        return error("Failed to get detailed results: " + detailedResults.message());
-    }
+//     // Get election results with candidate details
+//     map<json>[]|error detailedResults = getElectionResultsWithDetails(electionId);
+//     if detailedResults is error {
+//         return error("Failed to get detailed results: " + detailedResults.message());
+//     }
 
-    // Build candidate overall results
-    CandidateOverall[] candidates = [];
-    DistrictSummary[] districtSummaries = [];
+//     // Build candidate overall results
+//     CandidateOverall[] candidates = [];
+//     DistrictSummary[] districtSummaries = [];
 
-    foreach map<json> result in detailedResults {
-        int totalVotes = result["Totals"] is int ? <int>result["Totals"] : 0;
-        decimal percentage = allResults.total_votes > 0 ? 
-            <decimal>totalVotes / <decimal>allResults.total_votes * 100.0d : 0.0d;
+//     foreach map<json> result in detailedResults {
+//         int totalVotes = result["Totals"] is int ? <int>result["Totals"] : 0;
+//         decimal percentage = allResults.total_votes > 0 ? 
+//             <decimal>totalVotes / <decimal>allResults.total_votes * 100.0d : 0.0d;
 
-        // Get district performance
-        CandidateDistrictPerformance|error performance = 
-            getCandidateDistrictPerformance(electionId, result["candidateId"].toString());
+//         // Get district performance
+//         CandidateDistrictPerformance|error performance = 
+//             getCandidateDistrictPerformance(electionId, result["candidateId"].toString());
         
-        int won = 0;
-        int second = 0; 
-        int third = 0;
-        if performance is CandidateDistrictPerformance {
-            won = performance.districts_won;
-            second = performance.districts_second;
-            third = performance.districts_third;
-        }
+//         int won = 0;
+//         int second = 0; 
+//         int third = 0;
+//         if performance is CandidateDistrictPerformance {
+//             won = performance.districts_won;
+//             second = performance.districts_second;
+//             third = performance.districts_third;
+//         }
 
-        candidates.push({
-            candidate_id: result["candidateId"].toString(),
-            candidate_name: result["candidateName"].toString(),
-            party: result["partyName"].toString(),
-            party_symbol: result["partySymbol"].toString(),
-            party_color: result["partyColor"].toString(),
-            total_votes: totalVotes,
-            percentage: percentage,
-            districts_won: won,
-            districts_second: second,
-            districts_third: third,
-            rank: 0 // Will be set after sorting
-        });
-    }
+//         candidates.push({
+//             candidate_id: result["candidateId"].toString(),
+//             candidate_name: result["candidateName"].toString(),
+//             party: result["partyName"].toString(),
+//             party_symbol: result["partySymbol"].toString(),
+//             party_color: result["partyColor"].toString(),
+//             total_votes: totalVotes,
+//             percentage: percentage,
+//             districts_won: won,
+//             districts_second: second,
+//             districts_third: third,
+//             rank: 0 // Will be set after sorting
+//         });
+//     }
 
-    // Sort candidates by total votes and set ranks
-    candidates = sortCandidatesOverallByVotes(candidates);
+//     // Sort candidates by total votes and set ranks
+//     candidates = sortCandidatesOverallByVotes(candidates);
 
-    // Create district summaries
-    foreach var [districtId, districtResult] in allResults.districts.entries() {
-        CandidateResult winner = districtResult.candidates.length() > 0 ? 
-            districtResult.candidates[0] : 
-            {candidate_id: "", candidate_name: "", votes: 0, percentage: 0.0d, rank: 1};
+//     // Create district summaries
+//     foreach var [districtId, districtResult] in allResults.districts.entries() {
+//         CandidateResult winner = districtResult.candidates.length() > 0 ? 
+//             districtResult.candidates[0] : 
+//             {candidate_id: "", candidate_name: "", votes: 0, percentage: 0.0d, rank: 1};
 
-        decimal margin = districtResult.candidates.length() > 1 ? 
-            districtResult.candidates[0].percentage - districtResult.candidates[1].percentage : 
-            100.0d;
+//         decimal margin = districtResult.candidates.length() > 1 ? 
+//             districtResult.candidates[0].percentage - districtResult.candidates[1].percentage : 
+//             100.0d;
 
-        districtSummaries.push({
-            district_id: districtId,
-            district_name: districtResult.district_name,
-            total_votes: districtResult.total_votes,
-            winner: winner,
-            margin_of_victory: margin,
-            declared: true // Assuming all results are declared
-        });
-    }
+//         districtSummaries.push({
+//             district_id: districtId,
+//             district_name: districtResult.district_name,
+//             total_votes: districtResult.total_votes,
+//             winner: winner,
+//             margin_of_victory: margin,
+//             declared: true // Assuming all results are declared
+//         });
+//     }
 
-    return {
-        election_id: electionId,
-        total_votes: allResults.total_votes,
-        total_districts: allResults.total_districts,
-        districts_declared: allResults.total_districts,
-        candidates: candidates,
-        district_summaries: districtSummaries
-    };
-}
+//     return {
+//         election_id: electionId,
+//         total_votes: allResults.total_votes,
+//         total_districts: allResults.total_districts,
+//         districts_declared: allResults.total_districts,
+//         candidates: candidates,
+//         district_summaries: districtSummaries
+//     };
+// }
 
-public function getCandidateTopDistricts(string electionId, string candidateId, int 'limit) returns CandidateTopDistricts|error {
-    CandidateDistrictPerformance|error performance = getCandidateDistrictPerformance(electionId, candidateId);
-    if performance is error {
-        return performance;
-    }
+// public function getCandidateTopDistricts(string electionId, string candidateId, int 'limit) returns CandidateTopDistricts|error {
+//     CandidateDistrictPerformance|error performance = getCandidateDistrictPerformance(electionId, candidateId);
+//     if performance is error {
+//         return performance;
+//     }
 
-    // Sort districts by percentage and limit
-    DistrictPerformance[] sortedDistricts = from DistrictPerformance district in performance.districts
-        order by district.percentage descending
-        select district;
+//     // Sort districts by percentage and limit
+//     DistrictPerformance[] sortedDistricts = from DistrictPerformance district in performance.districts
+//         order by district.percentage descending
+//         select district;
 
-    DistrictPerformance[] topDistricts = [];
-    int count = 0;
-    foreach DistrictPerformance district in sortedDistricts {
-        if count >= 'limit {
-            break;
-        }
-        topDistricts.push(district);
-        count += 1;
-    }
+//     DistrictPerformance[] topDistricts = [];
+//     int count = 0;
+//     foreach DistrictPerformance district in sortedDistricts {
+//         if count >= 'limit {
+//             break;
+//         }
+//         topDistricts.push(district);
+//         count += 1;
+//     }
 
-    return {
-        election_id: electionId,
-        candidate_id: candidateId,
-        candidate_name: performance.candidate_name,
-        top_districts: topDistricts
-    };
-}
+//     return {
+//         election_id: electionId,
+//         candidate_id: candidateId,
+//         candidate_name: performance.candidate_name,
+//         top_districts: topDistricts
+//     };
+// }
 
-public function getDistrictRankings(string electionId) returns DistrictRankings|error {
-    ElectionDistrictResults|error allResults = getAllDistrictResults(electionId);
-    if allResults is error {
-        return allResults;
-    }
+// public function getDistrictRankings(string electionId) returns DistrictRankings|error {
+//     ElectionDistrictResults|error allResults = getAllDistrictResults(electionId);
+//     if allResults is error {
+//         return allResults;
+//     }
 
-    DistrictRanking[] rankings = [];
-    foreach var [districtId, districtResult] in allResults.districts.entries() {
-        rankings.push({
-            district_id: districtId,
-            district_name: districtResult.district_name,
-            total_votes: districtResult.total_votes,
-            rank: 0 // Will be set after sorting
-        });
-    }
+//     DistrictRanking[] rankings = [];
+//     foreach var [districtId, districtResult] in allResults.districts.entries() {
+//         rankings.push({
+//             district_id: districtId,
+//             district_name: districtResult.district_name,
+//             total_votes: districtResult.total_votes,
+//             rank: 0 // Will be set after sorting
+//         });
+//     }
 
-    // Sort by total votes and set ranks
-    DistrictRanking[] sortedRankings = from DistrictRanking ranking in rankings
-        order by ranking.total_votes descending
-        select ranking;
+//     // Sort by total votes and set ranks
+//     DistrictRanking[] sortedRankings = from DistrictRanking ranking in rankings
+//         order by ranking.total_votes descending
+//         select ranking;
 
-    foreach int i in 0 ..< sortedRankings.length() {
-        sortedRankings[i].rank = i + 1;
-    }
+//     foreach int i in 0 ..< sortedRankings.length() {
+//         sortedRankings[i].rank = i + 1;
+//     }
 
-    return {
-        election_id: electionId,
-        rankings: sortedRankings
-    };
-}
+//     return {
+//         election_id: electionId,
+//         rankings: sortedRankings
+//     };
+// }
 
-public function getCandidateStandings(string electionId) returns CandidateStandings|error {
-    ElectionSummary|error summary = getElectionSummary(electionId);
-    if summary is error {
-        return summary;
-    }
+// public function getCandidateStandings(string electionId) returns CandidateStandings|error {
+//     ElectionSummary|error summary = getElectionSummary(electionId);
+//     if summary is error {
+//         return summary;
+//     }
 
-    return {
-        election_id: electionId,
-        standings: summary.candidates,
-        final_results: summary.districts_declared == summary.total_districts
-    };
-}
+//     return {
+//         election_id: electionId,
+//         standings: summary.candidates,
+//         final_results: summary.districts_declared == summary.total_districts
+//     };
+// }
 
-public function compareDistrictResults(string electionId, DistrictComparisonRequest request) returns DistrictComparison|error {
-    map<DistrictResults> comparison = {};
-    int totalVotesCompared = 0;
-    int maxVotes = 0;
-    int minVotes = int:MAX_VALUE;
-    string strongestDistrict = "";
-    string weakestDistrict = "";
+// public function compareDistrictResults(string electionId, DistrictComparisonRequest request) returns DistrictComparison|error {
+//     map<DistrictResults> comparison = {};
+//     int totalVotesCompared = 0;
+//     int maxVotes = 0;
+//     int minVotes = int:MAX_VALUE;
+//     string strongestDistrict = "";
+//     string weakestDistrict = "";
 
-    foreach string districtId in request.district_ids {
-        DistrictResults|error result = getDistrictResults(electionId, districtId);
-        if result is DistrictResults {
-            // Filter by candidate IDs if specified
-            if request.candidate_ids is string[] {
-                string[] candidateIds = <string[]>request.candidate_ids;
-                CandidateResult[] filteredCandidates = [];
-                foreach CandidateResult candidate in result.candidates {
-                    boolean found = false;
-                    foreach string id in candidateIds {
-                        if id == candidate.candidate_id {
-                            found = true;
-                            break;
-                        }
-                    }
-                    if found {
-                        filteredCandidates.push(candidate);
-                    }
-                }
-                result.candidates = sortCandidatesByVotes(filteredCandidates, result.total_votes);
-            }
+//     foreach string districtId in request.district_ids {
+//         DistrictResults|error result = getDistrictResults(electionId, districtId);
+//         if result is DistrictResults {
+//             // Filter by candidate IDs if specified
+//             if request.candidate_ids is string[] {
+//                 string[] candidateIds = <string[]>request.candidate_ids;
+//                 CandidateResult[] filteredCandidates = [];
+//                 foreach CandidateResult candidate in result.candidates {
+//                     boolean found = false;
+//                     foreach string id in candidateIds {
+//                         if id == candidate.candidate_id {
+//                             found = true;
+//                             break;
+//                         }
+//                     }
+//                     if found {
+//                         filteredCandidates.push(candidate);
+//                     }
+//                 }
+//                 result.candidates = sortCandidatesByVotes(filteredCandidates, result.total_votes);
+//             }
 
-            comparison[districtId] = result;
-            totalVotesCompared += result.total_votes;
+//             comparison[districtId] = result;
+//             totalVotesCompared += result.total_votes;
 
-            if result.total_votes > maxVotes {
-                maxVotes = result.total_votes;
-                strongestDistrict = districtId;
-            }
-            if result.total_votes < minVotes {
-                minVotes = result.total_votes;
-                weakestDistrict = districtId;
-            }
-        }
-    }
+//             if result.total_votes > maxVotes {
+//                 maxVotes = result.total_votes;
+//                 strongestDistrict = districtId;
+//             }
+//             if result.total_votes < minVotes {
+//                 minVotes = result.total_votes;
+//                 weakestDistrict = districtId;
+//             }
+//         }
+//     }
 
-    decimal averageTurnout = comparison.length() > 0 ? 
-        <decimal>totalVotesCompared / <decimal>comparison.length() : 0.0d;
+//     decimal averageTurnout = comparison.length() > 0 ? 
+//         <decimal>totalVotesCompared / <decimal>comparison.length() : 0.0d;
 
-    return {
-        election_id: electionId,
-        district_ids: request.district_ids,
-        candidate_ids: request.candidate_ids,
-        comparison: comparison,
-        summary: {
-            strongest_district: strongestDistrict,
-            weakest_district: weakestDistrict,
-            average_turnout: averageTurnout,
-            total_votes_compared: totalVotesCompared
-        }
-    };
-}
+//     return {
+//         election_id: electionId,
+//         district_ids: request.district_ids,
+//         candidate_ids: request.candidate_ids,
+//         comparison: comparison,
+//         summary: {
+//             strongest_district: strongestDistrict,
+//             weakest_district: weakestDistrict,
+//             average_turnout: averageTurnout,
+//             total_votes_compared: totalVotesCompared
+//         }
+//     };
+// }
 
-public function getVoteDistribution(string electionId, string districtId) returns VoteDistribution|error {
-    DistrictResults|error result = getDistrictResults(electionId, districtId);
-    if result is error {
-        return result;
-    }
+// public function getVoteDistribution(string electionId, string districtId) returns VoteDistribution|error {
+//     DistrictResults|error result = getDistrictResults(electionId, districtId);
+//     if result is error {
+//         return result;
+//     }
 
-    DistributionData[] distribution = [];
-    foreach CandidateResult candidate in result.candidates {
-        distribution.push({
-            candidate_id: candidate.candidate_id,
-            candidate_name: candidate.candidate_name,
-            party: candidate.party,
-            party_symbol: candidate.party_symbol,
-            party_color: candidate.party_color,
-            votes: candidate.votes,
-            percentage: candidate.percentage,
-            color: candidate.party_color
-        });
-    }
+//     DistributionData[] distribution = [];
+//     foreach CandidateResult candidate in result.candidates {
+//         distribution.push({
+//             candidate_id: candidate.candidate_id,
+//             candidate_name: candidate.candidate_name,
+//             party: candidate.party,
+//             party_symbol: candidate.party_symbol,
+//             party_color: candidate.party_color,
+//             votes: candidate.votes,
+//             percentage: candidate.percentage,
+//             color: candidate.party_color
+//         });
+//     }
 
-    return {
-        election_id: electionId,
-        district_id: districtId,
-        district_name: result.district_name,
-        total_votes: result.total_votes,
-        distribution: distribution
-    };
-}
+//     return {
+//         election_id: electionId,
+//         district_id: districtId,
+//         district_name: result.district_name,
+//         total_votes: result.total_votes,
+//         distribution: distribution
+//     };
+// }
 
-public function getCandidateMargins(string electionId, string candidateId) returns CandidateMargins|error {
-    CandidateDistrictPerformance|error performance = getCandidateDistrictPerformance(electionId, candidateId);
-    if performance is error {
-        return performance;
-    }
+// public function getCandidateMargins(string electionId, string candidateId) returns CandidateMargins|error {
+//     CandidateDistrictPerformance|error performance = getCandidateDistrictPerformance(electionId, candidateId);
+//     if performance is error {
+//         return performance;
+//     }
 
-    MarginData[] margins = [];
-    decimal totalMargin = 0.0d;
-    int closeRaces = 0;
+//     MarginData[] margins = [];
+//     decimal totalMargin = 0.0d;
+//     int closeRaces = 0;
 
-    foreach DistrictPerformance district in performance.districts {
-        // Get district results to find closest competitor
-        DistrictResults|error districtResult = getDistrictResults(electionId, district.district_id);
-        if districtResult is error {
-            continue;
-        }
+//     foreach DistrictPerformance district in performance.districts {
+//         // Get district results to find closest competitor
+//         DistrictResults|error districtResult = getDistrictResults(electionId, district.district_id);
+//         if districtResult is error {
+//             continue;
+//         }
 
-        string closestCompetitor = "";
-        decimal margin = 0.0d;
+//         string closestCompetitor = "";
+//         decimal margin = 0.0d;
 
-        if districtResult.candidates.length() > 1 {
-            if district.rank == 1 && districtResult.candidates.length() > 1 {
-                // Won - margin against second place
-                margin = district.percentage - districtResult.candidates[1].percentage;
-                closestCompetitor = districtResult.candidates[1].candidate_name;
-            } else if district.rank > 1 {
-                // Lost - margin against winner
-                margin = districtResult.candidates[0].percentage - district.percentage;
-                closestCompetitor = districtResult.candidates[0].candidate_name;
-            }
-        }
+//         if districtResult.candidates.length() > 1 {
+//             if district.rank == 1 && districtResult.candidates.length() > 1 {
+//                 // Won - margin against second place
+//                 margin = district.percentage - districtResult.candidates[1].percentage;
+//                 closestCompetitor = districtResult.candidates[1].candidate_name;
+//             } else if district.rank > 1 {
+//                 // Lost - margin against winner
+//                 margin = districtResult.candidates[0].percentage - district.percentage;
+//                 closestCompetitor = districtResult.candidates[0].candidate_name;
+//             }
+//         }
 
-        margins.push({
-            district_id: district.district_id,
-            district_name: district.district_name,
-            margin_percentage: margin,
-            margin_votes: <int>(margin * <decimal>district.total_district_votes / 100.0d),
-            won: district.won,
-            closest_competitor: closestCompetitor
-        });
+//         margins.push({
+//             district_id: district.district_id,
+//             district_name: district.district_name,
+//             margin_percentage: margin,
+//             margin_votes: <int>(margin * <decimal>district.total_district_votes / 100.0d),
+//             won: district.won,
+//             closest_competitor: closestCompetitor
+//         });
 
-        totalMargin += margin;
-        if margin < 5.0d {
-            closeRaces += 1;
-        }
-    }
+//         totalMargin += margin;
+//         if margin < 5.0d {
+//             closeRaces += 1;
+//         }
+//     }
 
-    decimal averageMargin = margins.length() > 0 ? totalMargin / <decimal>margins.length() : 0.0d;
+//     decimal averageMargin = margins.length() > 0 ? totalMargin / <decimal>margins.length() : 0.0d;
 
-    return {
-        election_id: electionId,
-        candidate_id: candidateId,
-        candidate_name: performance.candidate_name,
-        margins: margins,
-        average_margin: averageMargin,
-        close_races: closeRaces
-    };
-}
+//     return {
+//         election_id: electionId,
+//         candidate_id: candidateId,
+//         candidate_name: performance.candidate_name,
+//         margins: margins,
+//         average_margin: averageMargin,
+//         close_races: closeRaces
+//     };
+// }
 
-public function getMarginAnalysis(string electionId, string candidateId, decimal marginThreshold) returns MarginAnalysis|error {
-    CandidateMargins|error margins = getCandidateMargins(electionId, candidateId);
-    if margins is error {
-        return margins;
-    }
+// public function getMarginAnalysis(string electionId, string candidateId, decimal marginThreshold) returns MarginAnalysis|error {
+//     CandidateMargins|error margins = getCandidateMargins(electionId, candidateId);
+//     if margins is error {
+//         return margins;
+//     }
 
-    string[] narrowWins = [];
-    string[] narrowLosses = [];
-    int safeDistricts = 0;
-    int competitiveDistricts = 0;
-    decimal totalWinningMargin = 0.0d;
-    decimal totalLosingMargin = 0.0d;
-    int winCount = 0;
-    int lossCount = 0;
+//     string[] narrowWins = [];
+//     string[] narrowLosses = [];
+//     int safeDistricts = 0;
+//     int competitiveDistricts = 0;
+//     decimal totalWinningMargin = 0.0d;
+//     decimal totalLosingMargin = 0.0d;
+//     int winCount = 0;
+//     int lossCount = 0;
 
-    foreach MarginData margin in margins.margins {
-        if margin.margin_percentage <= marginThreshold {
-            competitiveDistricts += 1;
-            if margin.won {
-                narrowWins.push(margin.district_id);
-            } else {
-                narrowLosses.push(margin.district_id);
-            }
-        } else {
-            safeDistricts += 1;
-        }
+//     foreach MarginData margin in margins.margins {
+//         if margin.margin_percentage <= marginThreshold {
+//             competitiveDistricts += 1;
+//             if margin.won {
+//                 narrowWins.push(margin.district_id);
+//             } else {
+//                 narrowLosses.push(margin.district_id);
+//             }
+//         } else {
+//             safeDistricts += 1;
+//         }
 
-        if margin.won {
-            totalWinningMargin += margin.margin_percentage;
-            winCount += 1;
-        } else {
-            totalLosingMargin += margin.margin_percentage;
-            lossCount += 1;
-        }
-    }
+//         if margin.won {
+//             totalWinningMargin += margin.margin_percentage;
+//             winCount += 1;
+//         } else {
+//             totalLosingMargin += margin.margin_percentage;
+//             lossCount += 1;
+//         }
+//     }
 
-    decimal averageWinningMargin = winCount > 0 ? totalWinningMargin / <decimal>winCount : 0.0d;
-    decimal averageLosingMargin = lossCount > 0 ? totalLosingMargin / <decimal>lossCount : 0.0d;
+//     decimal averageWinningMargin = winCount > 0 ? totalWinningMargin / <decimal>winCount : 0.0d;
+//     decimal averageLosingMargin = lossCount > 0 ? totalLosingMargin / <decimal>lossCount : 0.0d;
 
-    return {
-        election_id: electionId,
-        candidate_id: candidateId,
-        margin_threshold: marginThreshold,
-        narrow_wins: narrowWins,
-        narrow_losses: narrowLosses,
-        safe_districts: safeDistricts,
-        competitive_districts: competitiveDistricts,
-        average_winning_margin: averageWinningMargin,
-        average_losing_margin: averageLosingMargin
-    };
-}
+//     return {
+//         election_id: electionId,
+//         candidate_id: candidateId,
+//         margin_threshold: marginThreshold,
+//         narrow_wins: narrowWins,
+//         narrow_losses: narrowLosses,
+//         safe_districts: safeDistricts,
+//         competitive_districts: competitiveDistricts,
+//         average_winning_margin: averageWinningMargin,
+//         average_losing_margin: averageLosingMargin
+//     };
+// }
 
-public function getLiveResults(string electionId) returns LiveResults|error {
-    // For now, return the final results as "live" results
-    // In a real implementation, you might check election status and return partial results
-    ElectionSummary|error summary = getElectionSummary(electionId);
-    if summary is error {
-        return summary;
-    }
+// public function getLiveResults(string electionId) returns LiveResults|error {
+//     // For now, return the final results as "live" results
+//     // In a real implementation, you might check election status and return partial results
+//     ElectionSummary|error summary = getElectionSummary(electionId);
+//     if summary is error {
+//         return summary;
+//     }
 
-    RecentUpdate[] recentUpdates = [];
-    // In a real implementation, you would track when districts were last updated
+//     RecentUpdate[] recentUpdates = [];
+//     // In a real implementation, you would track when districts were last updated
 
-    return {
-        election_id: electionId,
-        last_updated: getCurrentTimestamp(),
-        districts_declared: summary.districts_declared,
-        total_districts: summary.total_districts,
-        completion_percentage: summary.total_districts > 0 ? 
-            <decimal>summary.districts_declared / <decimal>summary.total_districts * 100.0d : 0.0d,
-        current_standings: summary.candidates,
-        recent_updates: recentUpdates
-    };
-}
+//     return {
+//         election_id: electionId,
+//         last_updated: getCurrentTimestamp(),
+//         districts_declared: summary.districts_declared,
+//         total_districts: summary.total_districts,
+//         completion_percentage: summary.total_districts > 0 ? 
+//             <decimal>summary.districts_declared / <decimal>summary.total_districts * 100.0d : 0.0d,
+//         current_standings: summary.candidates,
+//         recent_updates: recentUpdates
+//     };
+// }
 
-// Helper Functions
+// // Helper Functions
 
-function sortCandidatesByVotes(CandidateResult[] candidates, int totalVotes) returns CandidateResult[] {
-    // Calculate percentages
-    foreach CandidateResult candidate in candidates {
-        candidate.percentage = totalVotes > 0 ? 
-            <decimal>candidate.votes / <decimal>totalVotes * 100.0d : 0.0d;
-    }
+// function sortCandidatesByVotes(CandidateResult[] candidates, int totalVotes) returns CandidateResult[] {
+//     // Calculate percentages
+//     foreach CandidateResult candidate in candidates {
+//         candidate.percentage = totalVotes > 0 ? 
+//             <decimal>candidate.votes / <decimal>totalVotes * 100.0d : 0.0d;
+//     }
 
-    // Sort by votes in descending order
-    CandidateResult[] sorted = from CandidateResult candidate in candidates
-        order by candidate.votes descending
-        select candidate;
+//     // Sort by votes in descending order
+//     CandidateResult[] sorted = from CandidateResult candidate in candidates
+//         order by candidate.votes descending
+//         select candidate;
 
-    // Set ranks
-    foreach int i in 0 ..< sorted.length() {
-        sorted[i].rank = i + 1;
-    }
+//     // Set ranks
+//     foreach int i in 0 ..< sorted.length() {
+//         sorted[i].rank = i + 1;
+//     }
 
-    return sorted;
-}
+//     return sorted;
+// }
 
-function sortCandidatesOverallByVotes(CandidateOverall[] candidates) returns CandidateOverall[] {
-    CandidateOverall[] sorted = from CandidateOverall candidate in candidates
-        order by candidate.total_votes descending
-        select candidate;
+// function sortCandidatesOverallByVotes(CandidateOverall[] candidates) returns CandidateOverall[] {
+//     CandidateOverall[] sorted = from CandidateOverall candidate in candidates
+//         order by candidate.total_votes descending
+//         select candidate;
 
-    foreach int i in 0 ..< sorted.length() {
-        sorted[i].rank = i + 1;
-    }
+//     foreach int i in 0 ..< sorted.length() {
+//         sorted[i].rank = i + 1;
+//     }
 
-    return sorted;
-}
+//     return sorted;
+// }
 
 function getCurrentTimestamp() returns string {
     time:Utc now = time:utcNow();
@@ -1245,7 +1245,7 @@ public function calculateElectionResults(string electionId) returns store:Candid
             matara: 0,
             monaragala: 0,
             mullaitivu: 0,
-            nuwaraEliya: 0,
+            nuwaraeliya: 0,
             polonnaruwa: 0,
             puttalam: 0,
             ratnapura: 0,
@@ -1376,7 +1376,7 @@ public function getElectionResultsWithDetails(string electionId) returns map<jso
             matara: summary.matara,
             monaragala: summary.monaragala,
             mullaitivu: summary.mullaitivu,
-            nuwaraEliya: summary.nuwaraEliya,
+            nuwaraeliya: summary.nuwaraeliya,
             polonnaruwa: summary.polonnaruwa,
             puttalam: summary.puttalam,
             ratnapura: summary.ratnapura,

@@ -6,9 +6,10 @@ import online_election.vote;
 import online_election.store;
 import online_election.HouseholdManagement;
 
-
 import ballerina/http;
 import ballerina/persist;
+import online_election.verification;
+import online_election.enrollment;
 
 listener http:Listener SharedListener = new (8080);
 
@@ -465,7 +466,7 @@ service /vote/api/v1 on SharedListener {
         if authResult is http:Response {
             return authResult;
         }
-
+        
         return vote:checkVotingEligibility(voterId, electionId);
     }
 
@@ -529,6 +530,339 @@ service /vote/api/v1 on SharedListener {
         return check vote:getVotesByHousehold(chiefOccupantId, electionId);
     }
 }
+
+//  NEW RESULTS API SERVICE - COMPREHENSIVE ELECTION RESULTS AND ANALYTICS 
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["http://localhost:3000"],
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowHeaders: ["Content-Type", "Authorization"],
+        allowCredentials: true
+    }
+}
+service /results/api/v1 on SharedListener {
+
+    //  CANDIDATE TOTALS AND RANKINGS
+
+    // Get candidate total votes for an election (sorted by highest votes)
+    resource function get elections/[string electionId]/candidates/totals() returns results:CandidateTotal[]|error {
+        return check results:getSortedCandidatesByTotal(electionId, results:dbClient);
+    }
+
+    // Batch update all candidate totals for an election
+    resource function post elections/[string electionId]/candidates/batch\-update\-totals() returns json|error {
+        error? result = results:batchUpdateCandidateTotals(electionId, results:dbClient);
+        if result is error {
+            return result;
+        }
+        return { "electionId": electionId, "message": "All candidate totals updated successfully" };
+    }
+
+    //  CANDIDATE VOTE SUMMARIES WITH PERCENTAGES
+
+
+    // Get comprehensive candidate data for export
+    resource function get elections/[string electionId]/candidates/export() returns results:CandidateExportData[]|error {
+        return check results:getComprehensiveCandidateData(electionId, results:dbClient);
+    }
+
+    // Export candidate data as CSV format
+    resource function get elections/[string electionId]/candidates/export/csv() returns string|error {
+        return check results:exportElectionCandidateDataAsCSV(electionId, results:dbClient);
+    }
+
+
+    //  DISTRICT-WISE ANALYSIS
+
+    // Get district-wise vote analysis for all candidates
+    resource function get elections/[string electionId]/districts/analysis() returns results:CandidateDistrictAnalysis[]|error {
+        return check results:calculateCandidateDistrictAnalysis(electionId, results:dbClient);
+    }
+
+    // Get total votes per district for an election
+    resource function get elections/[string electionId]/districts/totals() returns results:DistrictVoteTotals|error {
+        return check results:calculateDistrictVoteTotalsFromDB(electionId, results:dbClient);
+    }
+
+    // Get district winners analysis with margins
+    resource function get elections/[string electionId]/districts/winners() returns json|error {
+        return check results:getDistrictWinnerAnalysis(electionId, results:dbClient);
+    }
+
+    //  ELECTION SUMMARY AND OVERVIEW
+
+    //  DATA VALIDATION AND INTEGRITY
+
+    //  SPECIFIC RESULT QUERIES
+
+    // Get winner of the election
+    resource function get elections/[string electionId]/winner() returns json|error {
+        results:CandidateTotal[]|error candidates = results:getSortedCandidatesByTotal(electionId, results:dbClient);
+        if candidates is error {
+            return candidates;
+        }
+        if candidates.length() == 0 {
+            return error("No candidates found for this election");
+        }
+        
+        results:CandidateTotal winner = candidates[0];
+        return {
+            "electionId": electionId,
+            "winnerCandidateId": winner.candidateId,
+            "totalVotes": winner.totals,
+            "message": "Election winner determined"
+        };
+    }
+    // Get top N candidates
+    resource function get elections/[string electionId]/candidates/top/[int count]() returns results:CandidateTotal[]|error {
+        results:CandidateTotal[]|error allCandidates = results:getSortedCandidatesByTotal(electionId, results:dbClient);
+        if allCandidates is error {
+            return allCandidates;
+        }
+        
+        int maxCount = allCandidates.length() > count ? count : allCandidates.length();
+        results:CandidateTotal[] topCandidates = [];
+        foreach int i in 0 ..< maxCount {
+            topCandidates.push(allCandidates[i]);
+        }
+        return topCandidates;
+    }
+
+    // Get candidate ranking by total votes
+    resource function get elections/[string electionId]/candidates/[string candidateId]/rank() returns json|error {
+        results:CandidateTotal[]|error candidates = results:getSortedCandidatesByTotal(electionId, results:dbClient);
+        if candidates is error {
+            return candidates;
+        }
+        
+        foreach int i in 0 ..< candidates.length() {
+            if candidates[i].candidateId == candidateId {
+                return {
+                    "candidateId": candidateId,
+                    "rank": i + 1,
+                    "totalVotes": candidates[i].totals,
+                    "totalCandidates": candidates.length()
+                };
+            }
+        }
+        
+        return error("Candidate not found in this election");
+    }
+
+    //  ADVANCED ANALYTICS ENDPOINTS
+
+    // Get vote distribution statistics
+    resource function get elections/[string electionId]/statistics/distribution() returns json|error {
+        results:CandidateVoteSummary[]|error summaries = results:calculateCandidateVoteSummary(electionId, results:dbClient);
+        if summaries is error {
+            return summaries;
+        }
+        
+        if summaries.length() == 0 {
+            return error("No data available for analysis");
+        }
+        
+        // Calculate statistics
+        int totalVotes = 0;  // FIXED: Changed from decimal to int
+        decimal maxPercentage = 0.0;
+        decimal minPercentage = 100.0;
+        
+        foreach results:CandidateVoteSummary summary in summaries {
+            totalVotes += summary.totalVotes;  // FIXED: Direct int addition
+            if summary.percentage > maxPercentage {
+                maxPercentage = summary.percentage;
+            }
+            if summary.percentage < minPercentage {
+                minPercentage = summary.percentage;
+            }
+        }
+        
+        // FIXED: Corrected average percentage calculation
+        decimal averagePercentage = summaries.length() > 0 ? 100.0d / <decimal>summaries.length() : 0.0d;
+        
+        return {
+            "electionId": electionId,
+            "totalCandidates": summaries.length(),
+            "totalVotes": totalVotes,  // FIXED: Now returns int directly
+            "maxPercentage": maxPercentage,
+            "minPercentage": minPercentage,
+            "averagePercentage": averagePercentage,
+            "competitivenessIndex": maxPercentage - minPercentage
+        };
+    }
+
+    // Get margin analysis between top candidates
+    resource function get elections/[string electionId]/statistics/margins() returns json|error {
+        results:CandidateTotal[]|error candidates = results:getSortedCandidatesByTotal(electionId, results:dbClient);
+        if candidates is error {
+            return candidates;
+        }
+        
+        if candidates.length() < 2 {
+            return error("Need at least 2 candidates for margin analysis");
+        }
+        
+        results:CandidateTotal first = candidates[0];
+        results:CandidateTotal second = candidates[1];
+        
+        int marginVotes = first.totals - second.totals;
+        decimal marginPercentage = first.totals > 0 ? (<decimal>marginVotes / <decimal>first.totals) * 100.0 : 0.0;
+        
+        return {
+            "electionId": electionId,
+            "winner": {
+                "candidateId": first.candidateId,
+                "votes": first.totals
+            },
+            "runnerUp": {
+                "candidateId": second.candidateId,
+                "votes": second.totals
+            },
+            "margin": {
+                "votes": marginVotes,
+                "percentage": marginPercentage
+            }
+        };
+    }
+    
+    // // Get candidate results for a specific district
+    // resource function get election/[string electionId]/district/[string districtId]/results()
+    // returns results:DistrictResults|http:NotFound|error {
+    //     return check results:getDistrictResults(electionId, districtId);
+    // }
+
+    // // Get results for all districts in an election
+    // resource function get election/[string electionId]/districts/results()
+    // returns results:ElectionDistrictResults|http:NotFound|error {
+    //     return check results:getAllDistrictResults(electionId);
+    // }
+
+    // // Get candidate performance across all districts
+    // resource function get election/[string electionId]/candidate/[string candidateId]/districts()
+    // returns results:CandidateDistrictPerformance|http:NotFound|error {
+    //     return check results:getCandidateDistrictPerformance(electionId, candidateId);
+    // }
+
+    // Get election summary with district winners
+    resource function get election/[string electionId]/summary()
+    returns results:ElectionSummaryies|http:NotFound|error {
+        return check results:getElectionSummaryies(electionId, results:dbClient);
+    }
+
+    // // Get top performing districts for a candidate
+    // resource function get election/[string electionId]/candidate/[string candidateId]/top\-districts(int 'limit = 10)
+    // returns results:CandidateTopDistricts|http:NotFound|error {
+    //     return check results:getCandidateTopDistricts(electionId, candidateId, 'limit);
+    // }
+
+    // // Get district rankings by total votes
+    // resource function get election/[string electionId]/districts/rankings()
+    // returns results:DistrictRankings|http:NotFound|error {
+    //     return check results:getDistrictRankings(electionId);
+    // }
+
+    // // Get candidate standings (overall election results)
+    // resource function get election/[string electionId]/candidates/standings()
+    // returns results:CandidateStandings|http:NotFound|error {
+    //     return check results:getCandidateStandings(electionId);
+    // }
+
+    // // Compare candidates in specific districts
+    // resource function post election/[string electionId]/districts/compare(@http:Payload results:DistrictComparisonRequest request)
+    // returns results:DistrictComparison|http:BadRequest|error {
+    //     return check results:compareDistrictResults(electionId, request);
+    // }
+
+    // // Get vote distribution by district (pie chart data)
+    // resource function get election/[string electionId]/district/[string districtId]/distribution()
+    // returns results:VoteDistribution|http:NotFound|error {
+    //     return check results:getVoteDistribution(electionId, districtId);
+    // }
+
+    // // Get candidate margin analysis by district
+    // resource function get election/[string electionId]/candidate/[string candidateId]/margins()
+    // returns results:CandidateMargins|http:NotFound|error {
+    //     return check results:getCandidateMargins(electionId, candidateId);
+    // }
+
+    // // Get districts where candidate won/lost by specific margin
+    // resource function get election/[string electionId]/candidate/[string candidateId]/margins/analysis(decimal marginThreshold = 5.0)
+    // returns results:MarginAnalysis|http:NotFound|error {
+    //     return check results:getMarginAnalysis(electionId, candidateId, marginThreshold);
+    // }
+
+    // // Get real-time results (if election is ongoing)
+    // resource function get election/[string electionId]/live/results()
+    // returns results:LiveResults|http:NotFound|error {
+    //     return check results:getLiveResults(electionId);
+    // }
+}
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["http://localhost:3000"], // Your frontend URL
+        allowMethods: ["GET", "POST", "PUT", "DELETE"],
+        allowHeaders: ["Content-Type", "Authorization"]
+    }
+}
+service /api/v1 on SharedListener {
+
+    // == REGISTRATION REVIEW ENDPOINTS ==
+
+    // CORRECTED: All function calls now use the 'verification:' prefix.
+    resource function get registrations/applications(string? nameOrNic, string? statusFilter) 
+    returns verification:RegistrationApplication[]|error {
+        return verification:getRegistrationApplications(nameOrNic, statusFilter);
+    }
+
+    resource function get registrations/counts() 
+    returns verification:StatusCounts|error {
+        return verification:getApplicationCounts();
+    }
+
+    resource function get registrations/applications/[string nic]() 
+    returns verification:RegistrationDetails|http:NotFound|error {
+        return verification:getRegistrationDetails(nic);
+    }
+
+    resource function post registrations/applications/[string nic]/review(verification:ReviewRequest reviewData) 
+    returns http:Ok|http:Forbidden|error {
+        return verification:reviewApplication(nic, reviewData);
+    }
+
+    // === VOTER ENDPOINTS ===
+
+    // resource function post voter/login(@http:Payload enrollment:LoginRequest payload) 
+    // returns enrollment:ApiResponse|error {
+    //     return enrollment:loginVoter(payload);
+    // }
+
+    resource function get profile/[string nic]() 
+    returns enrollment:UserProfile|http:NotFound|error {
+        return enrollment:getUserProfile(nic);
+    }
+
+    // === ELECTION & ENROLLMENT ENDPOINTS ===
+
+    resource function get elections(@http:Query string? voterId = (), @http:Query string? voterNic = ()) 
+    returns enrollment:ElectionWithEnrollment[]|error {
+        return enrollment:getAllElections(voterId, voterNic);
+    }
+
+    resource function get elections/[string electionId]/candidates() 
+    returns enrollment:ElectionDetailsWithCandidates|http:NotFound|error {
+        return enrollment:getElectionWithCandidates(electionId);
+    }
+    
+    // The verification and enrollment endpoint
+   resource function post elections/[string electionId]/enroll(
+            @http:Payload enrollment:VoterVerificationRequest verificationPayload
+    ) returns http:Created|enrollment:ApiResponse|error {
+        return enrollment:enrollInElection(electionId, verificationPayload);
+    }
+}
+
 @http:ServiceConfig {
     cors: {
         allowOrigins: ["http://localhost:3000"],
@@ -582,90 +916,5 @@ service /household\-management/api/v1 on SharedListener {
     resource function options household/[string chiefOccupantId]/members() 
         returns http:Accepted {
         return http:ACCEPTED;
-    }
-}
-
-
-@http:ServiceConfig {
-    cors: {
-        allowOrigins: ["http://localhost:3000"],
-        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allowHeaders: ["Content-Type", "Authorization"],
-        allowCredentials: true
-    }
-}
-// Election Results Service - /results/api/v1
-service /results/api/v1 on SharedListener {
-
-    // Get candidate results for a specific district
-    resource function get election/[string electionId]/district/[string districtId]/results()
-    returns results:DistrictResults|http:NotFound|error {
-        return check results:getDistrictResults(electionId, districtId);
-    }
-
-    // Get results for all districts in an election
-    resource function get election/[string electionId]/districts/results()
-    returns results:ElectionDistrictResults|http:NotFound|error {
-        return check results:getAllDistrictResults(electionId);
-    }
-
-    // Get candidate performance across all districts
-    resource function get election/[string electionId]/candidate/[string candidateId]/districts()
-    returns results:CandidateDistrictPerformance|http:NotFound|error {
-        return check results:getCandidateDistrictPerformance(electionId, candidateId);
-    }
-
-    // Get election summary with district winners
-    resource function get election/[string electionId]/summary()
-    returns results:ElectionSummary|http:NotFound|error {
-        return check results:getElectionSummary(electionId);
-    }
-
-    // Get top performing districts for a candidate
-    resource function get election/[string electionId]/candidate/[string candidateId]/top\-districts(int 'limit = 10)
-    returns results:CandidateTopDistricts|http:NotFound|error {
-        return check results:getCandidateTopDistricts(electionId, candidateId, 'limit);
-    }
-
-    // Get district rankings by total votes
-    resource function get election/[string electionId]/districts/rankings()
-    returns results:DistrictRankings|http:NotFound|error {
-        return check results:getDistrictRankings(electionId);
-    }
-
-    // Get candidate standings (overall election results)
-    resource function get election/[string electionId]/candidates/standings()
-    returns results:CandidateStandings|http:NotFound|error {
-        return check results:getCandidateStandings(electionId);
-    }
-
-    // Compare candidates in specific districts
-    resource function post election/[string electionId]/districts/compare(@http:Payload results:DistrictComparisonRequest request)
-    returns results:DistrictComparison|http:BadRequest|error {
-        return check results:compareDistrictResults(electionId, request);
-    }
-
-    // Get vote distribution by district (pie chart data)
-    resource function get election/[string electionId]/district/[string districtId]/distribution()
-    returns results:VoteDistribution|http:NotFound|error {
-        return check results:getVoteDistribution(electionId, districtId);
-    }
-
-    // Get candidate margin analysis by district
-    resource function get election/[string electionId]/candidate/[string candidateId]/margins()
-    returns results:CandidateMargins|http:NotFound|error {
-        return check results:getCandidateMargins(electionId, candidateId);
-    }
-
-    // Get districts where candidate won/lost by specific margin
-    resource function get election/[string electionId]/candidate/[string candidateId]/margins/analysis(decimal marginThreshold = 5.0)
-    returns results:MarginAnalysis|http:NotFound|error {
-        return check results:getMarginAnalysis(electionId, candidateId, marginThreshold);
-    }
-
-    // Get real-time results (if election is ongoing)
-    resource function get election/[string electionId]/live/results()
-    returns results:LiveResults|http:NotFound|error {
-        return check results:getLiveResults(electionId);
     }
 }

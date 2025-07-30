@@ -38,6 +38,7 @@ public type Candidate record {|
 # + civilStatus - Marital Status
 # + passwordHash - Hashed Password
 # + idCopyPath - File Path of ID Copy
+# + photoCopyPath - File Path of Image
 # + email - email of chiefoccupant
 # + role - Role of the user
 # + photoCopyPath-file path to photo
@@ -67,7 +68,7 @@ public type ChiefOccupant record {|
 # HouseholdDetails Table
 #
 # + id - Auto-incrementing Primary Key
-# + chiefOccupantId - Foreign Key (ChiefOccupant)
+# + chiefOccupantId - Foreign Key (ChiefOccupant)https://claude.ai/new
 # + electoralDistrict - District of Registration
 # + pollingDivision - Polling Division Name
 # + pollingDistrictNumber - Polling District Number
@@ -294,7 +295,6 @@ public type Vote record {|
 # + enrollementDate - Date of enrolment
 
 public type Enrolment record {|
-
     @sql:Name { value: "voter_id" }
     readonly string voterId;
     @sql:Name { value: "election_id" }
@@ -303,6 +303,101 @@ public type Enrolment record {|
     time:Utc enrollementDate;
 |};
 
+// -- Removal Requests Table --
+public type RemovalRequest record {|
+    readonly string id;
+    @sql:Name { value: "member_name" }
+    string memberName;
+    string nic;
+    @sql:Name { value: "requested_by" }
+    string requestedBy;
+    string reason;
+    @sql:Name { value: "proof_document" }
+    string proofDocument;
+    string status; // pending, approved, rejected
+|};
+
+// -- Registration Reviews Table --
+public type RegistrationReview record {|
+    readonly string id;
+    @sql:Name { value: "member_nic" }
+    string memberNic;
+    @sql:Name { value: "reviewed_by" }
+    string reviewedBy;
+    string status; // pending, approved, rejected
+    string? comments;
+    @sql:Name { value: "reviewed_at" }
+    time:Utc? reviewedAt;
+|};
+
+
+// -- Grama Niladhari Table --
+public type GramaNiladhari record {|
+    readonly string id;
+    @sql:Name { value: "full_name" }
+    string fullName;
+    string nic;
+    @sql:Name { value: "date_of_birth" }
+    string dateOfBirth;
+    string email;
+    @sql:Name { value: "office_phone" }
+    string officePhone;
+    @sql:Name { value: "mobile_number" }
+    string mobileNumber;
+    @sql:Name { value: "residential_address" }
+    string residentialAddress;
+    @sql:Name { value: "official_title" }
+    string officialTitle;
+    @sql:Name { value: "employee_id" }
+    string employeeId;
+    @sql:Name { value: "appointment_date" }
+    string appointmentDate;
+    @sql:Name { value: "gn_division" }
+    string gnDivision;
+    string district;
+    string province;
+    @sql:Name { value: "office_address" }
+    string officeAddress;
+    string qualifications;
+    string experience;
+|};
+
+// -- Notifications Table --
+public type Notification record {|
+    readonly string id;
+    string title;
+    string message;
+    string? link; // e.g., to view the action
+    @sql:Name { value: "created_at" }
+    time:Utc createdAt;
+    string status; // unread, read
+    @sql:Name { value: "recipient_nic" }
+    string recipientNic;
+|};
+
+# Voter entity.
+#
+# + id - Voter ID (Auto-incrementing Primary Key)
+# + nationalId - National Identity Card Number (Unique Identifier)
+# + name - Full name of the voter
+# + password - Login password (hashed)
+# + district - Voter's district
+# + pollingStation - Voter's polling station
+# + registrationDate - Registration date
+# + status - ACTIVE / INACTIVE
+public type Voter record {|
+    readonly string id;
+    @sql:Name { value: "national_id" }
+    string nationalId;
+    string name;
+    string password;
+    string district;
+    @sql:Name { value: "polling_station" }
+    string pollingStation;
+    @sql:Name { value: "registration_date" }
+    time:Date registrationDate;
+    string status;
+|};
 # Description.
 #
 # + electionId - foreign key reference to the Election record
@@ -326,7 +421,7 @@ public type Enrolment record {|
 # + matara - field description
 # + monaragala - field description
 # + mullaitivu - field description
-# + nuwaraEliya - field description
+# + nuwaraeliya - field description
 # + polonnaruwa - field description
 # + puttalam - field description
 # + ratnapura - field description
@@ -358,7 +453,7 @@ public type CandidateDistrictVoteSummary record {|
     int matara;
     int monaragala;
     int mullaitivu;
-    int nuwaraEliya;
+    int nuwaraeliya;
     int polonnaruwa;
     int puttalam;
     int ratnapura;
