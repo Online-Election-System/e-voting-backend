@@ -41,6 +41,8 @@ public type Candidate record {|
 # + email - email of chiefoccupant
 # + role - Role of the user
 
+
+
 public type ChiefOccupant record {|
     readonly string id;
     @sql:Name {value: "full_name"}
@@ -62,14 +64,14 @@ public type ChiefOccupant record {|
 
 # HouseholdDetails Table
 #
-# + id - Auto-incrementing Primary Key
-# + chiefOccupantId - Foreign Key (ChiefOccupant)
-# + electoralDistrict - District of Registration
-# + pollingDivision - Polling Division Name
-# + pollingDistrictNumber - Polling District Number
-# + gramaNiladhariDivision - GN Division
-# + villageStreetEstate - Location Information
-# + houseNumber - Registered House Number
+# + id - Auto-incrementing Primary Key  
+# + chiefOccupantId - Foreign Key (ChiefOccupant)  
+# + electoralDistrict - District of Registration  
+# + pollingDivision - Polling Division Name  
+# + pollingDistrictNumber - Polling District Number  
+# + gramaNiladhariDivision - GN Division  
+# + villageStreetEstate - Location Information  
+# + houseNumber - Registered House Number  
 # + householdMemberCount - Number of Members (excluding Chief)
 
 public type HouseholdDetails record {|

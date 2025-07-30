@@ -1,7 +1,6 @@
 import online_election.auth;
 import online_election.candidate;
 import online_election.election;
-import online_election.results;
 import online_election.vote;
 import online_election.store;
 
@@ -439,179 +438,133 @@ service /candidate/api/v1 on SharedListener {
     }
 }
 service /vote/api/v1 on SharedListener {
+    
+    // NEW: Voter login endpoint for voting authentication
+    resource function post login(vote:VoterLoginRequest loginRequest) 
+    returns json|http:Unauthorized|error {
+        return vote:voterLogin(loginRequest.nationalId, loginRequest.password);
+    }
+
     // Cast vote endpoint
     resource function post votes/cast(http:Request request, vote:Vote newVote)
     returns http:Created|http:Forbidden|error|http:Response {
-        auth:AuthOptions options = {
-            allowedRoles: [auth:POLLING_STATION]
-        };
-
-        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
-        if authResult is http:Response {
-            return authResult;
-        }
-
         return check vote:castVote(newVote);
     }
 
     // Check voting eligibility (enrollment + not already voted)
-    resource function get eligibility/[string voterId]/election/[string electionId](http:Request request) returns json|error|error|http:Response {
-        auth:AuthOptions options = {
-            allowedRoles: [auth:POLLING_STATION]
-        };
-
-        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
-        if authResult is http:Response {
-            return authResult;
-        }
-
+    resource function get eligibility/[string voterId]/election/[string electionId](http:Request request) 
+    returns json|error {
         return vote:checkVotingEligibility(voterId, electionId);
     }
 
     // Get votes by election
     resource function get votes/election/[string electionId](http:Request request)
-    returns store:Vote[]|error|http:Response {
-        auth:AuthOptions options = {
-            allowedRoles: [auth:POLLING_STATION]
-        };
-
-        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
-        if authResult is http:Response {
-            return authResult;
-        }
-
+    returns store:Vote[]|error {
         return check vote:getVotesByElection(electionId);
     }
 
     // Get voter's voting history
     resource function get votes/voter/[string voterId](http:Request request)
-    returns store:Vote[]|error|http:Response {
-        auth:AuthOptions options = {
-            allowedRoles: [auth:POLLING_STATION]
-        };
-
-        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
-        if authResult is http:Response {
-            return authResult;
-        }
-
+    returns store:Vote[]|error {
         return check vote:getVotesByVoter(voterId);
     }
 
     // Get votes by election and district
     resource function get votes/election/[string electionId]/district/[string district](http:Request request)
-    returns store:Vote[]|error|http:Response {
-        auth:AuthOptions options = {
-            allowedRoles: [auth:POLLING_STATION]
-        };
-
-        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
-        if authResult is http:Response {
-            return authResult;
-        }
-
+    returns store:Vote[]|error {
         return check vote:getVotesByElectionAndDistrict(electionId, district);
     }
 
-    // Get votes by household (new functionality)
+    // Get votes by household
     resource function get votes/household/[string chiefOccupantId]/election/[string electionId](http:Request request)
-    returns store:Vote[]|error|http:Response {
-        auth:AuthOptions options = {
-            allowedRoles: [auth:POLLING_STATION]
-        };
-
-        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
-        if authResult is http:Response {
-            return authResult;
-        }
-
+    returns store:Vote[]|error {
         return check vote:getVotesByHousehold(chiefOccupantId, electionId);
     }
 }
 
 
-@http:ServiceConfig {
-    cors: {
-        allowOrigins: ["http://localhost:3000"],
-        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allowHeaders: ["Content-Type", "Authorization"],
-        allowCredentials: true
-    }
-}
-// Election Results Service - /results/api/v1
-service /results/api/v1 on SharedListener {
+// @http:ServiceConfig {
+//     cors: {
+//         allowOrigins: ["http://localhost:3000"],
+//         allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//         allowHeaders: ["Content-Type", "Authorization"],
+//         allowCredentials: true
+//     }
+// }
+// // Election Results Service - /results/api/v1
+// service /results/api/v1 on SharedListener {
 
     // Get candidate results for a specific district
-    resource function get election/[string electionId]/district/[string districtId]/results()
-    returns results:DistrictResults|http:NotFound|error {
-        return check results:getDistrictResults(electionId, districtId);
-    }
+    // resource function get election/[string electionId]/district/[string districtId]/results()
+    // returns results:DistrictResults|http:NotFound|error {
+    //     return check results:getDistrictResults(electionId, districtId);
+    // }
 
     // Get results for all districts in an election
-    resource function get election/[string electionId]/districts/results()
-    returns results:ElectionDistrictResults|http:NotFound|error {
-        return check results:getAllDistrictResults(electionId);
-    }
+    // resource function get election/[string electionId]/districts/results()
+    // returns results:ElectionDistrictResults|http:NotFound|error {
+    //     return check results:getAllDistrictResults(electionId);
+    // }
 
-    // Get candidate performance across all districts
-    resource function get election/[string electionId]/candidate/[string candidateId]/districts()
-    returns results:CandidateDistrictPerformance|http:NotFound|error {
-        return check results:getCandidateDistrictPerformance(electionId, candidateId);
-    }
+    // // Get candidate performance across all districts
+    // resource function get election/[string electionId]/candidate/[string candidateId]/districts()
+    // returns results:CandidateDistrictPerformance|http:NotFound|error {
+    //     return check results:getCandidateDistrictPerformance(electionId, candidateId);
+    // }
 
-    // Get election summary with district winners
-    resource function get election/[string electionId]/summary()
-    returns results:ElectionSummary|http:NotFound|error {
-        return check results:getElectionSummary(electionId);
-    }
+    // // Get election summary with district winners
+    // resource function get election/[string electionId]/summary()
+    // returns results:ElectionSummary|http:NotFound|error {
+    //     return check results:getElectionSummary(electionId);
+    // }
 
     // Get top performing districts for a candidate
-    resource function get election/[string electionId]/candidate/[string candidateId]/top\-districts(int 'limit = 10)
-    returns results:CandidateTopDistricts|http:NotFound|error {
-        return check results:getCandidateTopDistricts(electionId, candidateId, 'limit);
-    }
+    // resource function get election/[string electionId]/candidate/[string candidateId]/top\-districts(int 'limit = 10)
+    // returns results:CandidateTopDistricts|http:NotFound|error {
+    //     return check results:getCandidateTopDistricts(electionId, candidateId, 'limit);
+    // }
 
     // Get district rankings by total votes
-    resource function get election/[string electionId]/districts/rankings()
-    returns results:DistrictRankings|http:NotFound|error {
-        return check results:getDistrictRankings(electionId);
-    }
+    // resource function get election/[string electionId]/districts/rankings()
+    // returns results:DistrictRankings|http:NotFound|error {
+    //     return check results:getDistrictRankings(electionId);
+    // }
 
     // Get candidate standings (overall election results)
-    resource function get election/[string electionId]/candidates/standings()
-    returns results:CandidateStandings|http:NotFound|error {
-        return check results:getCandidateStandings(electionId);
-    }
+    // resource function get election/[string electionId]/candidates/standings()
+    // returns results:CandidateStandings|http:NotFound|error {
+    //     return check results:getCandidateStandings(electionId);
+    // }
 
     // Compare candidates in specific districts
-    resource function post election/[string electionId]/districts/compare(@http:Payload results:DistrictComparisonRequest request)
-    returns results:DistrictComparison|http:BadRequest|error {
-        return check results:compareDistrictResults(electionId, request);
-    }
+    // resource function post election/[string electionId]/districts/compare(@http:Payload results:DistrictComparisonRequest request)
+    // returns results:DistrictComparison|http:BadRequest|error {
+    //     return check results:compareDistrictResults(electionId, request);
+    // }
 
     // Get vote distribution by district (pie chart data)
-    resource function get election/[string electionId]/district/[string districtId]/distribution()
-    returns results:VoteDistribution|http:NotFound|error {
-        return check results:getVoteDistribution(electionId, districtId);
-    }
+    // resource function get election/[string electionId]/district/[string districtId]/distribution()
+    // returns results:VoteDistribution|http:NotFound|error {
+    //     return check results:getVoteDistribution(electionId, districtId);
+    // }
 
     // Get candidate margin analysis by district
-    resource function get election/[string electionId]/candidate/[string candidateId]/margins()
-    returns results:CandidateMargins|http:NotFound|error {
-        return check results:getCandidateMargins(electionId, candidateId);
-    }
+    // resource function get election/[string electionId]/candidate/[string candidateId]/margins()
+    // returns results:CandidateMargins|http:NotFound|error {
+    //     return check results:getCandidateMargins(electionId, candidateId);
+    // }
 
-    // Get districts where candidate won/lost by specific margin
-    resource function get election/[string electionId]/candidate/[string candidateId]/margins/analysis(decimal marginThreshold = 5.0)
-    returns results:MarginAnalysis|http:NotFound|error {
-        return check results:getMarginAnalysis(electionId, candidateId, marginThreshold);
-    }
+    // // Get districts where candidate won/lost by specific margin
+    // resource function get election/[string electionId]/candidate/[string candidateId]/margins/analysis(decimal marginThreshold = 5.0)
+    // returns results:MarginAnalysis|http:NotFound|error {
+    //     return check results:getMarginAnalysis(electionId, candidateId, marginThreshold);
+    // }
 
     // Get real-time results (if election is ongoing)
-    resource function get election/[string electionId]/live/results()
-    returns results:LiveResults|http:NotFound|error {
-        return check results:getLiveResults(electionId);
-    }
-}
+//     resource function get election/[string electionId]/live/results()
+//     returns results:LiveResults|http:NotFound|error {
+//         return check results:getLiveResults(electionId);
+//     }
+    
 
 

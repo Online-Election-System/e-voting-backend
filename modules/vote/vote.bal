@@ -1,6 +1,5 @@
 import online_election.common;
 import online_election.store;
-import online_election.auth;
 import online_election.results; // NEW: Import results module
 import online_election.candidate;
 
@@ -18,36 +17,68 @@ public type VoterLoginRequest record {|
 |};
 
 // Enhanced authentication function for both user types
-public function authenticateVoter(string identifier, string password) returns auth:LoginResponse|http:Unauthorized|error {
-    // Create a LoginRequest object for the postLogin function
-    auth:LoginRequest loginReq = {
-        nic: identifier,
-        password: password
-    };
+// Voter-specific login function that checks NIC and password
+public function voterLogin(string nationalId, string password) returns json|http:Unauthorized|error {
+    io:println("=== Voter Login Attempt ===");
+    io:println("National ID: ", nationalId);
     
-    // Call the postLogin function from auth module
-    auth:LoginResponse|http:Unauthorized|error result = auth:postLogin(loginReq);
+    // Hash the provided password for comparison
+    byte[] hashedPasswordBytes = crypto:hashSha256(password.toBytes());
+    string hashedPassword = hashedPasswordBytes.toBase16();
     
-    if result is auth:LoginResponse {
-        // Check if user is eligible to vote (only chief_occupant and household_member)
-        if result.userType == "chief_occupant" || result.userType == "household_member" {
-            // Modify the message to indicate this is for voting
-            result.message = "Authentication successful - Ready to vote";
-            io:println("Voter authenticated successfully: ", result.fullName, " (", result.userType, ")");
-            return result;
-        } else {
-            // Block admin/government users from voting
-            io:println("User type not eligible for voting: ", result.userType);
-            return http:UNAUTHORIZED;
+    // First, try to find the voter as a Chief Occupant
+    stream<store:ChiefOccupant, persist:Error?> chiefStream = dbVote->/chiefoccupants;
+    store:ChiefOccupant[] chiefs = check from store:ChiefOccupant chief in chiefStream
+        where chief.nic == nationalId && chief.passwordHash == hashedPassword
+        select chief;
+    
+    if chiefs.length() > 0 {
+        store:ChiefOccupant chief = chiefs[0];
+        io:println("✓ Chief Occupant authenticated: ", chief.fullName);
+        
+        return {
+            "success": true,
+            "voterId": chief.id,
+            "fullName": chief.fullName,
+            "nic": chief.nic,
+            "userType": "chief_occupant",
+            "role": chief.role,
+            "message": "Authentication successful - Ready to vote"
+        };
+    }
+    
+    // If not found as Chief Occupant, try Household Member
+    stream<store:HouseholdMembers, persist:Error?> memberStream = dbVote->/householdmembers;
+    store:HouseholdMembers[] members = check from store:HouseholdMembers member in memberStream
+        where member.nic == nationalId && member.passwordHash == hashedPassword
+        select member;
+    
+    if members.length() > 0 {
+        store:HouseholdMembers member = members[0];
+        
+        // Check if approved by chief
+        if !member.approvedByChief {
+            io:println("❌ Household member not approved by chief: ", member.fullName);
+            return error("Account not approved by Chief Occupant");
         }
+        
+        io:println("✓ Household Member authenticated: ", member.fullName);
+        
+        return {
+            "success": true,
+            "voterId": member.id,
+            "fullName": member.fullName,
+            "nic": member.nic,
+            "userType": "household_member",
+            "role": member.role,
+            "chiefOccupantId": member.chiefOccupantId,
+            "message": "Authentication successful - Ready to vote"
+        };
     }
     
-    // If authentication failed or returned error, pass it through
-    if result is http:Unauthorized {
-        io:println("Voter authentication failed for identifier: ", identifier);
-    }
-    
-    return result;
+    // If neither found, authentication failed
+    io:println("❌ Authentication failed for NIC: ", nationalId);
+    return http:UNAUTHORIZED;
 }
 
 // Get voter by ID (unified for both tables)
