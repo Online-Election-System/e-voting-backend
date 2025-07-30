@@ -85,6 +85,7 @@ public function getRoleLevel(UserRole role) returns int {
     match role {
         ADMIN => { return 100; }
         ELECTION_COMMISSION => { return 90; }
+        POLLING_STATION => { return 85; }
         GOVERNMENT_OFFICIAL => { return 80; }
         CHIEF_OCCUPANT => { return 40; }
         HOUSEHOLD_MEMBER => { return 30; }

@@ -178,12 +178,23 @@ public type ElectionCommissionInput record {|
     string passwordHash;
 |};
 
+public type PollingStationInput record {|
+    string fullName;
+    string nic;
+    string email;
+    string passwordHash;
+|};
+
 public type GovernmentOfficialRegistrationRequest record {|
     GovernmentOfficialInput official;
 |};
 
 public type ElectionCommissionRegistrationRequest record {|
     ElectionCommissionInput commission;
+|};
+
+public type PollingStationRegistrationRequest record {|
+    PollingStationInput station;
 |};
 
 // Additional types
