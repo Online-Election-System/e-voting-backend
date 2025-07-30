@@ -42,6 +42,7 @@ public type Candidate record {|
 # + email - email of chiefoccupant
 # + role - Role of the user
 
+
 public type ChiefOccupant record {|
     readonly string id;
     @sql:Name {value: "full_name"}
@@ -66,7 +67,7 @@ public type ChiefOccupant record {|
 # HouseholdDetails Table
 #
 # + id - Auto-incrementing Primary Key
-# + chiefOccupantId - Foreign Key (ChiefOccupant)
+# + chiefOccupantId - Foreign Key (ChiefOccupant)https://claude.ai/new
 # + electoralDistrict - District of Registration
 # + pollingDivision - Polling Division Name
 # + pollingDistrictNumber - Polling District Number
@@ -422,4 +423,68 @@ public type DeleteMemberRequest record {|
     string? reason; 
     @sql:Name {value: "required_document_path"}
     string? requiredDocumentPath;
+|};
+
+# Description.
+#
+# + electionId - foreign key reference to the Election record
+# + candidateId - foreign key reference to the Candidate record
+# + ampara - number of votes in the Ampara district
+# + anuradhapura - number of votes in the Anuradhapura district
+# + badulla - number of votes in the Badulla district
+# + batticaloa - number of votes in the Batticaloa district
+# + colombo - field description
+# + galle - field description
+# + gampaha - field description
+# + hambantota - field description
+# + jaffna - field description
+# + kalutara - field description
+# + kandy - field description
+# + kegalle - field description
+# + kilinochchi - field description
+# + kurunegala - field description
+# + mannar - field description
+# + matale - field description
+# + matara - field description
+# + monaragala - field description
+# + mullaitivu - field description
+# + nuwaraeliya - field description
+# + polonnaruwa - field description
+# + puttalam - field description
+# + ratnapura - field description
+# + trincomalee - field description
+# + vavuniya - field description
+# + totals - field description
+public type CandidateDistrictVoteSummary record {|
+    @sql:Name { value: "election_id" }
+    readonly string electionId;
+
+    @sql:Name { value: "candidate_id" }
+    readonly string candidateId;
+    int ampara;
+    int anuradhapura;
+    int badulla;
+    int batticaloa;
+    int colombo;
+    int galle;
+    int gampaha;
+    int hambantota;
+    int jaffna;
+    int kalutara;
+    int kandy;
+    int kegalle;
+    int kilinochchi;
+    int kurunegala;
+    int mannar;
+    int matale;
+    int matara;
+    int monaragala;
+    int mullaitivu;
+    int nuwaraeliya;
+    int polonnaruwa;
+    int puttalam;
+    int ratnapura;
+    int trincomalee;
+    int vavuniya;
+    int totals;
 |};

@@ -260,6 +260,111 @@ public type AdminUsersUpdate record {|
     boolean isActive?;
 |};
 
+public type AddMemberRequest record {|
+    readonly string addRequestId;
+    string chiefOccupantId;
+    string nicNumber;
+    string fullName;
+    string dateOfBirth;
+    string gender;
+    string civilStatus;
+    string relationshipToChief;
+    string chiefOccupantApproval;
+    string requestStatus;
+    string? nicOrBirthCertificatePath;
+|};
+
+public type AddMemberRequestOptionalized record {|
+    string addRequestId?;
+    string chiefOccupantId?;
+    string nicNumber?;
+    string fullName?;
+    string dateOfBirth?;
+    string gender?;
+    string civilStatus?;
+    string relationshipToChief?;
+    string chiefOccupantApproval?;
+    string requestStatus?;
+    string? nicOrBirthCertificatePath?;
+|};
+
+public type AddMemberRequestTargetType typedesc<AddMemberRequestOptionalized>;
+
+public type AddMemberRequestInsert AddMemberRequest;
+
+public type AddMemberRequestUpdate record {|
+    string chiefOccupantId?;
+    string nicNumber?;
+    string fullName?;
+    string dateOfBirth?;
+    string gender?;
+    string civilStatus?;
+    string relationshipToChief?;
+    string chiefOccupantApproval?;
+    string requestStatus?;
+    string? nicOrBirthCertificatePath?;
+|};
+
+public type UpdateMemberRequest record {|
+    readonly string updateRequestId;
+    string chiefOccupantId;
+    string? householdMemberId;
+    string? newFullName;
+    string? newResidentArea;
+    string requestStatus;
+    string? relevantCertificatePath;
+|};
+
+public type UpdateMemberRequestOptionalized record {|
+    string updateRequestId?;
+    string chiefOccupantId?;
+    string? householdMemberId?;
+    string? newFullName?;
+    string? newResidentArea?;
+    string requestStatus?;
+    string? relevantCertificatePath?;
+|};
+
+public type UpdateMemberRequestTargetType typedesc<UpdateMemberRequestOptionalized>;
+
+public type UpdateMemberRequestInsert UpdateMemberRequest;
+
+public type UpdateMemberRequestUpdate record {|
+    string chiefOccupantId?;
+    string? householdMemberId?;
+    string? newFullName?;
+    string? newResidentArea?;
+    string requestStatus?;
+    string? relevantCertificatePath?;
+|};
+
+public type DeleteMemberRequest record {|
+    readonly string deleteRequestId;
+    string chiefOccupantId;
+    string? householdMemberId;
+    string requestStatus;
+    string? requiredDocumentPath;
+|};
+
+public type DeleteMemberRequestOptionalized record {|
+    string deleteRequestId?;
+    string chiefOccupantId?;
+    string? householdMemberId?;
+    string requestStatus?;
+    string? requiredDocumentPath?;
+|};
+
+public type DeleteMemberRequestTargetType typedesc<DeleteMemberRequestOptionalized>;
+
+public type DeleteMemberRequestInsert DeleteMemberRequest;
+
+public type DeleteMemberRequestUpdate record {|
+    string chiefOccupantId?;
+    string? householdMemberId?;
+    string requestStatus?;
+    string? requiredDocumentPath?;
+|};
+
 public type EnrolCandidates record {|
     readonly string electionId;
     readonly string candidateId;
@@ -353,7 +458,7 @@ public type RegistrationReviewInsert RegistrationReview;
 public type RegistrationReviewUpdate record {|
     string memberNic?;
     string status?;
-    string? reason?;
+    string? reason?; 
     time:Utc? reviewedAt?;
 |};
 
@@ -489,6 +594,7 @@ public type VoterUpdate record {|
     string status?;
 |};
 
+
 public type AddMemberRequest record {|
     readonly string addRequestId;
     string chiefOccupantId;
@@ -601,5 +707,100 @@ public type DeleteMemberRequestUpdate record {|
     string requestStatus?;
     string? reason?;
     string? requiredDocumentPath?;
+
+public type CandidateDistrictVoteSummary record {|
+    readonly string electionId;
+    readonly string candidateId;
+    int ampara;
+    int anuradhapura;
+    int badulla;
+    int batticaloa;
+    int colombo;
+    int galle;
+    int gampaha;
+    int hambantota;
+    int jaffna;
+    int kalutara;
+    int kandy;
+    int kegalle;
+    int kilinochchi;
+    int kurunegala;
+    int mannar;
+    int matale;
+    int matara;
+    int monaragala;
+    int mullaitivu;
+    int nuwaraeliya;
+    int polonnaruwa;
+    int puttalam;
+    int ratnapura;
+    int trincomalee;
+    int vavuniya;
+    int totals;
+|};
+
+public type CandidateDistrictVoteSummaryOptionalized record {|
+    string electionId?;
+    string candidateId?;
+    int ampara?;
+    int anuradhapura?;
+    int badulla?;
+    int batticaloa?;
+    int colombo?;
+    int galle?;
+    int gampaha?;
+    int hambantota?;
+    int jaffna?;
+    int kalutara?;
+    int kandy?;
+    int kegalle?;
+    int kilinochchi?;
+    int kurunegala?;
+    int mannar?;
+    int matale?;
+    int matara?;
+    int monaragala?;
+    int mullaitivu?;
+    int nuwaraeliya?;
+    int polonnaruwa?;
+    int puttalam?;
+    int ratnapura?;
+    int trincomalee?;
+    int vavuniya?;
+    int totals?;
+|};
+
+public type CandidateDistrictVoteSummaryTargetType typedesc<CandidateDistrictVoteSummaryOptionalized>;
+
+public type CandidateDistrictVoteSummaryInsert CandidateDistrictVoteSummary;
+
+public type CandidateDistrictVoteSummaryUpdate record {|
+    int ampara?;
+    int anuradhapura?;
+    int badulla?;
+    int batticaloa?;
+    int colombo?;
+    int galle?;
+    int gampaha?;
+    int hambantota?;
+    int jaffna?;
+    int kalutara?;
+    int kandy?;
+    int kegalle?;
+    int kilinochchi?;
+    int kurunegala?;
+    int mannar?;
+    int matale?;
+    int matara?;
+    int monaragala?;
+    int mullaitivu?;
+    int nuwaraeliya?;
+    int polonnaruwa?;
+    int puttalam?;
+    int ratnapura?;
+    int trincomalee?;
+    int vavuniya?;
+    int totals?;
+
 |};
 

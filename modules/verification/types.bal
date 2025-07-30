@@ -28,6 +28,8 @@ public type RegistrationApplication record {|
     string dob;
     string? phone;
     string address;
+    string? idCopyPath;
+    string? photoCopyPath;
     string status;
 |};
 

@@ -85,3 +85,44 @@ public function registerElectionCommission(ElectionCommissionRegistrationRequest
         message: "Election commission user registered successfully"
     };
 }
+
+public function registerPollingStation(PollingStationRegistrationRequest request) returns json|error {
+    // Validate password policy
+    string? passwordError = validatePasswordPolicy(request.station.passwordHash);
+    if passwordError is string {
+        return {
+            status: "error",
+            message: passwordError
+        };
+    }
+
+    string id = common:generateId();
+
+    string|error hashedPassword = hashPassword(request.station.passwordHash);
+    if hashedPassword is error {
+        log:printError("Failed to hash password: " + hashedPassword.message());
+        return error("Failed to hash password");
+    }
+
+    store:AdminUsersInsert insertRec = {
+        id: id,
+        username: request.station.nic,  // use NIC as username for login
+        email: request.station.email,
+        passwordHash: hashedPassword,
+        role: "polling_station",
+        createdAt: time:utcNow(),
+        isActive: true
+    };
+
+    string[]|error resp = dbClient->/adminusers.post([insertRec]);
+    if resp is error {
+        log:printError("Failed to create polling station: " + resp.message());
+        return error("Failed to create polling station");
+    }
+
+    return {
+        status: "success",
+        id: id,
+        message: "Polling Station user registered successfully"
+    };
+}
