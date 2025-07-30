@@ -1,34 +1,37 @@
 import ballerina/persist;
-import ballerina/http;
-import ballerina/time;
-import ballerina/log;
-import ballerina/lang.'string;
-import ballerina/sql;
 import codeCrew/online_election.store;
-import online_election.common;
+import ballerina/time;
+import ballerina/uuid;
 
-
-// Initialize the persist client
 final store:Client dbClient = check new ();
 
 // ----- Business Logic Functions -----
 
+// Add these types to your model.bal or at the top of verification.bal
+
 public function getRegistrationApplications(string? nameOrNic, string? statusFilter) returns RegistrationApplication[]|error {
-    // 1. Fetch all chiefs, members, and reviews from the database
+    
+    // 1. Fetch all Chief Occupants and filter by role
     stream<store:ChiefOccupant, persist:Error?> chiefStream = dbClient->/chiefoccupants;
-    store:ChiefOccupant[] chiefs = check from store:ChiefOccupant co in chiefStream select co;
+    store:ChiefOccupant[] chiefs = check from store:ChiefOccupant co in chiefStream 
+        where co.role == "chief_occupant" 
+        select co;
 
+    // 2. Fetch all Household Members and filter by role
     stream<store:HouseholdMembers, persist:Error?> memberStream = dbClient->/householdmembers;
-    store:HouseholdMembers[] members = check from store:HouseholdMembers hm in memberStream select hm;
+    store:HouseholdMembers[] members = check from store:HouseholdMembers hm in memberStream 
+        where hm.role == "household_member" 
+        select hm;
 
-    // 2. Fetch all HouseholdDetails and reviews into maps for efficient lookup
+    // 3. Fetch all HouseholdDetails into map for efficient lookup
     stream<store:HouseholdDetails, persist:Error?> hhDetailsStream = dbClient->/householddetails;
     map<store:HouseholdDetails> hhDetailsMap = {};
     check from store:HouseholdDetails detail in hhDetailsStream
         do {
             hhDetailsMap[detail.chiefOccupantId] = detail;
         };
-    
+
+    // 4. Fetch all RegistrationReview records into map for efficient lookup
     stream<store:RegistrationReview, persist:Error?> reviewStream = dbClient->/registrationreviews;
     map<store:RegistrationReview> reviewMap = {};
     check from store:RegistrationReview review in reviewStream
@@ -36,18 +39,37 @@ public function getRegistrationApplications(string? nameOrNic, string? statusFil
             reviewMap[review.memberNic] = review;
         };
 
-    // 3. Combine chiefs and members into a unified application list
-   RegistrationApplication[] applications = [];
+    // 5. Combine chiefs and members into a unified application list
+    RegistrationApplication[] applications = [];
     
     // Process Chief Occupants
     foreach var chief in chiefs {
-        string currentStatus = reviewMap.hasKey(chief.nic) ? reviewMap.get(chief.nic).status : "pending";
-        string submitted = reviewMap.hasKey(chief.nic) ? (reviewMap.get(chief.nic).reviewedAt ?: time:utcNow()).toString() : "N/A";
-        
         string address = "-";
         if hhDetailsMap.hasKey(chief.id) {
             store:HouseholdDetails hh = hhDetailsMap.get(chief.id);
-            address = (hh.houseNumber ?: "") + ", " + (hh.villageStreetEstate ?: "");
+            string houseNum = hh.houseNumber is string ? <string>hh.houseNumber : "";
+            string village = hh.villageStreetEstate is string ? <string>hh.villageStreetEstate : "";
+            string district = hh.electoralDistrict;
+            
+            // Create a meaningful address string
+            string[] addressParts = [];
+            if houseNum != "" {
+                addressParts.push(houseNum);
+            }
+            if village != "" {
+                addressParts.push(village);
+            }
+            if district != "" {
+                addressParts.push(district);
+            }
+            
+            address = addressParts.length() > 0 ? string:'join(", ", ...addressParts) : "-";
+        }
+
+        // Get status from RegistrationReview table or default to "pending"
+        string status = "pending";
+        if reviewMap.hasKey(chief.nic) {
+            status = reviewMap.get(chief.nic).status;
         }
 
         applications.push({
@@ -56,64 +78,85 @@ public function getRegistrationApplications(string? nameOrNic, string? statusFil
             dob: chief.dob,
             phone: chief.phoneNumber,
             address: address,
-            idCopyPath: chief.idCopyPath,
-            imagePath: chief.imagePath,
-            status: currentStatus,
-            submittedDate: submitted 
+            status: status
         });
     }
 
     // Process Household Members
     foreach var member in members {
-        if member.nic is string {
-            string currentStatus = reviewMap.hasKey(<string>member.nic) ? reviewMap.get(<string>member.nic).status : "pending";
-            string submitted = reviewMap.hasKey(<string>member.nic) ? (reviewMap.get(<string>member.nic).reviewedAt ?: time:utcNow()).toString() : "N/A";
-
+        // Only process members with NIC (some might not have NIC)
+        if member.nic is string && member.nic != "" {
             string address = "-";
             if hhDetailsMap.hasKey(member.chiefOccupantId) {
                 store:HouseholdDetails hh = hhDetailsMap.get(member.chiefOccupantId);
-                address = (hh.houseNumber ?: "") + ", " + (hh.villageStreetEstate ?: "");
+                string houseNum = hh.houseNumber is string ? <string>hh.houseNumber : "";
+                string village = hh.villageStreetEstate is string ? <string>hh.villageStreetEstate : "";
+                string district = hh.electoralDistrict;
+                
+                // Create a meaningful address string
+                string[] addressParts = [];
+                if houseNum != "" {
+                    addressParts.push(houseNum);
+                }
+                if village != "" {
+                    addressParts.push(village);
+                }
+                if district != "" {
+                    addressParts.push(district);
+                }
+                
+                address = addressParts.length() > 0 ? string:'join(", ", ...addressParts) : "-";
+            }
+
+            // Get status from RegistrationReview table or default to "pending"
+            string status = "pending";
+            if reviewMap.hasKey(<string>member.nic) {
+                status = reviewMap.get(<string>member.nic).status;
             }
 
             applications.push({
                 fullName: member.fullName,
                 nic: <string>member.nic,
                 dob: member.dob,
-                phone: (), // No phone for members
+                phone: (), // Household members don't have phone numbers
                 address: address,
-                idCopyPath: member.idCopyPath,
-                imagePath: member.imagePath,
-                status: currentStatus,
-                submittedDate: submitted
+                status: status
             });
         }
     }
 
-    // 4. Filter results based on query parameters if they exist
-    if nameOrNic is string {
-        string searchTerm = string:toLowerAscii(nameOrNic);
-        applications = from var app in applications
-            where string:toLowerAscii(app.fullName).includes(searchTerm) || app.nic.includes(searchTerm)
+    // 6. Apply filters if provided
+    RegistrationApplication[] filteredApplications = applications;
+    
+    // Filter by name or NIC
+    if nameOrNic is string && nameOrNic.trim() != "" {
+        string searchTerm = string:toLowerAscii(nameOrNic.trim());
+        filteredApplications = from var app in filteredApplications
+            where string:toLowerAscii(app.fullName).includes(searchTerm) || 
+                  string:toLowerAscii(app.nic).includes(searchTerm)
             select app;
     }
 
-    if statusFilter is string && statusFilter != "All Status" {
+    // Filter by status
+    if statusFilter is string && statusFilter != "all" && statusFilter != "All Status" {
         string statusTerm = string:toLowerAscii(statusFilter);
-        applications = from var app in applications
+        filteredApplications = from var app in filteredApplications
             where string:toLowerAscii(app.status) == statusTerm
             select app;
     }
 
-    return applications;
+    return filteredApplications;
 }
 
 public function getApplicationCounts() returns StatusCounts|error {
+    // Get all applications without any filters
     RegistrationApplication[] allApps = check getRegistrationApplications((), ());
     
     int pending = 0;
     int approved = 0;
     int rejected = 0;
 
+    // Count applications by status
     foreach var app in allApps {
         match app.status {
             "pending" => { pending += 1; }
@@ -130,166 +173,362 @@ public function getApplicationCounts() returns StatusCounts|error {
     };
 }
 
-
-
-public function getRegistrationDetails(string nic) returns RegistrationDetails|http:NotFound|error {
-    var person = findPersonByNic(nic);
-    if person is error {
-        return http:NOT_FOUND;
-    }
-
-    string chiefOccupantId;
-    string fullName; string dob; string gender; string civilStatus;
-    string? phone; string? idCopyPath; string? imagePath;
-
-    if person is store:ChiefOccupant {
-        chiefOccupantId = person.id;
-        fullName = person.fullName;
-        dob = person.dob;
-        gender = person.gender;
-        civilStatus = person.civilStatus;
-        phone = person.phoneNumber;
-        idCopyPath = person.idCopyPath;
-        imagePath = person.imagePath;
-    } else { // It's a HouseholdMember
-        chiefOccupantId = person.chiefOccupantId;
-        fullName = person.fullName;
-        dob = person.dob;
-        gender = person.gender;
-        civilStatus = person.civilStatus;
-        idCopyPath = person.idCopyPath;
-        imagePath = person.imagePath;
-        phone = ();
-    }
+// NEW FUNCTION: Get detailed registration information by NIC
+// Function to get detailed registration information by NIC
+public function getRegistrationDetailByNic(string nic) returns RegistrationDetail|error {
     
-    // Construct and execute the query for HouseholdDetails
-    sql:ParameterizedQuery hhWhereClause = `chief_occupant_id = ${chiefOccupantId}`;
-    stream<store:HouseholdDetails, persist:Error?> hhStream = dbClient->/householddetails(whereClause = hhWhereClause);
+    // Get status from RegistrationReview table
+    stream<store:RegistrationReview, persist:Error?> reviewStream = dbClient->/registrationreviews;
+    store:RegistrationReview[] reviews = check from store:RegistrationReview review in reviewStream
+        where review.memberNic == nic
+        select review;
+    
+    string status = "pending"; // Default status
+    if reviews.length() > 0 {
+        status = reviews[0].status;
+    }
 
-    var hhDetailsResult = hhStream.next();
-    store:HouseholdDetails hhDetails;
+    // 1. First try to find in Chief Occupants
+    stream<store:ChiefOccupant, persist:Error?> chiefStream = dbClient->/chiefoccupants;
+    store:ChiefOccupant[] matchedChief = check from store:ChiefOccupant co in chiefStream 
+        where co.nic == nic && co.role == "chief_occupant"
+        select co;
 
-    if hhDetailsResult is () {
-        return error("Critical: Household details not found for the applicant NIC: " + nic);
-    } else if hhDetailsResult is error {
-        return hhDetailsResult;
-    } else {
+    if matchedChief.length() > 0 {
+        store:ChiefOccupant chief = matchedChief[0];
         
-        hhDetails = hhDetailsResult.value;
+        // Get household details for this chief
+        stream<store:HouseholdDetails, persist:Error?> hhDetailsStream = dbClient->/householddetails;
+        store:HouseholdDetails[] householdDetails = check from store:HouseholdDetails hd in hhDetailsStream
+            where hd.chiefOccupantId == chief.id
+            select hd;
+            
+        if householdDetails.length() > 0 {
+            store:HouseholdDetails hh = householdDetails[0];
+            
+            // Build address
+            string[] addressParts = [];
+            if hh.houseNumber is string && <string>hh.houseNumber != "" {
+                addressParts.push(<string>hh.houseNumber);
+            }
+            if hh.villageStreetEstate is string && <string>hh.villageStreetEstate != "" {
+                addressParts.push(<string>hh.villageStreetEstate);
+            }
+            if hh.electoralDistrict != "" {
+                addressParts.push(hh.electoralDistrict);
+            }
+            string address = addressParts.length() > 0 ? string:'join(", ", ...addressParts) : "-";
+            
+            return {
+                fullName: chief.fullName,
+                nic: chief.nic,
+                dob: chief.dob,
+                phone: chief.phoneNumber,
+                gender: chief.gender,
+                civilStatus: chief.civilStatus,
+                electoralDistrict: hh.electoralDistrict,
+                pollingDivision: hh.pollingDivision,
+                pollingDistrictNumber: hh.pollingDistrictNumber,
+                gramaNiladhariDivision: hh.gramaNiladhariDivision,
+                village: hh.villageStreetEstate,
+                houseNumber: hh.houseNumber,
+                address: address,
+                status: status,
+                idCopyPath: chief.idCopyPath,
+                photoCopyPath: chief.photoCopyPath,
+                role: chief.role
+            };
+        } else {
+            // Chief found but no household details
+            return {
+                fullName: chief.fullName,
+                nic: chief.nic,
+                dob: chief.dob,
+                phone: chief.phoneNumber,
+                gender: chief.gender,
+                civilStatus: chief.civilStatus,
+                electoralDistrict: "-",
+                pollingDivision: "-",
+                pollingDistrictNumber: "-",
+                gramaNiladhariDivision: (),
+                village: (),
+                houseNumber: (),
+                address: "-",
+                status: status,
+                idCopyPath: chief.idCopyPath,
+                photoCopyPath: chief.photoCopyPath,
+                role: chief.role
+            };
+        }
     }
 
-    // Construct and execute the query for RegistrationReview
-    sql:ParameterizedQuery reviewWhereClause = `member_nic = ${nic}`;
-    stream<store:RegistrationReview, persist:Error?> reviewStream = dbClient->/registrationreviews(whereClause = reviewWhereClause);
-    
-    var reviewResult = reviewStream.next();
-    store:RegistrationReview? review = ();
+    // 2. If not found in chiefs, try household members
+    stream<store:HouseholdMembers, persist:Error?> memberStream = dbClient->/householdmembers;
+    store:HouseholdMembers[] matchedMembers = check from store:HouseholdMembers hm in memberStream 
+        where hm.nic == nic && hm.role == "household_member"
+        select hm;
 
-    if reviewResult is record {| store:RegistrationReview value; |} {
-        review = reviewResult.value;
-    } else if reviewResult is error {
-        return reviewResult;
+    if matchedMembers.length() > 0 {
+        store:HouseholdMembers member = matchedMembers[0];
+        
+        // Get household details for this member's chief occupant
+        stream<store:HouseholdDetails, persist:Error?> hhDetailsStream = dbClient->/householddetails;
+        store:HouseholdDetails[] householdDetails = check from store:HouseholdDetails hd in hhDetailsStream
+            where hd.chiefOccupantId == member.chiefOccupantId
+            select hd;
+            
+        if householdDetails.length() > 0 {
+            store:HouseholdDetails hh = householdDetails[0];
+            
+            // Build address
+            string[] addressParts = [];
+            if hh.houseNumber is string && <string>hh.houseNumber != "" {
+                addressParts.push(<string>hh.houseNumber);
+            }
+            if hh.villageStreetEstate is string && <string>hh.villageStreetEstate != "" {
+                addressParts.push(<string>hh.villageStreetEstate);
+            }
+            if hh.electoralDistrict != "" {
+                addressParts.push(hh.electoralDistrict);
+            }
+            string address = addressParts.length() > 0 ? string:'join(", ", ...addressParts) : "-";
+            
+            return {
+                fullName: member.fullName,
+                nic: <string>member.nic,
+                dob: member.dob,
+                phone: (), // Household members don't have phone numbers
+                gender: member.gender,
+                civilStatus: member.civilStatus,
+                electoralDistrict: hh.electoralDistrict,
+                pollingDivision: hh.pollingDivision,
+                pollingDistrictNumber: hh.pollingDistrictNumber,
+                gramaNiladhariDivision: hh.gramaNiladhariDivision,
+                village: hh.villageStreetEstate,
+                houseNumber: hh.houseNumber,
+                address: address,
+                status: status,
+                idCopyPath: member.idCopyPath,
+                photoCopyPath: member.photoCopyPath,
+                role: member.role
+            };
+        } else {
+            // Member found but no household details
+            return {
+                fullName: member.fullName,
+                nic: <string>member.nic,
+                dob: member.dob,
+                phone: (), // Household members don't have phone numbers
+                gender: member.gender,
+                civilStatus: member.civilStatus,
+                electoralDistrict: "-",
+                pollingDivision: "-",
+                pollingDistrictNumber: "-",
+                gramaNiladhariDivision: (),
+                village: (),
+                houseNumber: (),
+                address: "-",
+                status: status,
+                idCopyPath: member.idCopyPath,
+                photoCopyPath: member.photoCopyPath,
+                role: member.role
+            };
+        }
     }
 
-    // Assemble the final detailed record
-    return {
-        fullName: fullName, nic: nic, dob: dob, gender: gender, civilStatus: civilStatus, phone: phone,
-        electoralDistrict: hhDetails.electoralDistrict, pollingDivision: hhDetails.pollingDivision, pollingDistrictNumber: hhDetails.pollingDistrictNumber,
-        villageStreetEstate: hhDetails.villageStreetEstate, houseNumber: hhDetails.houseNumber, fullAddress: (hhDetails.houseNumber ?: "") + ", " + (hhDetails.villageStreetEstate ?: ""),
-        idCopyPath: idCopyPath, imagePath: imagePath, status: review is () ? "pending" : review.status,
-        reviewedAt: review?.reviewedAt, comments: review?.comments
-    };
+    // 3. If NIC not found in either table, return error
+    return error("Registration not found for NIC: " + nic);
 }
 
-
-public function reviewApplication(string nic, ReviewRequest reviewData) returns http:Ok|http:Forbidden|error {
-    var person = findPersonByNic(nic);
-    if person is error { 
-        return error("Cannot review: Person not found for NIC: " + nic); 
-    }
-
-    string chiefId = (person is store:ChiefOccupant) ? person.id : person.chiefOccupantId;
-
-    // Correctly query for the household details
-    sql:ParameterizedQuery hhWhereClause = `chief_occupant_id = ${chiefId}`;
-    stream<store:HouseholdDetails, persist:Error?> hhStream = dbClient->/householddetails(whereClause = hhWhereClause);
-
-    var hhDetailsResult = hhStream.next();
-    store:HouseholdDetails hhDetails;
-
-    if hhDetailsResult is () {
-        return error("Cannot review: Household details not found for NIC: " + nic);
-    } else if hhDetailsResult is error {
-        return hhDetailsResult;
-    } else {
-        // Safely access the value after the type check
-        hhDetails = hhDetailsResult.value;
-    }
-    
-    // Create the review record for insertion
-    string memberid = common:generateId();
-    store:RegistrationReviewInsert reviewInsert = {
-        id: memberid,
-        memberNic: nic,
-        reviewedBy: "grama_niladhari_user_id", // Placeholder
-        status: reviewData.status,
-        comments: reviewData.comments,
-        reviewedAt: time:utcNow()
-    };
-    // The .post method expects an array of records
-    _ = check dbClient->/registrationreviews.post([reviewInsert]);
-
-    // If approved, create a new record in the Voter table
-    if reviewData.status == "approved" {
-        // Correctly convert time:Utc to time:Date
-        time:Utc now = time:utcNow();
-        time:Civil civilTime = time:utcToCivil(now);
-        time:Date registrationDate = {year: civilTime.year, month: civilTime.month, day: civilTime.day};
-        
-        string voterId = common:generateId();
-        store:VoterInsert voterInsert = {
-            id: voterId,
-            nationalId: nic,
-            name: person.fullName,
-            password: person.passwordHash,
-            district: hhDetails.electoralDistrict,
-            pollingStation: hhDetails.pollingDivision,
-            registrationDate: registrationDate,
-            status: "active"
+// Function to approve registration
+public function approveRegistration(string nic) returns string|error {
+    // Start transaction to ensure data consistency
+    transaction {
+        // 1. Insert/Update RegistrationReview table
+        store:RegistrationReview reviewRecord = {
+            id: uuid:createType1AsString(),
+            memberNic: nic,
+            status: "approved",
+            reason: (),
+            reviewedAt: time:utcNow()
         };
-        _ = check dbClient->/voters.post([voterInsert]);
-        log:printInfo("Successfully created voter for NIC: " + nic);
+        
+        // Check if review already exists
+        stream<store:RegistrationReview, persist:Error?> existingReviewStream = dbClient->/registrationreviews;
+        store:RegistrationReview[] existingReviews = check from store:RegistrationReview review in existingReviewStream
+            where review.memberNic == nic
+            select review;
+        
+        if existingReviews.length() > 0 {
+            // Update existing record
+            _ = check dbClient->/registrationreviews/[existingReviews[0].id].put({
+                memberNic: nic,
+                status: "approved",
+                reason: (),
+                reviewedAt: time:utcNow()
+            });
+        } else {
+            // Insert new record
+            _ = check dbClient->/registrationreviews.post([reviewRecord]);
+        }
+
+// 2. Get user details to add to Voter table
+        RegistrationDetail userDetail = check getRegistrationDetailByNic(nic);
+        
+        // 3. Get password from ChiefOccupant or HouseholdMembers table
+        string userPassword = "";
+        
+        // First try to find in Chief Occupants
+        stream<store:ChiefOccupant, persist:Error?> chiefStream = dbClient->/chiefoccupants;
+        store:ChiefOccupant[] matchedChief = check from store:ChiefOccupant co in chiefStream 
+            where co.nic == nic && co.role == "chief_occupant"
+            select co;
+
+        if matchedChief.length() > 0 {
+            userPassword = matchedChief[0].passwordHash;
+        } else {
+            // If not found in chiefs, try household members
+            stream<store:HouseholdMembers, persist:Error?> memberStream = dbClient->/householdmembers;
+            store:HouseholdMembers[] matchedMembers = check from store:HouseholdMembers hm in memberStream 
+                where hm.nic == nic && hm.role == "household_member"
+                select hm;
+
+            if matchedMembers.length() > 0 {
+                userPassword = matchedMembers[0].passwordHash;
+            } else {
+                check commit;
+                return error("User not found for NIC: " + nic);
+            }
+        }
+        
+        // 4. Add to Voter table with the retrieved password
+        store:Voter voterRecord = {
+            id: uuid:createType1AsString(),
+            nationalId: nic,
+            name: userDetail.fullName,
+            password: userPassword, // Now using the actual password from the user's record
+            district: userDetail.electoralDistrict,
+            pollingStation: userDetail.pollingDivision,
+            registrationDate: time:utcToCivil(time:utcNow()),
+            status: "Active"
+        };
+        
+        // Check if voter already exists
+        stream<store:Voter, persist:Error?> existingVoterStream = dbClient->/voters;
+        store:Voter[] existingVoters = check from store:Voter voter in existingVoterStream
+            where voter.nationalId == nic
+            select voter;
+        
+        if existingVoters.length() == 0 {
+            _ = check dbClient->/voters.post([voterRecord]);
+        }
+
+        // 5. Update role in ChiefOccupant or HouseholdMembers table
+        // Try ChiefOccupant first
+        stream<store:ChiefOccupant, persist:Error?> chiefStreamForUpdate = dbClient->/chiefoccupants;
+        store:ChiefOccupant[] matchedChiefsForUpdate = check from store:ChiefOccupant co in chiefStreamForUpdate 
+            where co.nic == nic && co.role == "chief_occupant"
+            select co;
+
+        if matchedChiefsForUpdate.length() > 0 {
+            // Update ChiefOccupant role
+            store:ChiefOccupant chief = matchedChiefsForUpdate[0];
+            _ = check dbClient->/chiefoccupants/[chief.id].put({
+                fullName: chief.fullName,
+                nic: chief.nic,
+                phoneNumber: chief.phoneNumber,
+                dob: chief.dob,
+                gender: chief.gender,
+                civilStatus: chief.civilStatus,
+                passwordHash: chief.passwordHash,
+                email: chief.email,
+                idCopyPath: chief.idCopyPath,
+                photoCopyPath: chief.photoCopyPath,
+                role: "verified_chief_occupant"
+            });
+        } else {
+           // Try HouseholdMembers
+            stream<store:HouseholdMembers, persist:Error?> memberStreamForUpdate = dbClient->/householdmembers;
+            store:HouseholdMembers[] matchedMembersForUpdate = check from store:HouseholdMembers hm in memberStreamForUpdate 
+                where hm.nic == nic && hm.role == "household_member"
+                select hm;
+
+            if matchedMembersForUpdate.length() > 0 {
+                // Update HouseholdMember role
+                store:HouseholdMembers member = matchedMembersForUpdate[0];
+                _ = check dbClient->/householdmembers/[member.id].put({
+                    chiefOccupantId: member.chiefOccupantId,
+                    fullName: member.fullName,
+                    nic: member.nic,
+                    dob: member.dob,
+                    gender: member.gender,
+                    civilStatus: member.civilStatus,
+                    relationshipWithChiefOccupant: member.relationshipWithChiefOccupant,
+                    idCopyPath: member.idCopyPath,
+                    photoCopyPath: member.photoCopyPath,
+                    approvedByChief: member.approvedByChief,
+                    passwordHash: member.passwordHash,
+                    passwordchanged: member.passwordchanged,
+                    role: "verified_household_member"
+                });
+            } else {
+                return error("User not found for NIC: " + nic);
+            }
+        }
+        return "Registration approved successfully";
+    } on fail error e {
+        return error("Failed to approve registration: " + e.message());
     }
-    
-    return http:OK;
 }
 
-function findPersonByNic(string nic) returns store:ChiefOccupant|store:HouseholdMembers|error {
-    // Construct and execute the query for ChiefOccupant
-    sql:ParameterizedQuery chiefWhereClause = `nic = ${nic}`;
-    stream<store:ChiefOccupant, persist:Error?> chiefStream = dbClient->/chiefoccupants(whereClause = chiefWhereClause);
-    
-    var chiefResult = chiefStream.next();
-    if chiefResult is record {| store:ChiefOccupant value; |} {
-        return chiefResult.value;
-    } else if chiefResult is error {
-        // Log the error or handle it as needed before proceeding
-        log:printError("Error when querying ChiefOccupant by NIC", chiefResult);
+// Function to reject registration
+// verification.bal
+public function rejectRegistration(string nic, string reason) returns string|error {
+    // First verify the user exists before starting transaction
+    RegistrationDetail|error userDetailResult = getRegistrationDetailByNic(nic);
+    if userDetailResult is error {
+        return error("User not found for NIC: " + nic);
     }
-
-    // If not found, construct and execute the query for HouseholdMembers
-    sql:ParameterizedQuery memberWhereClause = `nic = ${nic}`;
-    stream<store:HouseholdMembers, persist:Error?> memberStream = dbClient->/householdmembers(whereClause = memberWhereClause);
     
-    var memberResult = memberStream.next();
-    if memberResult is record {| store:HouseholdMembers value; |} {
-        return memberResult.value;
-    } else if memberResult is error {
-        // Log the error or handle it as needed
-        log:printError("Error when querying HouseholdMembers by NIC", memberResult);
+    // Start transaction to ensure data consistency
+    transaction {
+        do {
+            // Check if review already exists
+            stream<store:RegistrationReview, persist:Error?> existingReviewStream = dbClient->/registrationreviews;
+            store:RegistrationReview[] existingReviews = check from store:RegistrationReview review in existingReviewStream
+                where review.memberNic == nic
+                select review;
+            
+            if existingReviews.length() > 0 {
+                // Update existing record
+                store:RegistrationReviewUpdate updateRecord = {
+                    memberNic: nic,
+                    status: "rejected",
+                    reason: reason,
+                    reviewedAt: time:utcNow()
+                };
+                _ = check dbClient->/registrationreviews/[existingReviews[0].id].put(updateRecord);
+            } else {
+                // Insert new record
+                store:RegistrationReview reviewRecord = {
+                    id: uuid:createType1AsString(),
+                    memberNic: nic,
+                    status: "rejected",
+                    reason: reason,
+                    reviewedAt: time:utcNow()
+                };
+                _ = check dbClient->/registrationreviews.post([reviewRecord]);
+            }
+            
+            // Commit the transaction
+            check commit;
+            return "Registration rejected successfully";
+            
+        } on fail error e {
+            // Rollback will happen automatically
+            return error("Failed to reject registration: " + e.message());
+        }
     }
-
-    // If not found in either table after checking both
-    return error("Person with NIC " + nic + " not found in either table.");
 }
+
 

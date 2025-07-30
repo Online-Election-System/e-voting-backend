@@ -1,11 +1,8 @@
-import ballerina/time;
 
 // This file defines custom data structures (view models) for the registration service API.
 // These records shape the data sent to and received from the frontend.
 
-// Represents a single application row in the main registration table.
-
-
+// Represents a single application row in the main registration table. 
 public type GramaNiladhariProfile record {|
     string fullName;
     string nic;
@@ -31,43 +28,32 @@ public type RegistrationApplication record {|
     string dob;
     string? phone;
     string address;
-    string? idCopyPath;
-    string? imagePath;
     string status;
-    string submittedDate; // Corresponds to the 'Submitted' column in the UI
 |};
 
 // Represents the complete detailed view of a single application for the details page.
-public type RegistrationDetails record {|
-    // Personal Information
+public type RegistrationDetail record {|
     string fullName;
     string nic;
     string dob;
+    string? phone;
     string gender;
     string civilStatus;
-    string? phone;
-    // Electoral Information
     string electoralDistrict;
     string pollingDivision;
     string pollingDistrictNumber;
-    // Address Information
-    string? villageStreetEstate;
+    string? gramaNiladhariDivision;
+    string? village;
     string? houseNumber;
-    string fullAddress;
-    // Document Paths
-    string? idCopyPath;
-    string? imagePath;
-    // Application Status Details
+    string address;
     string status;
-    time:Utc? reviewedAt;
-    string? comments;
+    string? idCopyPath;
+    string? photoCopyPath;
+    string role;
 |};
 
 // Represents the JSON payload for the approve/reject POST request.
-public type ReviewRequest record {|
-    "approved"|"rejected" status;
-    string? comments;
-|};
+
 
 // Represents the data structure for the dashboard status cards.
 public type StatusCounts record {|
@@ -76,3 +62,8 @@ public type StatusCounts record {|
     int rejected;
     int total;
 |};
+
+// Define the rejection request payload structure
+public type RejectionRequest record {
+    string reason;  // required field for rejection reason
+};

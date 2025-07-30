@@ -49,7 +49,7 @@ public type ChiefOccupant record {|
     string passwordHash;
     string email;
     string? idCopyPath;
-    string? imagePath;
+    string? photoCopyPath;
     string role;
 |};
 
@@ -64,7 +64,7 @@ public type ChiefOccupantOptionalized record {|
     string passwordHash?;
     string email?;
     string? idCopyPath?;
-    string? imagePath?;
+    string? photoCopyPath?;
     string role?;
 |};
 
@@ -82,7 +82,7 @@ public type ChiefOccupantUpdate record {|
     string passwordHash?;
     string email?;
     string? idCopyPath?;
-    string? imagePath?;
+    string? photoCopyPath?;
     string role?;
 |};
 
@@ -135,7 +135,7 @@ public type HouseholdMembers record {|
     string civilStatus;
     string relationshipWithChiefOccupant;
     string? idCopyPath;
-    string? imagePath;
+    string? photoCopyPath;
     boolean approvedByChief;
     string passwordHash;
     boolean passwordchanged;
@@ -152,7 +152,7 @@ public type HouseholdMembersOptionalized record {|
     string civilStatus?;
     string relationshipWithChiefOccupant?;
     string? idCopyPath?;
-    string? imagePath?;
+    string? photoCopyPath?;
     boolean approvedByChief?;
     string passwordHash?;
     boolean passwordchanged?;
@@ -172,7 +172,7 @@ public type HouseholdMembersUpdate record {|
     string civilStatus?;
     string relationshipWithChiefOccupant?;
     string? idCopyPath?;
-    string? imagePath?;
+    string? photoCopyPath?;
     boolean approvedByChief?;
     string passwordHash?;
     boolean passwordchanged?;
@@ -330,54 +330,19 @@ public type EnrolmentUpdate record {|
     time:Utc enrollementDate?;
 |};
 
-public type RemovalRequest record {|
-    readonly string id;
-    string memberName;
-    string nic;
-    string requestedBy;
-    string reason;
-    string proofDocument;
-    string status;
-|};
-
-public type RemovalRequestOptionalized record {|
-    string id?;
-    string memberName?;
-    string nic?;
-    string requestedBy?;
-    string reason?;
-    string proofDocument?;
-    string status?;
-|};
-
-public type RemovalRequestTargetType typedesc<RemovalRequestOptionalized>;
-
-public type RemovalRequestInsert RemovalRequest;
-
-public type RemovalRequestUpdate record {|
-    string memberName?;
-    string nic?;
-    string requestedBy?;
-    string reason?;
-    string proofDocument?;
-    string status?;
-|};
-
 public type RegistrationReview record {|
     readonly string id;
     string memberNic;
-    string reviewedBy;
     string status;
-    string? comments;
+    string? reason;
     time:Utc? reviewedAt;
 |};
 
 public type RegistrationReviewOptionalized record {|
     string id?;
     string memberNic?;
-    string reviewedBy?;
     string status?;
-    string? comments?;
+    string? reason?;
     time:Utc? reviewedAt?;
 |};
 
@@ -387,39 +352,8 @@ public type RegistrationReviewInsert RegistrationReview;
 
 public type RegistrationReviewUpdate record {|
     string memberNic?;
-    string reviewedBy?;
     string status?;
-    string? comments?;
-    time:Utc? reviewedAt?;
-|};
-
-public type RemovalRequestReview record {|
-    readonly string id;
-    int removalRequestId;
-    string reviewedBy;
-    string status;
-    string? comments;
-    time:Utc? reviewedAt;
-|};
-
-public type RemovalRequestReviewOptionalized record {|
-    string id?;
-    int removalRequestId?;
-    string reviewedBy?;
-    string status?;
-    string? comments?;
-    time:Utc? reviewedAt?;
-|};
-
-public type RemovalRequestReviewTargetType typedesc<RemovalRequestReviewOptionalized>;
-
-public type RemovalRequestReviewInsert RemovalRequestReview;
-
-public type RemovalRequestReviewUpdate record {|
-    int removalRequestId?;
-    string reviewedBy?;
-    string status?;
-    string? comments?;
+    string? reason?;
     time:Utc? reviewedAt?;
 |};
 
@@ -553,5 +487,119 @@ public type VoterUpdate record {|
     string pollingStation?;
     time:Date registrationDate?;
     string status?;
+|};
+
+public type AddMemberRequest record {|
+    readonly string addRequestId;
+    string chiefOccupantId;
+    string nicNumber;
+    string fullName;
+    string dateOfBirth;
+    string gender;
+    string civilStatus;
+    string relationshipToChief;
+    string chiefOccupantApproval;
+    string requestStatus;
+    string? reason;
+    string? nicOrBirthCertificatePath;
+|};
+
+public type AddMemberRequestOptionalized record {|
+    string addRequestId?;
+    string chiefOccupantId?;
+    string nicNumber?;
+    string fullName?;
+    string dateOfBirth?;
+    string gender?;
+    string civilStatus?;
+    string relationshipToChief?;
+    string chiefOccupantApproval?;
+    string requestStatus?;
+    string? reason?;
+    string? nicOrBirthCertificatePath?;
+|};
+
+public type AddMemberRequestTargetType typedesc<AddMemberRequestOptionalized>;
+
+public type AddMemberRequestInsert AddMemberRequest;
+
+public type AddMemberRequestUpdate record {|
+    string chiefOccupantId?;
+    string nicNumber?;
+    string fullName?;
+    string dateOfBirth?;
+    string gender?;
+    string civilStatus?;
+    string relationshipToChief?;
+    string chiefOccupantApproval?;
+    string requestStatus?;
+    string? reason?;
+    string? nicOrBirthCertificatePath?;
+|};
+
+public type UpdateMemberRequest record {|
+    readonly string updateRequestId;
+    string chiefOccupantId;
+    string? householdMemberId;
+    string? newFullName;
+    string? newResidentArea;
+    string requestStatus;
+    string? reason;
+    string? relevantCertificatePath;
+|};
+
+public type UpdateMemberRequestOptionalized record {|
+    string updateRequestId?;
+    string chiefOccupantId?;
+    string? householdMemberId?;
+    string? newFullName?;
+    string? newResidentArea?;
+    string requestStatus?;
+    string? reason?;
+    string? relevantCertificatePath?;
+|};
+
+public type UpdateMemberRequestTargetType typedesc<UpdateMemberRequestOptionalized>;
+
+public type UpdateMemberRequestInsert UpdateMemberRequest;
+
+public type UpdateMemberRequestUpdate record {|
+    string chiefOccupantId?;
+    string? householdMemberId?;
+    string? newFullName?;
+    string? newResidentArea?;
+    string requestStatus?;
+    string? reason?;
+    string? relevantCertificatePath?;
+|};
+
+public type DeleteMemberRequest record {|
+    readonly string deleteRequestId;
+    string chiefOccupantId;
+    string? householdMemberId;
+    string requestStatus;
+    string? reason;
+    string? requiredDocumentPath;
+|};
+
+public type DeleteMemberRequestOptionalized record {|
+    string deleteRequestId?;
+    string chiefOccupantId?;
+    string? householdMemberId?;
+    string requestStatus?;
+    string? reason?;
+    string? requiredDocumentPath?;
+|};
+
+public type DeleteMemberRequestTargetType typedesc<DeleteMemberRequestOptionalized>;
+
+public type DeleteMemberRequestInsert DeleteMemberRequest;
+
+public type DeleteMemberRequestUpdate record {|
+    string chiefOccupantId?;
+    string? householdMemberId?;
+    string requestStatus?;
+    string? reason?;
+    string? requiredDocumentPath?;
 |};
 

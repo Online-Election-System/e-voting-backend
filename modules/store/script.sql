@@ -11,20 +11,36 @@ DROP TABLE IF EXISTS "Election";
 DROP TABLE IF EXISTS "Notification";
 DROP TABLE IF EXISTS "HouseholdMembers";
 DROP TABLE IF EXISTS "AdminUsers";
-DROP TABLE IF EXISTS "RemovalRequest";
+DROP TABLE IF EXISTS "DeleteMemberRequest";
 DROP TABLE IF EXISTS "GramaNiladhari";
-DROP TABLE IF EXISTS "RemovalRequestReview";
+DROP TABLE IF EXISTS "UpdateMemberRequest";
 DROP TABLE IF EXISTS "Voter";
 DROP TABLE IF EXISTS "ChiefOccupant";
 DROP TABLE IF EXISTS "HouseholdDetails";
 DROP TABLE IF EXISTS "RegistrationReview";
+DROP TABLE IF EXISTS "AddMemberRequest";
+
+CREATE TABLE "AddMemberRequest" (
+	"add_request_id" VARCHAR(191) NOT NULL,
+	"chief_occupant_id" VARCHAR(191) NOT NULL,
+	"nic_number" VARCHAR(191) NOT NULL,
+	"full_name" VARCHAR(191) NOT NULL,
+	"date_of_birth" VARCHAR(191) NOT NULL,
+	"gender" VARCHAR(191) NOT NULL,
+	"civil_status" VARCHAR(191) NOT NULL,
+	"relationship_to_chief" VARCHAR(191) NOT NULL,
+	"chief_occupant_approval" VARCHAR(191) NOT NULL,
+	"request_status" VARCHAR(191) NOT NULL,
+	"reason" VARCHAR(191),
+	"nic_or_birth_certificate_path" VARCHAR(191),
+	PRIMARY KEY("add_request_id")
+);
 
 CREATE TABLE "RegistrationReview" (
 	"id" VARCHAR(191) NOT NULL,
 	"member_nic" VARCHAR(191) NOT NULL,
-	"reviewed_by" VARCHAR(191) NOT NULL,
 	"status" VARCHAR(191) NOT NULL,
-	"comments" VARCHAR(191),
+	"reason" VARCHAR(191),
 	"reviewed_at" TIMESTAMP,
 	PRIMARY KEY("id")
 );
@@ -53,7 +69,7 @@ CREATE TABLE "ChiefOccupant" (
 	"password_hash" VARCHAR(191) NOT NULL,
 	"email" VARCHAR(191) NOT NULL,
 	"id_copy_path" VARCHAR(191),
-	"image_path" VARCHAR(191),
+	"photo_copy_path" VARCHAR(191),
 	"role" VARCHAR(191) NOT NULL,
 	PRIMARY KEY("id")
 );
@@ -70,14 +86,16 @@ CREATE TABLE "Voter" (
 	PRIMARY KEY("id")
 );
 
-CREATE TABLE "RemovalRequestReview" (
-	"id" VARCHAR(191) NOT NULL,
-	"removal_request_id" INT NOT NULL,
-	"reviewed_by" VARCHAR(191) NOT NULL,
-	"status" VARCHAR(191) NOT NULL,
-	"comments" VARCHAR(191),
-	"reviewed_at" TIMESTAMP,
-	PRIMARY KEY("id")
+CREATE TABLE "UpdateMemberRequest" (
+	"update_request_id" VARCHAR(191) NOT NULL,
+	"chief_occupant_id" VARCHAR(191) NOT NULL,
+	"household_member_id" VARCHAR(191),
+	"new_full_name" VARCHAR(191),
+	"new_resident_area" VARCHAR(191),
+	"request_status" VARCHAR(191) NOT NULL,
+	"reason" VARCHAR(191),
+	"relevant_certificate_path" VARCHAR(191),
+	PRIMARY KEY("update_request_id")
 );
 
 CREATE TABLE "GramaNiladhari" (
@@ -101,15 +119,14 @@ CREATE TABLE "GramaNiladhari" (
 	PRIMARY KEY("id")
 );
 
-CREATE TABLE "RemovalRequest" (
-	"id" VARCHAR(191) NOT NULL,
-	"member_name" VARCHAR(191) NOT NULL,
-	"nic" VARCHAR(191) NOT NULL,
-	"requested_by" VARCHAR(191) NOT NULL,
-	"reason" VARCHAR(191) NOT NULL,
-	"proof_document" VARCHAR(191) NOT NULL,
-	"status" VARCHAR(191) NOT NULL,
-	PRIMARY KEY("id")
+CREATE TABLE "DeleteMemberRequest" (
+	"delete_request_id" VARCHAR(191) NOT NULL,
+	"chief_occupant_id" VARCHAR(191) NOT NULL,
+	"household_member_id" VARCHAR(191),
+	"request_status" VARCHAR(191) NOT NULL,
+	"reason" VARCHAR(191),
+	"required_document_path" VARCHAR(191),
+	PRIMARY KEY("delete_request_id")
 );
 
 CREATE TABLE "AdminUsers" (
@@ -133,7 +150,7 @@ CREATE TABLE "HouseholdMembers" (
 	"civil_status" VARCHAR(191) NOT NULL,
 	"relationship_with_chief_occupant" VARCHAR(191) NOT NULL,
 	"id_copy_path" VARCHAR(191),
-	"image_path" VARCHAR(191),
+	"photo_copy_path" VARCHAR(191),
 	"approved_by_chief" BOOLEAN NOT NULL,
 	"Hased_password" VARCHAR(191) NOT NULL,
 	"passwordchanged" BOOLEAN NOT NULL,
