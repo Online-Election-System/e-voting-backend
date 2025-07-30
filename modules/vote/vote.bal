@@ -8,6 +8,7 @@ import ballerina/http;
 import ballerina/persist;
 import ballerina/crypto;
 import ballerina/io;
+import ballerina/log;
 
 final store:Client dbVote = check new ();
 
@@ -18,36 +19,29 @@ public type VoterLoginRequest record {|
 |};
 
 // Enhanced authentication function for both user types
-public function authenticateVoter(string identifier, string password) returns auth:LoginResponse|http:Unauthorized|error {
-    // Create a LoginRequest object for the postLogin function
-    auth:LoginRequest loginReq = {
-        nic: identifier,
-        password: password
-    };
+public function authenticateVoter(string identifier, string password) returns AuthResult|http:Unauthorized|error {
+    // Use the authentication-only function instead of postLogin
+    AuthResult|error authResult = authenticateUserCredentials(identifier, password);
     
-    // Call the postLogin function from auth module
-    auth:LoginResponse|http:Unauthorized|error result = auth:postLogin(loginReq);
-    
-    if result is auth:LoginResponse {
-        // Check if user is eligible to vote (only chief_occupant and household_member)
-        if result.userType == "chief_occupant" || result.userType == "household_member" {
-            // Modify the message to indicate this is for voting
-            result.message = "Authentication successful - Ready to vote";
-            io:println("Voter authenticated successfully: ", result.fullName, " (", result.userType, ")");
-            return result;
-        } else {
-            // Block admin/government users from voting
-            io:println("User type not eligible for voting: ", result.userType);
-            return http:UNAUTHORIZED;
-        }
-    }
-    
-    // If authentication failed or returned error, pass it through
-    if result is http:Unauthorized {
+    if authResult is error {
         io:println("Voter authentication failed for identifier: ", identifier);
+        io:println("Error: ", authResult.message());
+        return http:UNAUTHORIZED;
     }
     
-    return result;
+    // Check if user is eligible to vote (only chief_occupant and household_member)
+    if authResult.userType == "chief_occupant" || 
+       authResult.userType == "verified_chief_occupant" ||
+       authResult.userType == "household_member" || 
+       authResult.userType == "verified_household_member" {
+        
+        io:println("Voter authenticated successfully: ", authResult.fullName, " (", authResult.userType, ")");
+        return authResult;
+    } else {
+        // Block admin/government users from voting
+        io:println("User type not eligible for voting: ", authResult.userType);
+        return http:UNAUTHORIZED;
+    }
 }
 
 // Get voter by ID (unified for both tables)
@@ -65,6 +59,7 @@ public function getVoterById(string voterId) returns json|persist:Error {
             "dob": chief.dob,
             "gender": chief.gender,
             "phoneNumber": chief.phoneNumber,
+            "photoCopyPath": chief.photoCopyPath,
             "civilStatus": chief.civilStatus
         };
     }
@@ -81,6 +76,7 @@ public function getVoterById(string voterId) returns json|persist:Error {
             "chiefOccupantId": member.chiefOccupantId,
             "dob": member.dob,
             "gender": member.gender,
+            "photoCopyPath": member.photoCopyPath,
             "civilStatus": member.civilStatus
         };
     }
@@ -552,4 +548,114 @@ public function getCandidatesForVoter(string voterId) returns store:Candidate[]|
     }
 
     return allCandidates;
+}
+
+public function authenticateUserCredentials(string identifier, string password) returns AuthResult|error {
+    log:printInfo("=== AUTHENTICATION ONLY - START ===");
+    log:printInfo("Authenticating NIC: " + identifier);
+
+    // ChiefOccupant authentication
+    stream<store:ChiefOccupant, persist:Error?> chiefStream = dbVote->/chiefoccupants.get();
+    
+    check from store:ChiefOccupant chief in chiefStream
+        do {
+            if chief.nic == identifier {
+                log:printInfo("Chief found: " + chief.fullName);
+                
+                boolean|error isVerified = auth:verifyPassword(password, chief.passwordHash);
+                if isVerified is error {
+                    log:printError("Password verification error: " + isVerified.message());
+                    check chiefStream.close();
+                    return error("Password verification failed");
+                }
+
+                if !isVerified {
+                    log:printInfo("Password verification failed - passwords don't match");
+                    check chiefStream.close();
+                    return error("Invalid credentials");
+                }
+
+                check chiefStream.close();
+                
+                // Return authentication result without session setup
+                return {
+                    userId: chief.id,
+                    userType: chief.role,
+                    fullName: chief.fullName,
+                    authenticated: true
+                };
+            }
+        };
+    check chiefStream.close();
+
+    // Household members authentication
+    stream<store:HouseholdMembers, persist:Error?> memberStream = dbVote->/householdmembers.get();
+    
+    check from store:HouseholdMembers member in memberStream
+        do {
+            if member.nic == identifier {
+                log:printInfo("Household member found: " + member.fullName);
+                
+                boolean|error isVerified = auth:verifyPassword(password, member.passwordHash);
+                if isVerified is error {
+                    log:printError("Password verification error: " + isVerified.message());
+                    check memberStream.close();
+                    return error("Password verification failed");
+                }
+
+                if !isVerified {
+                    log:printInfo("Password verification failed - incorrect password");
+                    check memberStream.close();
+                    return error("Invalid credentials");
+                }
+
+                check memberStream.close();
+                
+                // Return authentication result without session setup
+                return {
+                    userId: member.id,
+                    userType: member.role,
+                    fullName: member.fullName,
+                    authenticated: true
+                };
+            }
+        };
+    check memberStream.close();
+
+    // Admin users authentication (if needed for voting context)
+    stream<store:AdminUsers, persist:Error?> adminStream = dbVote->/adminusers.get();
+    
+    check from store:AdminUsers admin in adminStream
+        do {
+            if admin.username == identifier {
+                log:printInfo("Admin found: " + admin.username);
+                
+                boolean|error isVerified = auth:verifyPassword(password, admin.passwordHash);
+                if isVerified is error {
+                    log:printError("Password verification error: " + isVerified.message());
+                    check adminStream.close();
+                    return error("Password verification failed");
+                }
+
+                if !isVerified {
+                    log:printInfo("Password verification failed - passwords don't match");
+                    check adminStream.close();
+                    return error("Invalid credentials");
+                }
+
+                check adminStream.close();
+                
+                // Return authentication result without session setup
+                return {
+                    userId: admin.id,
+                    userType: admin.role,
+                    fullName: admin.username,
+                    authenticated: true
+                };
+            }
+        };
+    check adminStream.close();
+
+    log:printInfo("=== AUTHENTICATION ONLY - NO USER FOUND ===");
+    return error("User not found");
 }

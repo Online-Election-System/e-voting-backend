@@ -185,10 +185,10 @@ service /election/api/v1 on SharedListener {
 
     // Get all elections - any logged in user
     resource function get elections(http:Request request) returns election:ElectionWithCandidates[]|http:Response|error {
-        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request);
-        if authResult is http:Response {
-            return authResult;
-        }
+        // auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request);
+        // if authResult is http:Response {
+        //     return authResult;
+        // }
 
         return check election:getElections();
     }
@@ -441,6 +441,44 @@ service /candidate/api/v1 on SharedListener {
     }
 }
 service /vote/api/v1 on SharedListener {
+    // NEW: Validate voter credentials without changing session
+    resource function post voter/validate(http:Request request, vote:VoterValidationRequest validationReq)
+    returns json|http:Unauthorized|http:Response|error {
+        
+    auth:AuthOptions options = {
+        allowedRoles: [auth:POLLING_STATION]
+    };
+
+    auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
+    if authResult is http:Response {
+        return authResult;
+    }
+
+    // 🔥 Use your existing function - no duplication!
+    vote:AuthResult|http:Unauthorized|error voterAuthResult = vote:authenticateVoter(
+        validationReq.nationalId, 
+        validationReq.password
+    );
+    
+    if voterAuthResult is http:Unauthorized || voterAuthResult is error {
+        return check voterAuthResult;
+    }
+    
+    // Get complete voter profile
+    json|error completeProfile = vote:getCompleteVoterProfile(voterAuthResult.userId);
+    
+    if completeProfile is error {
+        return error("Failed to get voter profile: " + completeProfile.message());
+    }
+    
+    return {
+        "valid": true,
+        "voterProfile": completeProfile,
+        "userType": voterAuthResult.userType,
+        "message": "Voter validation successful"
+    };
+}
+
     // Cast vote endpoint
     resource function post votes/cast(http:Request request, vote:Vote newVote)
     returns http:Created|http:Forbidden|error|http:Response {
