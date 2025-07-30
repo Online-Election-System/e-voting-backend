@@ -20,7 +20,8 @@ public enum Permission {
     MANAGE_CANDIDATES = "manage_candidates",
     VOTE = "vote",
     VERIFY_USERS = "verify_users",
-    VIEW_RESULTS = "view_results"
+    VIEW_RESULTS = "view_results",
+    VIEW_AUDIT_LOGS = "view_audit_logs"
 }
 
 // Authorization options for middleware
@@ -177,12 +178,23 @@ public type ElectionCommissionInput record {|
     string passwordHash;
 |};
 
+public type PollingStationInput record {|
+    string fullName;
+    string nic;
+    string email;
+    string passwordHash;
+|};
+
 public type GovernmentOfficialRegistrationRequest record {|
     GovernmentOfficialInput official;
 |};
 
 public type ElectionCommissionRegistrationRequest record {|
     ElectionCommissionInput commission;
+|};
+
+public type PollingStationRegistrationRequest record {|
+    PollingStationInput station;
 |};
 
 // Additional types

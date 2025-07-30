@@ -57,7 +57,7 @@ public function getRegistrationApplications(string? nameOrNic, string? statusFil
             phone: chief.phoneNumber,
             address: address,
             idCopyPath: chief.idCopyPath,
-            imagePath: chief.imagePath,
+            photoCopyPath: chief.photoCopyPath,
             status: currentStatus,
             submittedDate: submitted 
         });
@@ -82,7 +82,7 @@ public function getRegistrationApplications(string? nameOrNic, string? statusFil
                 phone: (), // No phone for members
                 address: address,
                 idCopyPath: member.idCopyPath,
-                imagePath: member.imagePath,
+                photoCopyPath: member.photoCopyPath,
                 status: currentStatus,
                 submittedDate: submitted
             });
@@ -140,7 +140,7 @@ public function getRegistrationDetails(string nic) returns RegistrationDetails|h
 
     string chiefOccupantId;
     string fullName; string dob; string gender; string civilStatus;
-    string? phone; string? idCopyPath; string? imagePath;
+    string? phone; string? idCopyPath; string? photoCopyPath;
 
     if person is store:ChiefOccupant {
         chiefOccupantId = person.id;
@@ -150,7 +150,7 @@ public function getRegistrationDetails(string nic) returns RegistrationDetails|h
         civilStatus = person.civilStatus;
         phone = person.phoneNumber;
         idCopyPath = person.idCopyPath;
-        imagePath = person.imagePath;
+        photoCopyPath = person.photoCopyPath;
     } else { // It's a HouseholdMember
         chiefOccupantId = person.chiefOccupantId;
         fullName = person.fullName;
@@ -158,7 +158,7 @@ public function getRegistrationDetails(string nic) returns RegistrationDetails|h
         gender = person.gender;
         civilStatus = person.civilStatus;
         idCopyPath = person.idCopyPath;
-        imagePath = person.imagePath;
+        photoCopyPath = person.photoCopyPath;
         phone = ();
     }
     
@@ -196,7 +196,7 @@ public function getRegistrationDetails(string nic) returns RegistrationDetails|h
         fullName: fullName, nic: nic, dob: dob, gender: gender, civilStatus: civilStatus, phone: phone,
         electoralDistrict: hhDetails.electoralDistrict, pollingDivision: hhDetails.pollingDivision, pollingDistrictNumber: hhDetails.pollingDistrictNumber,
         villageStreetEstate: hhDetails.villageStreetEstate, houseNumber: hhDetails.houseNumber, fullAddress: (hhDetails.houseNumber ?: "") + ", " + (hhDetails.villageStreetEstate ?: ""),
-        idCopyPath: idCopyPath, imagePath: imagePath, status: review is () ? "pending" : review.status,
+        idCopyPath: idCopyPath, photoCopyPath: photoCopyPath, status: review is () ? "pending" : review.status,
         reviewedAt: review?.reviewedAt, comments: review?.comments
     };
 }

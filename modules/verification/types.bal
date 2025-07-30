@@ -32,7 +32,7 @@ public type RegistrationApplication record {|
     string? phone;
     string address;
     string? idCopyPath;
-    string? imagePath;
+    string? photoCopyPath;
     string status;
     string submittedDate; // Corresponds to the 'Submitted' column in the UI
 |};
@@ -56,7 +56,7 @@ public type RegistrationDetails record {|
     string fullAddress;
     // Document Paths
     string? idCopyPath;
-    string? imagePath;
+    string? photoCopyPath;
     // Application Status Details
     string status;
     time:Utc? reviewedAt;

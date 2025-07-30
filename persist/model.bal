@@ -41,7 +41,6 @@ public type Candidate record {|
 # + photoCopyPath - File Path of Image
 # + email - email of chiefoccupant
 # + role - Role of the user
-# + photoCopyPath-file path to photo
 
 
 public type ChiefOccupant record {|

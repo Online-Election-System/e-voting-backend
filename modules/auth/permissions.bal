@@ -10,7 +10,8 @@ public function getRolePermissions(UserRole role) returns Permission[] {
                 MANAGE_USERS,
                 MANAGE_CANDIDATES,
                 VERIFY_USERS,
-                VIEW_RESULTS
+                VIEW_RESULTS,
+                VIEW_AUDIT_LOGS
             ];
         }
         GOVERNMENT_OFFICIAL => {
@@ -27,7 +28,8 @@ public function getRolePermissions(UserRole role) returns Permission[] {
                 VIEW_ELECTION,
                 MANAGE_CANDIDATES,
                 VERIFY_USERS,
-                VIEW_RESULTS
+                VIEW_RESULTS,
+                VIEW_AUDIT_LOGS
             ];
         }
 
@@ -91,6 +93,7 @@ public function getRoleLevel(UserRole role) returns int {
     match role {
         ADMIN => { return 100; }
         ELECTION_COMMISSION => { return 90; }
+        POLLING_STATION => { return 85; }
         GOVERNMENT_OFFICIAL => { return 80; }
         CHIEF_OCCUPANT => { return 40; }
         HOUSEHOLD_MEMBER => { return 30; }

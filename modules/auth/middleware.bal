@@ -1,35 +1,36 @@
 import online_election.common;
 import online_election.store;
+
+import ballerina/file;
 import ballerina/http;
 import ballerina/jwt;
-import ballerina/file;
-import ballerina/time;
 import ballerina/log;
+import ballerina/time;
 
 // Extract and validate JWT token from request
 public function extractTokenFromRequest(http:Request request) returns string|AuthenticationError {
     // Try to get token from cookie first
     http:Cookie[] cookies = request.getCookies();
-    
+
     foreach http:Cookie cookie in cookies {
         if cookie.name == "AUTH_TOKEN" {
             return cookie.value;
         }
     }
-    
+
     // Fallback to Authorization header for backward compatibility (optional)
     string|http:HeaderNotFoundError authHeader = request.getHeader("Authorization");
     if authHeader is string && authHeader.startsWith("Bearer ") {
         return authHeader.substring(7);
     }
-    
+
     return error AuthenticationError("Authentication token not found in cookies or headers");
 }
 
 // Get user from database and determine role/permissions
 function getUserFromDatabase(string userId, string userType) returns AuthenticatedUser|error {
     log:printInfo("Getting user from database - userId: " + userId + ", userType: " + userType);
-    
+
     if userType == "chief_occupant" {
         store:ChiefOccupant|error chief = dbClient->/chiefoccupants/[userId].get();
         if chief is error {
@@ -38,7 +39,7 @@ function getUserFromDatabase(string userId, string userType) returns Authenticat
         }
 
         UserRole role = CHIEF_OCCUPANT;
-        
+
         return {
             id: chief.id,
             fullName: chief.fullName,
@@ -46,7 +47,7 @@ function getUserFromDatabase(string userId, string userType) returns Authenticat
             role: role,
             permissions: getRolePermissions(role)
         };
-        
+
     } else if userType == "household_member" {
         store:HouseholdMembers|error member = dbClient->/householdmembers/[userId].get();
         if member is error {
@@ -55,7 +56,7 @@ function getUserFromDatabase(string userId, string userType) returns Authenticat
         }
 
         UserRole role = HOUSEHOLD_MEMBER;
-        
+
         return {
             id: member.id,
             fullName: member.fullName,
@@ -63,7 +64,7 @@ function getUserFromDatabase(string userId, string userType) returns Authenticat
             role: role,
             permissions: getRolePermissions(role)
         };
-        
+
     } else if userType == "government_official" {
         store:AdminUsers|error admin = dbClient->/adminusers/[userId].get();
         if admin is error {
@@ -72,7 +73,7 @@ function getUserFromDatabase(string userId, string userType) returns Authenticat
         }
 
         UserRole role = GOVERNMENT_OFFICIAL;
-        
+
         return {
             id: admin.id,
             fullName: admin.username,
@@ -80,7 +81,7 @@ function getUserFromDatabase(string userId, string userType) returns Authenticat
             role: role,
             permissions: getRolePermissions(role)
         };
-        
+
     } else if userType == "election_commission" {
         store:AdminUsers|error admin = dbClient->/adminusers/[userId].get();
         if admin is error {
@@ -89,7 +90,7 @@ function getUserFromDatabase(string userId, string userType) returns Authenticat
         }
 
         UserRole role = ELECTION_COMMISSION;
-        
+
         return {
             id: admin.id,
             fullName: admin.username,
@@ -97,7 +98,24 @@ function getUserFromDatabase(string userId, string userType) returns Authenticat
             role: role,
             permissions: getRolePermissions(role)
         };
-        
+
+    } else if userType == "polling_station" {
+        store:AdminUsers|error admin = dbClient->/adminusers/[userId].get();
+        if admin is error {
+            log:printError("Polling Station user not found: " + admin.message());
+            return error("Polling Station user not found");
+        }
+
+        UserRole role = POLLING_STATION;
+
+        return {
+            id: admin.id,
+            fullName: admin.username,
+            userType: "polling_station",
+            role: role,
+            permissions: getRolePermissions(role)
+        };
+
     } else if userType == "admin" {
         store:AdminUsers|error admin = dbClient->/adminusers/[userId].get();
         if admin is error {
@@ -106,7 +124,7 @@ function getUserFromDatabase(string userId, string userType) returns Authenticat
         }
 
         UserRole role = ADMIN;
-        
+
         return {
             id: admin.id,
             fullName: admin.username,
@@ -168,7 +186,7 @@ function createErrorResponse(int statusCode, string message) returns http:Respon
 public function generateJwtWithId(string userId, UserRole role) returns string|error {
     log:printInfo("=== JWT GENERATION START ===");
     log:printInfo("Generating JWT for userId: " + userId + ", role: " + role.toString());
-    
+
     int seconds = time:utcNow()[0];
     int expiryTime = seconds + 3600; // 1 hour
     string jti = common:generateId();
@@ -176,12 +194,27 @@ public function generateJwtWithId(string userId, UserRole role) returns string|e
     // Map role to userType string for consistency
     string userType;
     match role {
-        ADMIN => { userType = "admin"; }
-        CHIEF_OCCUPANT => { userType = "chief_occupant"; }
-        HOUSEHOLD_MEMBER => { userType = "household_member"; }
-        GOVERNMENT_OFFICIAL => { userType = "government_official"; }
-        ELECTION_COMMISSION => { userType = "election_commission"; }
-        _ => { userType = "unknown"; }
+        ADMIN => {
+            userType = "admin";
+        }
+        CHIEF_OCCUPANT => {
+            userType = "chief_occupant";
+        }
+        HOUSEHOLD_MEMBER => {
+            userType = "household_member";
+        }
+        GOVERNMENT_OFFICIAL => {
+            userType = "government_official";
+        }
+        ELECTION_COMMISSION => {
+            userType = "election_commission";
+        }
+        POLLING_STATION => {
+            userType = "polling_station";
+        }
+        _ => {
+            userType = "unknown";
+        }
     }
 
     jwt:IssuerConfig issuerConfig = {
@@ -200,17 +233,17 @@ public function generateJwtWithId(string userId, UserRole role) returns string|e
         signatureConfig: {
             config: {
                 keyFile: "./resources/private_key.pem",
-                keyPassword: ""  // Empty for unencrypted key
+                keyPassword: "" // Empty for unencrypted key
             }
         }
     };
-    
+
     string|jwt:Error tokenResult = jwt:issue(issuerConfig);
     if tokenResult is jwt:Error {
         log:printError("JWT generation failed: " + tokenResult.message());
         return error("JWT generation failed: " + tokenResult.message());
     }
-    
+
     log:printInfo("JWT generated successfully");
     log:printInfo("=== JWT GENERATION END ===");
     return tokenResult;
