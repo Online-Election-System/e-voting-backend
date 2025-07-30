@@ -59,6 +59,7 @@ public function getVoterById(string voterId) returns json|persist:Error {
             "dob": chief.dob,
             "gender": chief.gender,
             "phoneNumber": chief.phoneNumber,
+            "photoCopyPath": chief.photoCopyPath,
             "civilStatus": chief.civilStatus
         };
     }
@@ -75,6 +76,7 @@ public function getVoterById(string voterId) returns json|persist:Error {
             "chiefOccupantId": member.chiefOccupantId,
             "dob": member.dob,
             "gender": member.gender,
+            "photoCopyPath": member.photoCopyPath,
             "civilStatus": member.civilStatus
         };
     }
