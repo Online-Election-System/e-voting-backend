@@ -262,5 +262,3 @@ CREATE TABLE "Candidate" (
 	"is_active" BOOLEAN NOT NULL,
 	PRIMARY KEY("candidate_id")
 );
-
-
