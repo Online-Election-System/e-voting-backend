@@ -41,7 +41,6 @@ public type Candidate record {|
 # + photoCopyPath - File Path of Image
 # + email - email of chiefoccupant
 # + role - Role of the user
-# + photoCopyPath-file path to photo
 
 
 public type ChiefOccupant record {|
@@ -460,53 +459,4 @@ public type CandidateDistrictVoteSummary record {|
     int trincomalee;
     int vavuniya;
     int totals;
-|};
-
-# Comprehensive Audit Log Table
-#
-# + id - Unique audit log entry ID (Primary Key)
-# + timestamp - When the action occurred
-# + userId - ID of the user who performed the action
-# + userRole - Role of the user (ELECTION_COMMISSION, VOTER, etc.)
-# + sessionId - Session identifier for tracking user sessions
-# + action - Type of action performed (CREATE, UPDATE, DELETE, LOGIN, etc.)
-# + resourceType - Resource type affected (ELECTION, CANDIDATE, VOTE, etc.)
-# + resourceId - ID of the specific resource affected
-# + oldValues - JSON string of values before the change
-# + newValues - JSON string of values after the change
-# + ipAddress - IP address of the user
-# + userAgent - Browser/client information
-# + result - SUCCESS or FAILURE
-# + errorMessage - Error details if action failed
-# + severity - LOW, MEDIUM, HIGH, CRITICAL
-# + additionalContext - Extra context information as JSON
-
-public type AuditLog record {|
-    readonly string id;
-    time:Utc timestamp;
-    @sql:Name {value: "user_id"}
-    string userId;
-    @sql:Name {value: "user_role"}
-    string userRole;
-    @sql:Name {value: "session_id"}
-    string? sessionId;
-    string action;
-    @sql:Name {value: "resource_type"}
-    string resourceType;
-    @sql:Name {value: "resource_id"}
-    string? resourceId;
-    @sql:Name {value: "old_values"}
-    string? oldValues;
-    @sql:Name {value: "new_values"}
-    string? newValues;
-    @sql:Name {value: "ip_address"}
-    string? ipAddress;
-    @sql:Name {value: "user_agent"}
-    string? userAgent;
-    string result;
-    @sql:Name {value: "error_message"}
-    string? errorMessage;
-    string severity;
-    @sql:Name {value: "additional_context"}
-    string? additionalContext;
 |};
