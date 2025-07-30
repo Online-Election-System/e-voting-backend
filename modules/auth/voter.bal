@@ -207,6 +207,7 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
         householdId: householdId
     };
 }
+
 public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unauthorized|error {
     log:printInfo("=== LOGIN DEBUG START ===");
     log:printInfo("Attempting login for NIC: " + loginReq.nic);
@@ -219,55 +220,34 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
     int chiefCount = 0;
 
     check from store:ChiefOccupant chief in chiefStream
-        do {
+    do {
+        chiefFound = true;
+        io:println("Chief found: ", chief.fullName);
+        io:println("Chief role: ", chief.role);
+        chiefCount += 1;
+        log:printInfo("Checking chief #" + chiefCount.toString() + ": " + chief.nic + " vs " + loginReq.nic);
+
+        if chief.nic == loginReq.nic {
             chiefFound = true;
-            io:println("Chief found: ", chief.fullName);
-            io:println("Chief role: ", chief.role); // ADDED: Log the role
-            chiefCount += 1;
-            log:printInfo("Checking chief #" + chiefCount.toString() + ": " + chief.nic + " vs " + loginReq.nic);
+            log:printInfo("Chief found: " + chief.fullName);
+            log:printInfo("Stored password hash: " + chief.passwordHash);
 
-            if chief.nic == loginReq.nic {
-                chiefFound = true;
-                log:printInfo("Chief found: " + chief.fullName);
-                log:printInfo("Stored password hash: " + chief.passwordHash);
+            boolean|error isVerified = verifyPassword(loginReq.password, chief.passwordHash);
+            log:printInfo("Password verification result: " + (check isVerified).toString());
 
-                boolean|error isVerified = verifyPassword(loginReq.password, chief.passwordHash);
-                log:printInfo("Password verification result: " + (check isVerified).toString());
-
-                if isVerified is error {
-                    log:printError("Password verification error: " + isVerified.message());
-                    check chiefStream.close();
-                    return http:UNAUTHORIZED;
-                }
-
-                if !isVerified {
-                    log:printInfo("Password verification failed - passwords don't match");
-                    check chiefStream.close();
-                    return http:UNAUTHORIZED;
-                }
-
-                string|error token = generateJwtWithId(chief.id.toString(), CHIEF_OCCUPANT);
-                if token is error {
-                    log:printError("JWT generation failed: " + token.message());
-                    check chiefStream.close();
-                    return http:UNAUTHORIZED;
-                }
-
+            if isVerified is error {
+                log:printError("Password verification error: " + isVerified.message());
                 check chiefStream.close();
-                log:printInfo("Chief login successful");
-
-                // Response with cookie
-                LoginResponse response = {
-                    userId: chief.id,
-                    userType: "chief_occupant",
-                    fullName: chief.fullName,
-                    message: "Login successful"
-                };
-
-                return response;
+                return http:UNAUTHORIZED;
             }
 
-            // UPDATED: Check role and only allow verified chief occupants or regular chief occupants
+            if !isVerified {
+                log:printInfo("Password verification failed - passwords don't match");
+                check chiefStream.close();
+                return http:UNAUTHORIZED;
+            }
+
+            // MOVED: Check role and only allow verified chief occupants or regular chief occupants
             string userRole;
             UserRole jwtRole;
             
@@ -280,7 +260,7 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
                 jwtRole = CHIEF_OCCUPANT;
                 io:println("Regular chief occupant login approved");
             } else {
-                // ADDED: Reject login if role is not recognized
+                // Reject login if role is not recognized
                 io:println("Unrecognized chief occupant role: ", chief.role);
                 check chiefStream.close();
                 return http:UNAUTHORIZED;
@@ -300,16 +280,19 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
             io:println("Returning successful response");
 
             check chiefStream.close();
+            
             // Response with cookie
-                LoginResponse response = {
-                    userId: chief.id,
-                    userType: userRole,
-                    fullName: chief.fullName,
-                    message: "Login successful"
-                };
+            LoginResponse response = {
+                userId: chief.id,
+                userType: userRole,
+                fullName: chief.fullName,
+                message: "Login successful"
+            };
 
-                return response;
-        };
+            return response;
+        }
+        // If NIC doesn't match, continue to next iteration without processing
+    };
     check chiefStream.close();
 
     log:printInfo("Total chiefs checked: " + chiefCount.toString());
@@ -324,28 +307,32 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
     boolean memberFound = false;
 
     check from store:HouseholdMembers member in memberStream
-        do {
+    do {
+        memberCount += 1;
+        
+        if member.nic == loginReq.nic {
             memberFound = true;
             io:println("Household member found: ", member.fullName);
-            io:println("Member role: ", member.role); // ADDED: Log the role
-            io:println("Member ID: ", member.id); // ADDED: Log member ID
-            check memberStream.close();
+            io:println("Member role: ", member.role);
+            io:println("Member ID: ", member.id);
 
-            io:println("About to verify password for member"); // ADDED: Debug log
+            io:println("About to verify password for member");
             boolean|error isVerified = verifyPassword(loginReq.password, member.passwordHash);
-            io:println("Password verification result for member: ", isVerified); // ADDED: Enhanced logging
+            io:println("Password verification result for member: ", isVerified);
             
             if isVerified is error {
-                io:println("Password verification error: ", isVerified.message()); // ADDED: Log error details
+                io:println("Password verification error: ", isVerified.message());
+                check memberStream.close();
                 return http:UNAUTHORIZED;
             }
             
             if !isVerified {
-                io:println("Password verification failed - incorrect password"); // ADDED: Log failure reason
+                io:println("Password verification failed - incorrect password");
+                check memberStream.close();
                 return http:UNAUTHORIZED;
             }
 
-            // UPDATED: Check role and only allow verified household members or regular household members
+            // Check role and only allow verified household members or regular household members
             string userRole;
             UserRole jwtRole;
             
@@ -358,31 +345,37 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
                 jwtRole = HOUSEHOLD_MEMBER;
                 io:println("Regular household member login approved");
             } else {
-                // ADDED: Reject login if role is not recognized
+                // Reject login if role is not recognized
                 io:println("Unrecognized household member role: ", member.role);
+                check memberStream.close();
                 return http:UNAUTHORIZED;
             }
 
-            io:println("About to generate JWT for member ID: ", member.id); // ADDED: Debug log
+            io:println("About to generate JWT for member ID: ", member.id);
             string|error token = generateJwtWithId(member.id.toString(), jwtRole);
             if token is error {
-                io:println("JWT generation failed for member: ", token.message()); // ADDED: Log JWT error
+                io:println("JWT generation failed for member: ", token.message());
+                check memberStream.close();
                 return http:UNAUTHORIZED;
             }
             
-            io:println("JWT generated successfully for member"); // ADDED: Success log
-            io:println("Returning successful login response for member"); // ADDED: Final success log
+            io:println("JWT generated successfully for member");
+            io:println("Returning successful login response for member");
+            
+            check memberStream.close();
             
             // Response with cookie
-                LoginResponse response = {
-                    userId: member.id,
-                    userType: userRole,
-                    fullName: member.fullName,
-                    message: member.passwordchanged ? "Login successful" : "First-time login. Please change your password."
-                };
+            LoginResponse response = {
+                userId: member.id,
+                userType: userRole,
+                fullName: member.fullName,
+                message: member.passwordchanged ? "Login successful" : "First-time login. Please change your password."
+            };
 
-                return response;
-        };
+            return response;
+        }
+        // If NIC doesn't match, continue to next iteration
+    };
     check memberStream.close();
     
     if !memberFound {
@@ -472,6 +465,7 @@ public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unau
     log:printInfo("=== LOGIN DEBUG END - NO USER FOUND ===");
     return http:UNAUTHORIZED;
 }
+
 public function putChangePassword(ChangePasswordRequest req) returns http:Ok|http:Unauthorized|json|error {
     // Validate new password
     string? passwordError = validatePasswordPolicy(req.newPassword);
