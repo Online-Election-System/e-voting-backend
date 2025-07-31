@@ -1,11 +1,8 @@
-import ballerina/time;
 
 // This file defines custom data structures (view models) for the registration service API.
 // These records shape the data sent to and received from the frontend.
 
-// Represents a single application row in the main registration table.
-
-
+// Represents a single application row in the main registration table. 
 public type GramaNiladhariProfile record {|
     string fullName;
     string nic;
@@ -31,46 +28,73 @@ public type RegistrationApplication record {|
     string dob;
     string? phone;
     string address;
+<<<<<<< HEAD
+=======
     string? idCopyPath;
     string? photoCopyPath;
+>>>>>>> 20c40ced0459e0c0cc3f8dec5cebae7a7e5f4bbc
     string status;
-    string submittedDate; // Corresponds to the 'Submitted' column in the UI
 |};
 
 // Represents the complete detailed view of a single application for the details page.
-public type RegistrationDetails record {|
-    // Personal Information
+public type RegistrationDetail record {|
     string fullName;
     string nic;
     string dob;
+    string? phone;
     string gender;
     string civilStatus;
-    string? phone;
-    // Electoral Information
     string electoralDistrict;
     string pollingDivision;
     string pollingDistrictNumber;
-    // Address Information
-    string? villageStreetEstate;
+    string? gramaNiladhariDivision;
+    string? village;
     string? houseNumber;
+<<<<<<< HEAD
+    string address;
+=======
     string fullAddress;
     // Document Paths
     string? idCopyPath;
     string? photoCopyPath;
     // Application Status Details
+>>>>>>> 20c40ced0459e0c0cc3f8dec5cebae7a7e5f4bbc
     string status;
-    time:Utc? reviewedAt;
-    string? comments;
+    string? idCopyPath;
+    string? photoCopyPath;
+    string role;
 |};
 
 // Represents the JSON payload for the approve/reject POST request.
-public type ReviewRequest record {|
-    "approved"|"rejected" status;
-    string? comments;
-|};
+
 
 // Represents the data structure for the dashboard status cards.
 public type StatusCounts record {|
+    int pending;
+    int approved;
+    int rejected;
+    int total;
+|};
+
+// Define the rejection request payload structure
+public type RejectionRequest record {
+    string reason;  // required field for rejection reason
+};
+
+// Type definitions for removal requests
+public type RemovalRequest record {|
+    string deleteRequestId;
+    string memberName;
+    string memberNic;
+    string requestedBy;
+    string requestedByNic;
+    string reason;
+    string? proofDocument;
+    string submittedDate;
+    string status; // "pending", "approved", "rejected"
+|};
+
+public type RemovalRequestCounts record {|
     int pending;
     int approved;
     int rejected;

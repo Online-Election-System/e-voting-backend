@@ -98,19 +98,19 @@ public type HouseholdDetails record {|
 
 # HouseholdMembers Table
 #
-# + id - Auto-incrementing Primary Key  
-# + chiefOccupantId - Foreign Key (ChiefOccupant)  
-# + fullName - Full Name of Household Member  
-# + nic - National Identity Card (Nullable)  
-# + dob - Date of Birth (MM/DD/YYYY)  
-# + gender - Gender (Male/Female)  
-# + civilStatus - Marital Status  
-# + relationshipWithChiefOccupant - Relationship with Chief Occupant  
-# + idCopyPath - File Path of ID Copy  
-# + photoCopyPath - field description  
-# + approvedByChief - Chief Occupant Approval Status  
-# + passwordHash - Hashed Password  
-# + passwordchanged - if the password change  
+# + id - Auto-incrementing Primary Key
+# + chiefOccupantId - Foreign Key (ChiefOccupant)
+# + fullName - Full Name of Household Member
+# + nic - National Identity Card (Nullable)
+# + dob - Date of Birth (MM/DD/YYYY)
+# + gender - Gender (Male/Female)
+# + civilStatus - Marital Status
+# + relationshipWithChiefOccupant - Relationship with Chief Occupant
+# + idCopyPath - File Path of ID Copy
+# + photoCopyPath - File Path of Image
+# + approvedByChief - Chief Occupant Approval Status
+# + passwordHash - Hashed Password
+# + passwordchanged - if the password change
 # + role - Role of the user
 
 public type HouseholdMembers record {|
@@ -199,59 +199,6 @@ public type AdminUsers record {|
     boolean isActive;
 |};
 
-public type AddMemberRequest record {|
-    @sql:Name {value: "add_request_id"}
-    readonly string addRequestId;
-    @sql:Name {value: "chief_occupant_id"}
-    string chiefOccupantId;
-    @sql:Name {value: "nic_number"}
-    string nicNumber;
-    @sql:Name {value: "full_name"}
-    string fullName;
-    @sql:Name {value: "date_of_birth"}
-    string dateOfBirth;
-    string gender; 
-    @sql:Name {value: "civil_status"}
-    string civilStatus;
-    @sql:Name {value: "relationship_to_chief"}
-    string relationshipToChief;
-    @sql:Name {value: "chief_occupant_approval"}
-    string chiefOccupantApproval; 
-    @sql:Name {value: "request_status"}
-    string requestStatus;
-    @sql:Name {value: "nic_or_birth_certificate_path"}
-    string? nicOrBirthCertificatePath;
-|};
-
-public type UpdateMemberRequest record {|
-    @sql:Name {value: "update_request_id"}
-    readonly string updateRequestId;
-    @sql:Name {value: "chief_occupant_id"}
-    string chiefOccupantId;
-    @sql:Name {value: "household_member_id"}
-    string? householdMemberId;
-    @sql:Name {value: "new_full_name"}
-    string? newFullName;
-    @sql:Name {value: "new_resident_area"}
-    string? newResidentArea;
-    @sql:Name {value: "request_status"}
-    string requestStatus;
-    @sql:Name {value: "relevant_certificate_path"}
-    string? relevantCertificatePath;
-|};
-
-public type DeleteMemberRequest record {|
-    @sql:Name {value: "delete_request_id"}
-    readonly string deleteRequestId;
-    @sql:Name {value: "chief_occupant_id"}
-    string chiefOccupantId; 
-    @sql:Name {value: "household_member_id"}
-    string? householdMemberId; 
-    @sql:Name {value: "request_status"}
-    string requestStatus; 
-    @sql:Name {value: "required_document_path"}
-    string? requiredDocumentPath;
-|};
 # Description.
 #
 # + electionId - election id
@@ -302,29 +249,20 @@ public type Enrolment record {|
     time:Utc enrollementDate;
 |};
 
-// -- Removal Requests Table --
-public type RemovalRequest record {|
-    readonly string id;
-    @sql:Name { value: "member_name" }
-    string memberName;
-    string nic;
-    @sql:Name { value: "requested_by" }
-    string requestedBy;
-    string reason;
-    @sql:Name { value: "proof_document" }
-    string proofDocument;
-    string status; // pending, approved, rejected
-|};
-
 // -- Registration Reviews Table --
+# Description.
+#
+# + id - field description  
+# + memberNic - field description  
+# + status - field description  
+# + reason - field description  
+# + reviewedAt - field description
 public type RegistrationReview record {|
     readonly string id;
     @sql:Name { value: "member_nic" }
     string memberNic;
-    @sql:Name { value: "reviewed_by" }
-    string reviewedBy;
     string status; // pending, approved, rejected
-    string? comments;
+    string? reason;
     @sql:Name { value: "reviewed_at" }
     time:Utc? reviewedAt;
 |};
@@ -396,6 +334,95 @@ public type Voter record {|
     @sql:Name { value: "registration_date" }
     time:Date registrationDate;
     string status;
+|};
+
+# Description.
+#
+# + addRequestId - field description  
+# + chiefOccupantId - field description  
+# + nicNumber - field description  
+# + fullName - field description  
+# + dateOfBirth - field description  
+# + gender - field description  
+# + civilStatus - field description  
+# + relationshipToChief - field description  
+# + chiefOccupantApproval - field description  
+# + requestStatus - field description  
+# + reason - field description
+# + nicOrBirthCertificatePath - field description
+public type AddMemberRequest record {|
+    @sql:Name {value: "add_request_id"}
+    readonly string addRequestId;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId;
+    @sql:Name {value: "nic_number"}
+    string nicNumber;
+    @sql:Name {value: "full_name"}
+    string fullName;
+    @sql:Name {value: "date_of_birth"}
+    string dateOfBirth;
+    string gender; 
+    @sql:Name {value: "civil_status"}
+    string civilStatus;
+    @sql:Name {value: "relationship_to_chief"}
+    string relationshipToChief;
+    @sql:Name {value: "chief_occupant_approval"}
+    string chiefOccupantApproval; 
+    @sql:Name {value: "request_status"}
+    string? requestStatus;
+    string? reason;
+    @sql:Name {value: "nic_or_birth_certificate_path"}
+    string? nicOrBirthCertificatePath;
+|};
+
+# Description.
+#
+# + updateRequestId - field description  
+# + chiefOccupantId - field description  
+# + householdMemberId - field description  
+# + newFullName - field description  
+# + newResidentArea - field description  
+# + requestStatus - field description 
+# + reason - field description  
+# + relevantCertificatePath - field description
+public type UpdateMemberRequest record {|
+    @sql:Name {value: "update_request_id"}
+    readonly string updateRequestId;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId;
+    @sql:Name {value: "household_member_id"}
+    string? householdMemberId;
+    @sql:Name {value: "new_full_name"}
+    string? newFullName;
+    @sql:Name {value: "new_resident_area"}
+    string? newResidentArea;
+    @sql:Name {value: "request_status"}
+    string? requestStatus;
+    string? reason;
+    @sql:Name {value: "relevant_certificate_path"}
+    string? relevantCertificatePath;
+|};
+
+# Description.
+#
+# + deleteRequestId - field description  
+# + chiefOccupantId - field description  
+# + householdMemberId - field description  
+# + requestStatus - field description  
+# + reason - field description 
+# + requiredDocumentPath - field description
+public type DeleteMemberRequest record {|
+    @sql:Name {value: "delete_request_id"}
+    readonly string deleteRequestId;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId; 
+    @sql:Name {value: "household_member_id"}
+    string? householdMemberId; 
+    @sql:Name {value: "request_status"}
+    string? requestStatus;
+    string? reason; 
+    @sql:Name {value: "required_document_path"}
+    string? requiredDocumentPath;
 |};
 # Description.
 #
