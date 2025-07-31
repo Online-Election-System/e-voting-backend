@@ -86,7 +86,7 @@ public type ChiefOccupantInput record {|
     string email;
     string passwordHash;
     string? idCopyPath;
-    string? phophotoCopyPath;
+    string? photoCopyPath;
 |};
 
 public type HouseholdMemberInput record {
@@ -97,7 +97,7 @@ public type HouseholdMemberInput record {
     string civilStatus;
     string relationshipWithChiefOccupant;
     string? idCopyPath;
-    string? phophotoCopyPath;
+    string? photoCopyPath;
     boolean approvedByChief;
 };
 
@@ -138,6 +138,7 @@ public type ChiefOccupantInsert record {| // Added role, isVerified, verifiedAt,
     string passwordHash;
     string email;
     string? idCopyPath;
+    string? photoCopyPath;
     string role = "chief_occupant";
 |};
 
@@ -152,6 +153,7 @@ public type HouseholdMembersInsert record {| // Added role, isVerified, verified
     boolean approvedByChief;
     string civilStatus;
     string? idCopyPath;
+    string? photoCopyPath;
     string passwordHash;
     boolean passwordchanged;
     string role = "household_member";

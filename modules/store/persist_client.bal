@@ -149,7 +149,9 @@ public isolated client class Client {
                 relationshipToChief: {columnName: "relationship_to_chief"},
                 chiefOccupantApproval: {columnName: "chief_occupant_approval"},
                 requestStatus: {columnName: "request_status"},
-                nicOrBirthCertificatePath: {columnName: "nic_or_birth_certificate_path"}
+                reason: {columnName: "reason"},
+                nicOrBirthCertificatePath: {columnName: "nic_or_birth_certificate_path"},
+                photoCopyPath: {columnName: "photo_copy_path"}
             },
             keyFields: ["addRequestId"]
         },
@@ -161,9 +163,9 @@ public isolated client class Client {
                 chiefOccupantId: {columnName: "chief_occupant_id"},
                 householdMemberId: {columnName: "household_member_id"},
                 newFullName: {columnName: "new_full_name"},
-                newResidentArea: {columnName: "new_resident_area"},
-                requestStatus: {columnName: "request_status"},
-                relevantCertificatePath: {columnName: "relevant_certificate_path"}
+                newCivilStatus: {columnName: "new_civil_status"},
+                relevantCertificatePath: {columnName: "relevant_certificate_path"},
+                reason: {columnName: "reason"}
             },
             keyFields: ["updateRequestId"]
         },
@@ -175,7 +177,9 @@ public isolated client class Client {
                 chiefOccupantId: {columnName: "chief_occupant_id"},
                 householdMemberId: {columnName: "household_member_id"},
                 requestStatus: {columnName: "request_status"},
-                requiredDocumentPath: {columnName: "required_document_path"}
+                reason: {columnName: "reason"},
+                requiredDocumentPath: {columnName: "required_document_path"},
+                rejectionReason: {columnName: "rejection_reason"}
             },
             keyFields: ["deleteRequestId"]
         },

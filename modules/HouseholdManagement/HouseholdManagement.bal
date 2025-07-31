@@ -17,7 +17,9 @@ public isolated function submitAddMemberRequest(store:AddMemberRequest request) 
         relationshipToChief: request.relationshipToChief,
         chiefOccupantApproval: request.chiefOccupantApproval,
         requestStatus: request.requestStatus,
-        nicOrBirthCertificatePath: request.nicOrBirthCertificatePath
+        reason: request.reason,
+        nicOrBirthCertificatePath: request.nicOrBirthCertificatePath,
+        photoCopyPath: request.photoCopyPath
     };
     string[]|error addResponse = dbclient->/addmemberrequests.post([insertRequest]);
     if addResponse is error {
@@ -59,20 +61,14 @@ public isolated function submitUpdateMemberRequest(store:UpdateMemberRequest req
         }
     }
     
-    log:printInfo("Actual Household Member ID to use: " + (actualHouseholdMemberId ?: "NULL"));
-    log:printInfo("New Full Name: " + (request.newFullName ?: "NULL"));
-    log:printInfo("New Resident Area: " + (request.newResidentArea ?: "NULL"));
-    log:printInfo("Request Status: " + request.requestStatus);
-    log:printInfo("Certificate Path: " + (request.relevantCertificatePath ?: "NULL"));
-    
-    store:UpdateMemberRequestInsert insertRequest = {
+     store:UpdateMemberRequestInsert insertRequest = {
         updateRequestId: requestId,
         chiefOccupantId: request.chiefOccupantId,
         householdMemberId: actualHouseholdMemberId,
         newFullName: request.newFullName,
-        newResidentArea: request.newResidentArea,
-        requestStatus: request.requestStatus,
-        relevantCertificatePath: request.relevantCertificatePath
+        newCivilStatus: request.newCivilStatus,
+        relevantCertificatePath: request.relevantCertificatePath,
+        reason: request.reason
     };
     
     string[]|error updateResponse = dbclient->/updatememberrequests.post([insertRequest]);
@@ -107,7 +103,9 @@ public isolated function submitDeleteMemberRequest(store:DeleteMemberRequest req
         chiefOccupantId: request.chiefOccupantId,
         householdMemberId: request.householdMemberId,
         requestStatus: request.requestStatus,
-        requiredDocumentPath: request.requiredDocumentPath
+        requiredDocumentPath: request.requiredDocumentPath,
+        reason: request.reason,
+        rejectionReason:request.rejectionReason
     };
     
     string[]|error deleteResponse = dbclient->/deletememberrequests.post([insertRequest]);
@@ -120,6 +118,8 @@ public isolated function submitDeleteMemberRequest(store:DeleteMemberRequest req
     return [newId];
 }
 // --- Get Household Members ---
+// Updated getHouseholdMembers function to show existing members AND new add member requests
+// Updated getHouseholdMembers function to include update requests
 public function getHouseholdMembers(string chiefOccupantId) returns json|error {
     // Fetch chief occupant
     store:ChiefOccupant|persist:Error chief = dbclient->/chiefoccupants/[chiefOccupantId].get();
@@ -127,7 +127,7 @@ public function getHouseholdMembers(string chiefOccupantId) returns json|error {
         return error("Chief occupant not found");
     }
 
-    // Fetch household details (all) and filter by chiefOccupantId
+    // Fetch household details
     stream<store:HouseholdDetails, persist:Error?> householdStream = dbclient->/householddetails.get();
     store:HouseholdDetails[] householdList = check from var h in householdStream
         where h.chiefOccupantId == chiefOccupantId
@@ -135,39 +135,155 @@ public function getHouseholdMembers(string chiefOccupantId) returns json|error {
     if householdList.length() == 0 {
         return error("Household details not found");
     }
-    store:HouseholdDetails household = householdList[0];
-
-    // Fetch household members (all) and filter by chiefOccupantId
+    store:HouseholdDetails _ = householdList[0];
+    
+    // Fetch existing household members
     stream<store:HouseholdMembers, persist:Error?> membersStream = dbclient->/householdmembers.get();
-    store:HouseholdMembers[] members = check from var m in membersStream
+    store:HouseholdMembers[] existingMembers = check from var m in membersStream
         where m.chiefOccupantId == chiefOccupantId
         select m;
 
+    // Fetch ALL add member requests for this chief occupant
+    stream<store:AddMemberRequest, persist:Error?> addRequests = dbclient->/addmemberrequests.get();
+    store:AddMemberRequest[] allRequests = check from var r in addRequests
+        where r.chiefOccupantId == chiefOccupantId
+        select r;
+
+    // Fetch update member requests for this chief occupant
+    stream<store:UpdateMemberRequest, persist:Error?> updateRequestsStream = dbclient->/updatememberrequests.get();
+    store:UpdateMemberRequest[] updateRequestsList = check from var u in updateRequestsStream
+        where u.chiefOccupantId == chiefOccupantId
+        select u;
+
     json[] memberData = [];
 
-    foreach store:HouseholdMembers member in members {
-        json status = {
-            memberId: member.id, 
-            memberName: member.fullName,
-            fullName: member.fullName, 
+    // First, add existing household members with their request status
+    foreach store:HouseholdMembers member in existingMembers {
+        // Find the corresponding add member request
+        store:AddMemberRequest? memberRequest = ();
+        foreach store:AddMemberRequest request in allRequests {
+            if (request.nicNumber == member.nic) {
+                memberRequest = request;
+                break;
+            }
+        }
+
+        string status = "Approved"; // Default for existing members
+        string rejectionReason = "—";
+        string? requestDate = ();
+
+        if (memberRequest is store:AddMemberRequest) {
+            if (memberRequest.requestStatus == "APPROVED") {
+                status = "Approved";
+            } else if (memberRequest.requestStatus == "REJECTED") {
+                status = "Rejected";
+            } else if (memberRequest.requestStatus == "PENDING_REVIEW") {
+                status = "D. Funding";
+            } else {
+                status = "Pending";
+            }
+            
+            rejectionReason = memberRequest.reason ?: "—";
+        }
+
+        memberData.push({
+            memberId: member.id,
+            fullName: member.fullName,
             nic: member.nic ?: "N/A",
-            status: "☑ Pending",
-            rejectionReason: "☑ Pending",
+            status: status,
+            rejectionReason: rejectionReason,
             relationship: member.relationshipWithChiefOccupant,
-            relationshipWithChiefOccupant: member.relationshipWithChiefOccupant 
-        };
-        memberData.push(status);
+            requestDate: requestDate,
+            isNewRequest: false // These are existing members
+        });
     }
+
+    // Then, add new add member requests that don't have corresponding household members yet
+    foreach store:AddMemberRequest request in allRequests {
+        // Check if this request already has a corresponding household member
+        boolean hasExistingMember = false;
+        foreach store:HouseholdMembers member in existingMembers {
+            if (member.nic == request.nicNumber) {
+                hasExistingMember = true;
+                break;
+            }
+        }
+
+        // Only add if it's a new request without existing member
+        if (!hasExistingMember) {
+            string status = "Pending";
+            if (request.requestStatus == "APPROVED") {
+                status = "Approved";
+            } else if (request.requestStatus == "REJECTED") {
+                status = "Rejected";
+            } else if (request.requestStatus == "PENDING_REVIEW") {
+                status = "D. Funding";
+            }
+
+            memberData.push({
+                memberId: request.addRequestId,
+                fullName: request.fullName,
+                nic: request.nicNumber,
+                status: status,
+                rejectionReason: request.reason ?: "—",
+                relationship: request.relationshipToChief,
+                isNewRequest: true // These are new requests
+            });
+        }
+    }
+
+    // Process update requests and format them for the frontend
+    json[] updateRequestsData = [];
+    foreach store:UpdateMemberRequest updateReq in updateRequestsList {
+        // Determine if this is a chief occupant update or member update
+        boolean isChiefOccupantUpdate = updateReq.householdMemberId is ();
+        
+        string memberName = "";
+        string memberNic = "";
+        
+        if (isChiefOccupantUpdate) {
+            // Chief occupant update
+            memberName = chief.fullName;
+            memberNic = chief.nic;
+        } else {
+            // Find the household member
+            string householdMemberId = updateReq.householdMemberId.toString();
+            foreach store:HouseholdMembers member in existingMembers {
+                if (member.id == householdMemberId) {
+                    memberName = member.fullName;
+                    memberNic = member.nic ?: "N/A";
+                    break;
+                }
+            }
+        }
+
+        updateRequestsData.push({
+            updateRequestId: updateReq.updateRequestId,
+            chiefOccupantId: updateReq.chiefOccupantId,
+            householdMemberId: updateReq.householdMemberId,
+            memberName: memberName,
+            memberNic: memberNic,
+            newFullName: updateReq.newFullName,
+            newCivilStatus: updateReq.newCivilStatus,
+            relevantCertificatePath: updateReq.relevantCertificatePath,
+            rejectionReason: updateReq.reason,
+            isChiefOccupantUpdate: isChiefOccupantUpdate
+        });
+    }
+
+    // Calculate total members (existing members + chief)
+    int totalMembers = existingMembers.length() + 1; // +1 for chief
 
     return {
         chiefOccupant: {
-            memberId: chief.id, 
+            memberId: chief.id,
             fullName: chief.fullName,
             nic: chief.nic,
-            status: "☑ Approved",
-            role: chief.role
+            status: "Approved",
+            role: "Chief Occupant"
         },
-        totalMembers: household.householdMemberCount + 1,
-        members: memberData
+        totalMembers: totalMembers,
+        members: memberData,
+        updateRequests: updateRequestsData // Add update requests to the response
     };
 }
