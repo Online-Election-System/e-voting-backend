@@ -67,3 +67,23 @@ public type StatusCounts record {|
 public type RejectionRequest record {
     string reason;  // required field for rejection reason
 };
+
+// Type definitions for removal requests
+public type RemovalRequest record {|
+    string deleteRequestId;
+    string memberName;
+    string memberNic;
+    string requestedBy;
+    string requestedByNic;
+    string reason;
+    string? proofDocument;
+    string submittedDate;
+    string status; // "pending", "approved", "rejected"
+|};
+
+public type RemovalRequestCounts record {|
+    int pending;
+    int approved;
+    int rejected;
+    int total;
+|};

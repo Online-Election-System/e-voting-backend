@@ -30,7 +30,7 @@ CREATE TABLE "AddMemberRequest" (
 	"civil_status" VARCHAR(191) NOT NULL,
 	"relationship_to_chief" VARCHAR(191) NOT NULL,
 	"chief_occupant_approval" VARCHAR(191) NOT NULL,
-	"request_status" VARCHAR(191) NOT NULL,
+	"request_status" VARCHAR(191),
 	"reason" VARCHAR(191),
 	"nic_or_birth_certificate_path" VARCHAR(191),
 	PRIMARY KEY("add_request_id")
@@ -92,7 +92,7 @@ CREATE TABLE "UpdateMemberRequest" (
 	"household_member_id" VARCHAR(191),
 	"new_full_name" VARCHAR(191),
 	"new_resident_area" VARCHAR(191),
-	"request_status" VARCHAR(191) NOT NULL,
+	"request_status" VARCHAR(191),
 	"reason" VARCHAR(191),
 	"relevant_certificate_path" VARCHAR(191),
 	PRIMARY KEY("update_request_id")
@@ -123,7 +123,7 @@ CREATE TABLE "DeleteMemberRequest" (
 	"delete_request_id" VARCHAR(191) NOT NULL,
 	"chief_occupant_id" VARCHAR(191) NOT NULL,
 	"household_member_id" VARCHAR(191),
-	"request_status" VARCHAR(191) NOT NULL,
+	"request_status" VARCHAR(191),
 	"reason" VARCHAR(191),
 	"required_document_path" VARCHAR(191),
 	PRIMARY KEY("delete_request_id")

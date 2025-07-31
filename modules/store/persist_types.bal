@@ -499,7 +499,7 @@ public type AddMemberRequest record {|
     string civilStatus;
     string relationshipToChief;
     string chiefOccupantApproval;
-    string requestStatus;
+    string? requestStatus;
     string? reason;
     string? nicOrBirthCertificatePath;
 |};
@@ -514,7 +514,7 @@ public type AddMemberRequestOptionalized record {|
     string civilStatus?;
     string relationshipToChief?;
     string chiefOccupantApproval?;
-    string requestStatus?;
+    string? requestStatus?;
     string? reason?;
     string? nicOrBirthCertificatePath?;
 |};
@@ -532,7 +532,7 @@ public type AddMemberRequestUpdate record {|
     string civilStatus?;
     string relationshipToChief?;
     string chiefOccupantApproval?;
-    string requestStatus?;
+    string? requestStatus?;
     string? reason?;
     string? nicOrBirthCertificatePath?;
 |};
@@ -543,7 +543,7 @@ public type UpdateMemberRequest record {|
     string? householdMemberId;
     string? newFullName;
     string? newResidentArea;
-    string requestStatus;
+    string? requestStatus;
     string? reason;
     string? relevantCertificatePath;
 |};
@@ -554,7 +554,7 @@ public type UpdateMemberRequestOptionalized record {|
     string? householdMemberId?;
     string? newFullName?;
     string? newResidentArea?;
-    string requestStatus?;
+    string? requestStatus?;
     string? reason?;
     string? relevantCertificatePath?;
 |};
@@ -568,7 +568,7 @@ public type UpdateMemberRequestUpdate record {|
     string? householdMemberId?;
     string? newFullName?;
     string? newResidentArea?;
-    string requestStatus?;
+    string? requestStatus?;
     string? reason?;
     string? relevantCertificatePath?;
 |};
@@ -577,7 +577,7 @@ public type DeleteMemberRequest record {|
     readonly string deleteRequestId;
     string chiefOccupantId;
     string? householdMemberId;
-    string requestStatus;
+    string? requestStatus;
     string? reason;
     string? requiredDocumentPath;
 |};
@@ -586,7 +586,7 @@ public type DeleteMemberRequestOptionalized record {|
     string deleteRequestId?;
     string chiefOccupantId?;
     string? householdMemberId?;
-    string requestStatus?;
+    string? requestStatus?;
     string? reason?;
     string? requiredDocumentPath?;
 |};
@@ -598,7 +598,7 @@ public type DeleteMemberRequestInsert DeleteMemberRequest;
 public type DeleteMemberRequestUpdate record {|
     string chiefOccupantId?;
     string? householdMemberId?;
-    string requestStatus?;
+    string? requestStatus?;
     string? reason?;
     string? requiredDocumentPath?;
 |};

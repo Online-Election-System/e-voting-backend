@@ -368,7 +368,7 @@ public type AddMemberRequest record {|
     @sql:Name {value: "chief_occupant_approval"}
     string chiefOccupantApproval; 
     @sql:Name {value: "request_status"}
-    string requestStatus;
+    string? requestStatus;
     string? reason;
     @sql:Name {value: "nic_or_birth_certificate_path"}
     string? nicOrBirthCertificatePath;
@@ -396,7 +396,7 @@ public type UpdateMemberRequest record {|
     @sql:Name {value: "new_resident_area"}
     string? newResidentArea;
     @sql:Name {value: "request_status"}
-    string requestStatus;
+    string? requestStatus;
     string? reason;
     @sql:Name {value: "relevant_certificate_path"}
     string? relevantCertificatePath;
@@ -418,7 +418,7 @@ public type DeleteMemberRequest record {|
     @sql:Name {value: "household_member_id"}
     string? householdMemberId; 
     @sql:Name {value: "request_status"}
-    string requestStatus;
+    string? requestStatus;
     string? reason; 
     @sql:Name {value: "required_document_path"}
     string? requiredDocumentPath;

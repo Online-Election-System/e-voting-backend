@@ -149,27 +149,51 @@ public function getRegistrationApplications(string? nameOrNic, string? statusFil
 }
 
 public function getApplicationCounts() returns StatusCounts|error {
-    // Get all applications without any filters
-    RegistrationApplication[] allApps = check getRegistrationApplications((), ());
     
-    int pending = 0;
-    int approved = 0;
-    int rejected = 0;
-
-    // Count applications by status
-    foreach var app in allApps {
-        match app.status {
-            "pending" => { pending += 1; }
-            "approved" => { approved += 1; }
-            "rejected" => { rejected += 1; }
-        }
-    }
+    // 1. Get approved count from RegistrationReview table
+    stream<store:RegistrationReview, persist:Error?> approvedStream = dbClient->/registrationreviews;
+    store:RegistrationReview[] approvedReviews = check from store:RegistrationReview review in approvedStream
+        where review.status == "approved"
+        select review;
+    int approved = approvedReviews.length();
+    
+    // 2. Get rejected count from RegistrationReview table
+    stream<store:RegistrationReview, persist:Error?> rejectedStream = dbClient->/registrationreviews;
+    store:RegistrationReview[] rejectedReviews = check from store:RegistrationReview review in rejectedStream
+        where review.status == "rejected"
+        select review;
+    int rejected = rejectedReviews.length();
+    
+    // 3. Get all reviewed NICs (both approved and rejected)
+    stream<store:RegistrationReview, persist:Error?> allReviewStream = dbClient->/registrationreviews;
+    string[] reviewedNics = [];
+    check from store:RegistrationReview review in allReviewStream
+        do {
+            reviewedNics.push(review.memberNic);
+        };
+    
+    // 4. Count pending: Chief Occupants with role "chief_occupant" who are NOT reviewed
+    stream<store:ChiefOccupant, persist:Error?> chiefStream = dbClient->/chiefoccupants;
+    store:ChiefOccupant[] pendingChiefs = check from store:ChiefOccupant co in chiefStream 
+        where co.role == "chief_occupant" && reviewedNics.indexOf(co.nic) is ()
+        select co;
+    
+    // 5. Count pending: Household Members with role "household_member" who are NOT reviewed
+    stream<store:HouseholdMembers, persist:Error?> memberStream = dbClient->/householdmembers;
+    store:HouseholdMembers[] pendingMembers = check from store:HouseholdMembers hm in memberStream 
+        where hm.role == "household_member" && hm.nic is string && reviewedNics.indexOf(<string>hm.nic) is ()
+        select hm;
+    
+    int pending = pendingChiefs.length() + pendingMembers.length();
+    
+    // 6. Calculate total
+    int total = pending + approved + rejected;
 
     return {
         pending: pending,
         approved: approved,
         rejected: rejected,
-        total: allApps.length()
+        total: total
     };
 }
 
@@ -528,6 +552,252 @@ public function rejectRegistration(string nic, string reason) returns string|err
             // Rollback will happen automatically
             return error("Failed to reject registration: " + e.message());
         }
+    }
+}
+
+// Function to get all removal requests with filtering
+public function getRemovalRequests(string? search, string? status) returns RemovalRequest[]|error {
+    
+    // 1. Fetch all DeleteMemberRequest records
+    stream<store:DeleteMemberRequest, persist:Error?> deleteRequestStream = dbClient->/deletememberrequests;
+    store:DeleteMemberRequest[] deleteRequests = check from store:DeleteMemberRequest dmr in deleteRequestStream
+        select dmr;
+
+    // 2. Fetch all ChiefOccupants into map for efficient lookup
+    stream<store:ChiefOccupant, persist:Error?> chiefStream = dbClient->/chiefoccupants;
+    map<store:ChiefOccupant> chiefMap = {};
+    check from store:ChiefOccupant co in chiefStream
+        do {
+            chiefMap[co.id] = co;
+        };
+
+    // 3. Fetch all HouseholdMembers into map for efficient lookup
+    stream<store:HouseholdMembers, persist:Error?> memberStream = dbClient->/householdmembers;
+    map<store:HouseholdMembers> memberMap = {};
+    check from store:HouseholdMembers hm in memberStream
+        do {
+            if hm.id != "" {
+                memberMap[hm.id] = hm;
+            }
+        };
+
+    // 4. Build removal request list
+    RemovalRequest[] removalRequests = [];
+    
+    foreach var deleteRequest in deleteRequests {
+        // Get household member details
+        string memberName = "Unknown Member";
+        string memberNic = "Unknown NIC";
+        
+        if deleteRequest.householdMemberId is string && deleteRequest.householdMemberId != "" {
+            string memberId = <string>deleteRequest.householdMemberId;
+            if memberMap.hasKey(memberId) {
+                store:HouseholdMembers member = memberMap.get(memberId);
+                memberName = member.fullName;
+                memberNic = member.nic is string ? <string>member.nic : "No NIC";
+            }
+        }
+
+        // Get chief occupant details (requester)
+        string requestedBy = "Unknown Requester";
+        string requestedByNic = "Unknown NIC";
+        
+        if chiefMap.hasKey(deleteRequest.chiefOccupantId) {
+            store:ChiefOccupant chief = chiefMap.get(deleteRequest.chiefOccupantId);
+            requestedBy = chief.fullName;
+            requestedByNic = chief.nic;
+        }
+
+        // Determine status (default to pending if null or empty)
+        string requestStatus = "pending";
+        if deleteRequest.requestStatus is string && deleteRequest.requestStatus != "" {
+            requestStatus = <string>deleteRequest.requestStatus;
+        }
+
+        // Create removal request object
+        RemovalRequest removalReq = {
+            deleteRequestId: deleteRequest.deleteRequestId,
+            memberName: memberName,
+            memberNic: memberNic,
+            requestedBy: requestedBy,
+            requestedByNic: requestedByNic,
+            reason: deleteRequest.reason ?: "No reason provided",
+            proofDocument: deleteRequest.requiredDocumentPath,
+            submittedDate: "2024-01-15", // You might want to add a timestamp field to DeleteMemberRequest
+            status: requestStatus
+        };
+
+        removalRequests.push(removalReq);
+    }
+
+    // 5. Apply filters if provided
+    RemovalRequest[] filteredRequests = removalRequests;
+    
+    // Filter by search term (member name, member NIC, or requester name)
+    if search is string && search.trim() != "" {
+        string searchTerm = string:toLowerAscii(search.trim());
+        filteredRequests = from var req in filteredRequests
+            where string:toLowerAscii(req.memberName).includes(searchTerm) || 
+                  string:toLowerAscii(req.memberNic).includes(searchTerm) ||
+                  string:toLowerAscii(req.requestedBy).includes(searchTerm)
+            select req;
+    }
+
+    // Filter by status
+    if status is string && status != "all" {
+        string statusTerm = string:toLowerAscii(status);
+        filteredRequests = from var req in filteredRequests
+            where string:toLowerAscii(req.status) == statusTerm
+            select req;
+    }
+
+    return filteredRequests;
+}
+
+// Function to get removal request counts by status
+public function getRemovalRequestCounts() returns RemovalRequestCounts|error {
+    // Get all removal requests without any filters
+    RemovalRequest[] allRequests = check getRemovalRequests((), ());
+    
+    int pending = 0;
+    int approved = 0;
+    int rejected = 0;
+
+    // Count requests by status
+    foreach var req in allRequests {
+        match req.status {
+            "pending" => { pending += 1; }
+            "approved" => { approved += 1; }
+            "rejected" => { rejected += 1; }
+        }
+    }
+
+    return {
+        pending: pending,
+        approved: approved,
+        rejected: rejected,
+        total: allRequests.length()
+    };
+}
+
+// Function to approve removal request
+public function approveRemovalRequest(string deleteRequestId) returns string|error {
+    // Start transaction to ensure data consistency
+    transaction {
+        // 1. Get the removal request details
+        stream<store:DeleteMemberRequest, persist:Error?> deleteRequestStream = dbClient->/deletememberrequests;
+        store:DeleteMemberRequest[] deleteRequests = check from store:DeleteMemberRequest dmr in deleteRequestStream
+            where dmr.deleteRequestId == deleteRequestId
+            select dmr;
+
+        if deleteRequests.length() == 0 {
+            check commit;
+            return error("Removal request not found for ID: " + deleteRequestId);
+        }
+
+        store:DeleteMemberRequest deleteRequest = deleteRequests[0];
+
+        // 2. Update DeleteMemberRequest status to "approved" and clear reason
+        _ = check dbClient->/deletememberrequests/[deleteRequestId].put({
+            chiefOccupantId: deleteRequest.chiefOccupantId,
+            householdMemberId: deleteRequest.householdMemberId,
+            requestStatus: "approved",
+            reason: (), // Set reason to null for approved requests
+            requiredDocumentPath: deleteRequest.requiredDocumentPath
+        });
+
+        // 3. Get household member details to find NIC for deletion
+        if deleteRequest.householdMemberId is string && deleteRequest.householdMemberId != "" {
+            string memberId = <string>deleteRequest.householdMemberId;
+            
+            // Get household member details
+            stream<store:HouseholdMembers, persist:Error?> memberStream = dbClient->/householdmembers;
+            store:HouseholdMembers[] members = check from store:HouseholdMembers hm in memberStream
+                where hm.id == memberId
+                select hm;
+
+            if members.length() > 0 {
+                store:HouseholdMembers member = members[0];
+                string memberNic = member.nic is string ? <string>member.nic : "";
+
+                if memberNic != "" {
+                    // 4. Delete from Voter table using NIC
+                    stream<store:Voter, persist:Error?> voterStream = dbClient->/voters;
+                    store:Voter[] voters = check from store:Voter v in voterStream
+                        where v.nationalId == memberNic
+                        select v;
+
+                    foreach var voter in voters {
+                        _ = check dbClient->/voters/[voter.id].delete();
+                    }
+                }
+
+                // 5. Delete the household member record
+                _ = check dbClient->/householdmembers/[memberId].delete();
+
+                // 6. Update household member count in HouseholdDetails
+                stream<store:HouseholdDetails, persist:Error?> hhDetailsStream = dbClient->/householddetails;
+                store:HouseholdDetails[] householdDetails = check from store:HouseholdDetails hd in hhDetailsStream
+                    where hd.chiefOccupantId == deleteRequest.chiefOccupantId
+                    select hd;
+
+                if householdDetails.length() > 0 {
+                    store:HouseholdDetails hh = householdDetails[0];
+                    int newMemberCount = hh.householdMemberCount > 0 ? hh.householdMemberCount - 1 : 0;
+                    
+                    _ = check dbClient->/householddetails/[hh.id].put({
+                        chiefOccupantId: hh.chiefOccupantId,
+                        electoralDistrict: hh.electoralDistrict,
+                        pollingDivision: hh.pollingDivision,
+                        pollingDistrictNumber: hh.pollingDistrictNumber,
+                        gramaNiladhariDivision: hh.gramaNiladhariDivision,
+                        villageStreetEstate: hh.villageStreetEstate,
+                        houseNumber: hh.houseNumber,
+                        householdMemberCount: newMemberCount
+                    });
+                }
+            } else {
+                return error("Household member not found for ID: " + memberId);
+            }
+        } else {
+            return error("No household member ID provided in removal request");
+        }
+
+        return "Removal request approved successfully and member removed from all systems";
+    } on fail error e {
+        return error("Failed to approve removal request: " + e.message());
+    }
+}
+
+// Function to reject removal request
+public function rejectRemovalRequest(string deleteRequestId, string rejectionReason) returns string|error {
+    // Start transaction to ensure data consistency
+    transaction {
+        // 1. Get the removal request details
+        stream<store:DeleteMemberRequest, persist:Error?> deleteRequestStream = dbClient->/deletememberrequests;
+        store:DeleteMemberRequest[] deleteRequests = check from store:DeleteMemberRequest dmr in deleteRequestStream
+            where dmr.deleteRequestId == deleteRequestId
+            select dmr;
+
+        if deleteRequests.length() == 0 {
+            check commit;
+            return error("Removal request not found for ID: " + deleteRequestId);
+        }
+
+        store:DeleteMemberRequest deleteRequest = deleteRequests[0];
+
+        // 2. Update DeleteMemberRequest status to "rejected" with reason
+        _ = check dbClient->/deletememberrequests/[deleteRequestId].put({
+            chiefOccupantId: deleteRequest.chiefOccupantId,
+            householdMemberId: deleteRequest.householdMemberId,
+            requestStatus: "rejected",
+            reason: rejectionReason,
+            requiredDocumentPath: deleteRequest.requiredDocumentPath
+        });
+
+        return "Removal request rejected successfully";
+    } on fail error e {
+        return error("Failed to reject removal request: " + e.message());
     }
 }
 
