@@ -463,6 +463,7 @@ dependencies = [
 modules = [
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election"},
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.HouseholdManagement"},
+	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.activityLog"},
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.auth"},
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.candidate"},
 	{org = "codeCrew", packageName = "online_election", moduleName = "online_election.common"},

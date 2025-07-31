@@ -5,6 +5,7 @@ import online_election.results;
 import online_election.vote;
 import online_election.store;
 import online_election.HouseholdManagement;
+// import online_election.activityLog;
 
 import ballerina/http;
 import ballerina/persist;
@@ -956,3 +957,137 @@ service /household\-management/api/v1 on SharedListener {
         return http:ACCEPTED;
     }
 }
+
+// ==================== ADMIN ACTIVITY LOG SERVICE ====================
+// @http:ServiceConfig {
+//     cors: {
+//         allowOrigins: ["http://localhost:3000"],
+//         allowHeaders: ["Content-Type", "Authorization"],
+//         allowMethods: ["GET", "POST", "OPTIONS"],
+//         allowCredentials: true
+//     }
+// }
+// service /admin/activity\-logs/api/v1 on SharedListener {
+
+//     // Get activity logs with filtering - Admin only
+//     resource function get logs(
+//         http:Request request,
+//         string? userId = (),
+//         string? userType = (),
+//         string? action = (),
+//         string? status = (),
+//         string? startTime = (),
+//         string? endTime = (),
+//         string? endpoint = (),
+//         string? ipAddress = (),
+//         int 'limit = 100,
+//         int offset = 0
+//     ) returns activitylog:SecurityAlert[]|http:Response|error {
+
+//         // Only admin can access activity logs
+//         auth:AuthOptions options = {
+//             allowedRoles: [auth:ADMIN],
+//             requiredPermissions: [auth:VIEW_AUDIT_LOGS]
+//         };
+
+//         auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
+//         if authResult is http:Response {
+//             return authResult;
+//         }
+
+//         // Log admin access to activity logs
+//         error? logAccess = activitylog:logActivity({
+//             userId: authResult.id,
+//             userType: authResult.userType,
+//             action: activitylog:DATA_EXPORT,
+//             endpoint: "/admin/activity-logs/api/v1/logs",
+//             httpMethod: "GET",
+//             status: activitylog:SUCCESS,
+//             details: string `Admin ${authResult.fullName} accessed activity logs`
+//         });
+
+//         // Build filter
+//         activitylog:ActivityLogFilter filter = {
+//             userId: userId,
+//             userType: userType,
+//             endpoint: endpoint,
+//             ipAddress: ipAddress,
+//             'limit: 'limit,
+//             offset: offset
+//         };
+
+//         // Parse time filters if provided
+//         if startTime is string {
+//             // Parse ISO string to time:Utc - you may need to adjust this based on your date format
+//             // For now, using a simple conversion
+//             // filter.startTime = time:utcFromString(startTime);
+//         }
+
+//         if endTime is string {
+//             // filter.endTime = time:utcFromString(endTime);
+//         }
+
+//         // Parse action filter
+//         if action is string {
+//             // Convert string to ActivityType enum
+//             // You might need to add proper enum parsing here
+//         }
+
+//         return check activitylog:getActivityLogs(filter);
+//     }
+
+//     // Get activity statistics - Admin only
+//     resource function get stats(http:Request request) returns activitylog:ActivityStats|http:Response|error {
+        
+//         auth:AuthOptions options = {
+//             allowedRoles: [auth:ADMIN],
+//             requiredPermissions: [auth:VIEW_AUDIT_LOGS]
+//         };
+
+//         auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
+//         if authResult is http:Response {
+//             return authResult;
+//         }
+
+//         // Log admin access to statistics
+//         error? logAccess = activitylog:logActivity({
+//             userId: authResult.id,
+//             userType: authResult.userType,
+//             action: activitylog:REPORT_GENERATED,
+//             endpoint: "/admin/activity-logs/api/v1/stats",
+//             httpMethod: "GET",
+//             status: activitylog:SUCCESS,
+//             details: "Activity statistics accessed"
+//         });
+
+//         return check activitylog:getActivityStats();
+//     }
+
+//     // Get security alerts - Admin only
+//     resource function get security\-alerts(http:Request request) returns activitylog:SecurityAlert[]|http:Response|error {
+        
+//         auth:AuthOptions options = {
+//             allowedRoles: [auth:ADMIN],
+//             requiredPermissions: [auth:VIEW_AUDIT_LOGS]
+//         };
+
+//         auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
+//         if authResult is http:Response {
+//             return authResult;
+//         }
+
+//         // Log admin access to security alerts
+//         error? logAccess = activitylog:logActivity({
+//             userId: authResult.id,
+//             userType: authResult.userType,
+//             action: activitylog:REPORT_GENERATED,
+//             endpoint: "/admin/activity-logs/api/v1/security-alerts",
+//             httpMethod: "GET",
+//             status: activitylog:SUCCESS,
+//             details: "Security alerts accessed"
+//         });
+
+//         return check activitylog:getSecurityAlerts();
+//     }
+// }
+

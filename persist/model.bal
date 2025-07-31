@@ -460,3 +460,42 @@ public type CandidateDistrictVoteSummary record {|
     int vavuniya;
     int totals;
 |};
+
+# Activity Log Table for auditing all user activities
+#
+# + id - Auto-incrementing Primary Key
+# + userId - ID of user who performed the action (nullable for failed logins)
+# + userType - Type of user (chief_occupant, household_member, admin, etc.)
+# + action - Action performed (LOGIN, LOGOUT, VOTE_CAST, ELECTION_CREATED, etc.)
+# + resourceId - Resource affected (election ID, candidate ID, etc.)
+# + httpMethod - HTTP method used (GET, POST, PUT, DELETE)
+# + endpoint - API endpoint that was called
+# + ipAddress - IP address of the user
+# + userAgent - Browser/client information
+# + timestamp - When the action occurred
+# + status - Result status (SUCCESS, FAILURE, ERROR)
+# + details - Additional JSON details about the action
+# + sessionId - Session identifier for tracking user sessions
+
+public type ActivityLog record {|
+    readonly string id;
+    @sql:Name {value: "user_id"}
+    string? userId;
+    @sql:Name {value: "user_type"}
+    string? userType;
+    string action;
+    @sql:Name {value: "resource_id"}
+    string? resourceId;
+    @sql:Name {value: "http_method"}
+    string? httpMethod;
+    string endpoint;
+    @sql:Name {value: "ip_address"}
+    string? ipAddress;
+    @sql:Name {value: "user_agent"}
+    string? userAgent;
+    time:Utc timestamp;
+    string status; // SUCCESS, FAILURE, ERROR
+    string? details; // JSON string for additional info
+    @sql:Name {value: "session_id"}
+    string? sessionId;
+|};

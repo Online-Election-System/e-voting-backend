@@ -28,6 +28,7 @@ const GRAMA_NILADHARI = "gramaniladharis";
 const NOTIFICATION = "notifications";
 const VOTER = "voters";
 const CANDIDATE_DISTRICT_VOTE_SUMMARY = "candidatedistrictvotesummaries";
+const ACTIVITY_LOG = "activitylogs";
 
 public isolated client class Client {
     *persist:AbstractPersistClient;
@@ -331,6 +332,26 @@ public isolated client class Client {
                 totals: {columnName: "totals"}
             },
             keyFields: ["electionId", "candidateId"]
+        },
+        [ACTIVITY_LOG]: {
+            entityName: "ActivityLog",
+            tableName: "ActivityLog",
+            fieldMetadata: {
+                id: {columnName: "id"},
+                userId: {columnName: "user_id"},
+                userType: {columnName: "user_type"},
+                action: {columnName: "action"},
+                resourceId: {columnName: "resource_id"},
+                httpMethod: {columnName: "http_method"},
+                endpoint: {columnName: "endpoint"},
+                ipAddress: {columnName: "ip_address"},
+                userAgent: {columnName: "user_agent"},
+                timestamp: {columnName: "timestamp"},
+                status: {columnName: "status"},
+                details: {columnName: "details"},
+                sessionId: {columnName: "session_id"}
+            },
+            keyFields: ["id"]
         }
     };
 
@@ -377,7 +398,8 @@ public isolated client class Client {
             [GRAMA_NILADHARI]: check new (dbClient, self.metadata.get(GRAMA_NILADHARI).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [NOTIFICATION]: check new (dbClient, self.metadata.get(NOTIFICATION).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [VOTER]: check new (dbClient, self.metadata.get(VOTER).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
-            [CANDIDATE_DISTRICT_VOTE_SUMMARY]: check new (dbClient, self.metadata.get(CANDIDATE_DISTRICT_VOTE_SUMMARY).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
+            [CANDIDATE_DISTRICT_VOTE_SUMMARY]: check new (dbClient, self.metadata.get(CANDIDATE_DISTRICT_VOTE_SUMMARY).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
+            [ACTIVITY_LOG]: check new (dbClient, self.metadata.get(ACTIVITY_LOG).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS)
         };
     }
 
@@ -1080,6 +1102,45 @@ public isolated client class Client {
             sqlClient = self.persistClients.get(CANDIDATE_DISTRICT_VOTE_SUMMARY);
         }
         _ = check sqlClient.runDeleteQuery({"electionId": electionId, "candidateId": candidateId});
+        return result;
+    }
+
+    isolated resource function get activitylogs(ActivityLogTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "query"
+    } external;
+
+    isolated resource function get activitylogs/[string id](ActivityLogTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
+        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
+        name: "queryOne"
+    } external;
+
+    isolated resource function post activitylogs(ActivityLogInsert[] data) returns string[]|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ACTIVITY_LOG);
+        }
+        _ = check sqlClient.runBatchInsertQuery(data);
+        return from ActivityLogInsert inserted in data
+            select inserted.id;
+    }
+
+    isolated resource function put activitylogs/[string id](ActivityLogUpdate value) returns ActivityLog|persist:Error {
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ACTIVITY_LOG);
+        }
+        _ = check sqlClient.runUpdateQuery(id, value);
+        return self->/activitylogs/[id].get();
+    }
+
+    isolated resource function delete activitylogs/[string id]() returns ActivityLog|persist:Error {
+        ActivityLog result = check self->/activitylogs/[id].get();
+        psql:SQLClient sqlClient;
+        lock {
+            sqlClient = self.persistClients.get(ACTIVITY_LOG);
+        }
+        _ = check sqlClient.runDeleteQuery(id);
         return result;
     }
 
