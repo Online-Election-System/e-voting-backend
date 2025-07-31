@@ -10,7 +10,6 @@ import ballerina/http;
 import ballerina/persist;
 import online_election.verification;
 import online_election.enrollment;
-import ballerina/log;
 
 listener http:Listener SharedListener = new (8080);
 
@@ -584,8 +583,6 @@ service /vote/api/v1 on SharedListener {
 
 //  NEW RESULTS API SERVICE - COMPREHENSIVE ELECTION RESULTS AND ANALYTICS 
 
-<<<<<<< HEAD
-=======
 @http:ServiceConfig {
     cors: {
         allowOrigins: ["http://localhost:3000"],
@@ -852,203 +849,39 @@ service /results/api/v1 on SharedListener {
     // }
 }
 
->>>>>>> 20c40ced0459e0c0cc3f8dec5cebae7a7e5f4bbc
 @http:ServiceConfig {
     cors: {
-        allowOrigins: ["http://localhost:3000"],
+        allowOrigins: ["http://localhost:3000"], // Your frontend URL
         allowMethods: ["GET", "POST", "PUT", "DELETE"],
         allowHeaders: ["Content-Type", "Authorization"]
     }
 }
-service /api/v1 on SharedListener { 
+service /api/v1 on SharedListener {
 
     // == REGISTRATION REVIEW ENDPOINTS ==
-    
-    // Get registration applications with optional filters
-    resource function get registrations/applications(string? nameOrNic, string? statusFilter)
+
+    // CORRECTED: All function calls now use the 'verification:' prefix.
+    resource function get registrations/applications(string? nameOrNic, string? statusFilter) 
     returns verification:RegistrationApplication[]|error {
         return verification:getRegistrationApplications(nameOrNic, statusFilter);
     }
 
-    // Get application counts by status
-    resource function get registrations/counts()
+    resource function get registrations/counts() 
     returns verification:StatusCounts|error {
         return verification:getApplicationCounts();
     }
 
-
-    // NEW ENDPOINT: Get detailed registration information by NIC
-// Get detailed registration information by NIC
-    resource function get registrations/application/[string nic]()
-    returns verification:RegistrationDetail|http:NotFound|http:InternalServerError {
-        
-        do {
-            verification:RegistrationDetail registrationDetail = check verification:getRegistrationDetailByNic(nic);
-            return registrationDetail;
-        } on fail error e {
-            log:printError("Error fetching registration detail for NIC: " + nic, e);
-            
-            // Check if it's a "not found" error
-            if e.message().includes("Registration not found") {
-                return http:NOT_FOUND;
-            }
-            
-            // Otherwise, it's an internal server error
-            return http:INTERNAL_SERVER_ERROR;
-        }
+    resource function get registrations/applications/[string nic]() 
+    returns verification:RegistrationDetails|http:NotFound|error {
+        return verification:getRegistrationDetails(nic);
     }
 
-    // Approve registration endpoint
-    resource function post registrations/[string nic]/approve()
-    returns http:Ok|http:NotFound|http:InternalServerError {
-        
-        do {
-            string _ = check verification:approveRegistration(nic);
-            log:printInfo("Registration approved successfully for NIC: " + nic);
-            return http:OK;
-        } on fail error e {
-            log:printError("Error approving registration for NIC: " + nic, e);
-            
-            if e.message().includes("not found") || e.message().includes("User not found") {
-                return http:NOT_FOUND;
-            }
-            
-            return http:INTERNAL_SERVER_ERROR;
-        }
+    resource function post registrations/applications/[string nic]/review(verification:ReviewRequest reviewData) 
+    returns http:Ok|http:Forbidden|error {
+        return verification:reviewApplication(nic, reviewData);
     }
 
-<<<<<<< HEAD
-    
-
-    // Reject registration endpoint
-    // service.bal
-resource function post registrations/[string nic]/reject(@http:Payload json payload)
-    returns http:InternalServerError & readonly|http:BadRequest & readonly|http:NotFound & readonly|http:Ok & readonly|error {
-        
-        // Extract reason from JSON payload
-        string reason;
-        do {
-            if payload is map<json> {
-                json reasonValue = payload["reason"];
-                if reasonValue is string {
-                    reason = reasonValue;
-                } else {
-                    log:printWarn("Invalid reason format in payload for NIC: " + nic);
-                    return http:BAD_REQUEST;
-                }
-            } else {
-                log:printWarn("Invalid payload format for NIC: " + nic);
-                return http:BAD_REQUEST;
-            }
-        } on fail error e {
-            log:printError("Error parsing payload for NIC: " + nic, e);
-            return http:BAD_REQUEST;
-        }
-        
-        // Validate rejection reason
-        if reason.trim() == "" {
-            log:printWarn("Rejection attempted without reason for NIC: " + nic);
-            return http:BAD_REQUEST;
-        }
-        
-        do {
-            string _ = check verification:rejectRegistration(nic, reason);
-            log:printInfo("Registration rejected successfully for NIC: " + nic + " with reason: " + reason);
-            return http:OK;
-        } on fail error e {
-            log:printError("Error rejecting registration for NIC: " + nic, e);
-            
-            if e.message().includes("not found") || e.message().includes("User not found") {
-                return http:NOT_FOUND;
-            }
-            
-            return http:INTERNAL_SERVER_ERROR;
-        }
-    }
-
-
-// == REMOVAL REQUEST ENDPOINTS ==
-    
-    // Get removal requests with optional filters
-    resource function get removal\-requests(string? search, string? status)
-    returns verification:RemovalRequest[]|error {
-        return verification:getRemovalRequests(search, status);
-    }
-
-    // Get removal request counts by status
-    resource function get removal\-requests/counts()
-    returns verification:RemovalRequestCounts|error {
-        return verification:getRemovalRequestCounts();
-    }
-
-    // Approve removal request endpoint
-    resource function post removal\-requests/[string deleteRequestId]/approve()
-    returns http:Ok|http:NotFound|http:InternalServerError {
-        
-        do {
-            string _ = check verification:approveRemovalRequest(deleteRequestId);
-            log:printInfo("Removal request approved successfully for ID: " + deleteRequestId);
-            return http:OK;
-        } on fail error e {
-            log:printError("Error approving removal request for ID: " + deleteRequestId, e);
-            
-            if e.message().includes("not found") || e.message().includes("Removal request not found") {
-                return http:NOT_FOUND;
-            }
-            
-            return http:INTERNAL_SERVER_ERROR;
-             }
-    }
-
-    // Reject removal request endpoint
-    resource function post removal\-requests/[string deleteRequestId]/reject(@http:Payload json payload)
-        returns http:InternalServerError & readonly|http:BadRequest & readonly|http:NotFound & readonly|http:Ok & readonly|error {
-        
-        // Extract reason from JSON payload
-        string reason;
-        do {
-            if payload is map<json> {
-                json reasonValue = payload["reason"];
-                if reasonValue is string {
-                    reason = reasonValue;
-                } else {
-                    log:printWarn("Invalid reason format in payload for deletion request ID: " + deleteRequestId);
-                    return http:BAD_REQUEST;
-                }
-            } else {
-                log:printWarn("Invalid payload format for deletion request ID: " + deleteRequestId);
-                return http:BAD_REQUEST;
-            }
-        } on fail error e {
-            log:printError("Error parsing payload for deletion request ID: " + deleteRequestId, e);
-            return http:BAD_REQUEST;
-        }
-        
-        // Validate rejection reason
-        if reason.trim() == "" {
-            log:printWarn("Rejection attempted without reason for deletion request ID: " + deleteRequestId);
-            return http:BAD_REQUEST;
-        }
-        
-        do {
-            string result = check verification:rejectRemovalRequest(deleteRequestId, reason);
-            log:printInfo("Removal request rejected successfully for ID: " + deleteRequestId + " with reason: " + reason + ". Result: " + result);
-            return http:OK;
-        } on fail error e {
-            log:printError("Error rejecting removal request for ID: " + deleteRequestId, e);
-            
-            if e.message().includes("not found") || e.message().includes("Removal request not found") {
-                return http:NOT_FOUND;
-            }
-            
-            return http:INTERNAL_SERVER_ERROR;
-        }
-    }
-
-        // === VOTER ENDPOINTS ===
-=======
     // === VOTER ENDPOINTS ===
->>>>>>> 20c40ced0459e0c0cc3f8dec5cebae7a7e5f4bbc
 
     // resource function post voter/login(@http:Payload enrollment:LoginRequest payload) 
     // returns enrollment:ApiResponse|error {
