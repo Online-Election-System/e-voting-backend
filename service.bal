@@ -48,6 +48,18 @@ service /admin/api/v1 on SharedListener {
         return check auth:registerElectionCommission(req);
     }
 
+    // Polling Station Registration - Admin Only
+    resource function post polling\-station/register(http:Request request, auth:PollingStationRegistrationRequest req)
+    returns json|http:Response|error {
+
+        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request);
+        if authResult is http:Response {
+            return authResult;
+        }
+
+        return check auth:registerPollingStation(req);
+    }
+
     // Admin endpoint for token monitoring - Admin Only
     resource function get token\-stats(http:Request request) returns json|http:Response|error {
         auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request);
