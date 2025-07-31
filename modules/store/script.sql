@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS "Election";
 DROP TABLE IF EXISTS "Notification";
 DROP TABLE IF EXISTS "HouseholdMembers";
 DROP TABLE IF EXISTS "AdminUsers";
+DROP TABLE IF EXISTS "CandidateDistrictVoteSummary";
 DROP TABLE IF EXISTS "DeleteMemberRequest";
 DROP TABLE IF EXISTS "GramaNiladhari";
 DROP TABLE IF EXISTS "UpdateMemberRequest";
@@ -127,6 +128,38 @@ CREATE TABLE "DeleteMemberRequest" (
 	"reason" VARCHAR(191),
 	"required_document_path" VARCHAR(191),
 	PRIMARY KEY("delete_request_id")
+);
+
+CREATE TABLE "CandidateDistrictVoteSummary" (
+	"election_id" VARCHAR(191) NOT NULL,
+	"candidate_id" VARCHAR(191) NOT NULL,
+	"ampara" INT NOT NULL,
+	"anuradhapura" INT NOT NULL,
+	"badulla" INT NOT NULL,
+	"batticaloa" INT NOT NULL,
+	"colombo" INT NOT NULL,
+	"galle" INT NOT NULL,
+	"gampaha" INT NOT NULL,
+	"hambantota" INT NOT NULL,
+	"jaffna" INT NOT NULL,
+	"kalutara" INT NOT NULL,
+	"kandy" INT NOT NULL,
+	"kegalle" INT NOT NULL,
+	"kilinochchi" INT NOT NULL,
+	"kurunegala" INT NOT NULL,
+	"mannar" INT NOT NULL,
+	"matale" INT NOT NULL,
+	"matara" INT NOT NULL,
+	"monaragala" INT NOT NULL,
+	"mullaitivu" INT NOT NULL,
+	"nuwaraeliya" INT NOT NULL,
+	"polonnaruwa" INT NOT NULL,
+	"puttalam" INT NOT NULL,
+	"ratnapura" INT NOT NULL,
+	"trincomalee" INT NOT NULL,
+	"vavuniya" INT NOT NULL,
+	"totals" INT NOT NULL,
+	PRIMARY KEY("election_id","candidate_id")
 );
 
 CREATE TABLE "AdminUsers" (

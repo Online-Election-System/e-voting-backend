@@ -28,6 +28,11 @@ public type RegistrationApplication record {|
     string dob;
     string? phone;
     string address;
+<<<<<<< HEAD
+=======
+    string? idCopyPath;
+    string? photoCopyPath;
+>>>>>>> 20c40ced0459e0c0cc3f8dec5cebae7a7e5f4bbc
     string status;
 |};
 
@@ -45,7 +50,15 @@ public type RegistrationDetail record {|
     string? gramaNiladhariDivision;
     string? village;
     string? houseNumber;
+<<<<<<< HEAD
     string address;
+=======
+    string fullAddress;
+    // Document Paths
+    string? idCopyPath;
+    string? photoCopyPath;
+    // Application Status Details
+>>>>>>> 20c40ced0459e0c0cc3f8dec5cebae7a7e5f4bbc
     string status;
     string? idCopyPath;
     string? photoCopyPath;

@@ -75,8 +75,13 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
         passwordHash: hashedPassword,
         email: request.chiefOccupant.email,
         idCopyPath: request.chiefOccupant.idCopyPath,
+        photoCopyPath: request.chiefOccupant.photoCopyPath,
         role: "chief_occupant"
+<<<<<<< HEAD
     ,photoCopyPath: ()};
+=======
+    };
+>>>>>>> 20c40ced0459e0c0cc3f8dec5cebae7a7e5f4bbc
 
     // DEBUG: Log what we're inserting
     log:printInfo("=== DEBUG: Inserting chief occupant ===");
@@ -97,7 +102,6 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
         log:printInfo("=== DEBUG: Verification - Chief in DB ===");
         log:printInfo("Verified chief idCopyPath from DB: " + (verifyChief.idCopyPath ?: "NULL"));
     }
-
     // Send welcome email
     error? emailError = sendWelcomeEmail(request.chiefOccupant.email, request.chiefOccupant.fullName, request.chiefOccupant.passwordHash);
     if emailError is error {
@@ -161,10 +165,15 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
             approvedByChief: member.approvedByChief,
             civilStatus: member.civilStatus,
             idCopyPath: member.idCopyPath,
+            photoCopyPath: member.photoCopyPath,
             passwordHash: memberHashedPassword,
             passwordchanged: false,
             role: "household_member"
+<<<<<<< HEAD
         ,photoCopyPath: ()};
+=======
+        };
+>>>>>>> 20c40ced0459e0c0cc3f8dec5cebae7a7e5f4bbc
 
         // DEBUG: Log what we're inserting for each member
         log:printInfo(string `=== DEBUG: Inserting member ${i} ===`);
@@ -200,7 +209,6 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
             // Don't fail the registration for email issues
         }
     }
-
     log:printInfo("Registration completed successfully");
     return {
         status: "success",
@@ -211,183 +219,259 @@ public function postRegistration(VoterRegistrationRequest request) returns json|
 }
 
 public function postLogin(LoginRequest loginReq) returns LoginResponse|http:Unauthorized|error {
-    // UPDATED: ChiefOccupant login with role-based verification
+    log:printInfo("=== LOGIN DEBUG START ===");
+    log:printInfo("Attempting login for NIC: " + loginReq.nic);
+    log:printInfo("Password length: " + loginReq.password.length().toString());
+
+    // ChiefOccupant login
+    log:printInfo("Checking ChiefOccupants table...");
     stream<store:ChiefOccupant, persist:Error?> chiefStream = dbClient->/chiefoccupants.get();
     boolean chiefFound = false;
+    int chiefCount = 0;
 
     check from store:ChiefOccupant chief in chiefStream
-        where chief.nic == loginReq.nic
         do {
             chiefFound = true;
             io:println("Chief found: ", chief.fullName);
-            io:println("Chief role: ", chief.role); // ADDED: Log the role
+            io:println("Chief role: ", chief.role);
+            chiefCount += 1;
+            log:printInfo("Checking chief #" + chiefCount.toString() + ": " + chief.nic + " vs " + loginReq.nic);
 
-            boolean|error isVerified = verifyPassword(loginReq.password, chief.passwordHash);
-            io:println("Password verification result: ", isVerified);
+            if chief.nic == loginReq.nic {
+                chiefFound = true;
+                log:printInfo("Chief found: " + chief.fullName);
+                log:printInfo("Stored password hash: " + chief.passwordHash);
 
-            if isVerified is error || !isVerified {
+                boolean|error isVerified = verifyPassword(loginReq.password, chief.passwordHash);
+                log:printInfo("Password verification result: " + (check isVerified).toString());
+
+                if isVerified is error {
+                    log:printError("Password verification error: " + isVerified.message());
+                    check chiefStream.close();
+                    return http:UNAUTHORIZED;
+                }
+
+                if !isVerified {
+                    log:printInfo("Password verification failed - passwords don't match");
+                    check chiefStream.close();
+                    return http:UNAUTHORIZED;
+                }
+
+                // MOVED: Check role and only allow verified chief occupants or regular chief occupants
+                string userRole;
+                UserRole jwtRole;
+
+                if chief.role == "verified_chief_occupant" {
+                    userRole = "verified_chief_occupant";
+                    jwtRole = VERIFIED_CHIEF_OCCUPANT;
+                    io:println("Verified chief occupant login approved");
+                } else if chief.role == "chief_occupant" {
+                    userRole = "chief_occupant";
+                    jwtRole = CHIEF_OCCUPANT;
+                    io:println("Regular chief occupant login approved");
+                } else {
+                    // Reject login if role is not recognized
+                    io:println("Unrecognized chief occupant role: ", chief.role);
+                    check chiefStream.close();
+                    return http:UNAUTHORIZED;
+                }
+
+                // Use new JWT generation with ID tracking
+                io:println("About to generate JWT for chief ID: ", chief.id);
+                string|error token = generateJwtWithId(chief.id.toString(), jwtRole);
+
+                if token is error {
+                    io:println("JWT generation failed: ", token);
+                    check chiefStream.close();
+                    return http:UNAUTHORIZED;
+                }
+
+                io:println("JWT generated successfully");
+                io:println("Returning successful response");
+
                 check chiefStream.close();
-                return http:UNAUTHORIZED;
+
+                // Response with cookie
+                LoginResponse response = {
+                    userId: chief.id,
+                    userType: userRole,
+                    fullName: chief.fullName,
+                    message: "Login successful"
+                };
+
+                return response;
             }
-
-            // UPDATED: Check role and only allow verified chief occupants or regular chief occupants
-            string userRole;
-            UserRole jwtRole;
-            
-            if chief.role == "verified_chief_occupant" {
-                userRole = "verified_chief_occupant";
-                jwtRole = VERIFIED_CHIEF_OCCUPANT;
-                io:println("Verified chief occupant login approved");
-            } else if chief.role == "chief_occupant" {
-                userRole = "chief_occupant";
-                jwtRole = CHIEF_OCCUPANT;
-                io:println("Regular chief occupant login approved");
-            } else {
-                // ADDED: Reject login if role is not recognized
-                io:println("Unrecognized chief occupant role: ", chief.role);
-                check chiefStream.close();
-                return http:UNAUTHORIZED;
-            }
-
-            // Use new JWT generation with ID tracking
-            io:println("About to generate JWT for chief ID: ", chief.id);
-            string|error token = generateJwtWithId(chief.id.toString(), jwtRole);
-
-            if token is error {
-                io:println("JWT generation failed: ", token);
-                check chiefStream.close();
-                return http:UNAUTHORIZED;
-            }
-
-            io:println("JWT generated successfully");
-            io:println("Returning successful response");
-
-            check chiefStream.close();
-            return {
-                userId: chief.id,
-                userType: userRole, // UPDATED: Return the actual role
-                fullName: chief.fullName,
-                message: "Login successful",
-                token: token
-            };
+            // If NIC doesn't match, continue to next iteration without processing
         };
     check chiefStream.close();
+
+    log:printInfo("Total chiefs checked: " + chiefCount.toString());
     if !chiefFound {
-        io:println("No chief found with NIC: ", loginReq.nic);
+        log:printInfo("No chief found with NIC: " + loginReq.nic);
     }
 
-    // UPDATED: Household members login with role-based verification
+    // Household members login
+    log:printInfo("Checking HouseholdMembers table...");
     stream<store:HouseholdMembers, persist:Error?> memberStream = dbClient->/householdmembers.get();
+    int memberCount = 0;
     boolean memberFound = false;
-    
+
     check from store:HouseholdMembers member in memberStream
-        where member.nic == loginReq.nic
         do {
-            memberFound = true;
-            io:println("Household member found: ", member.fullName);
-            io:println("Member role: ", member.role); // ADDED: Log the role
-            io:println("Member ID: ", member.id); // ADDED: Log member ID
-            check memberStream.close();
+            memberCount += 1;
 
-            io:println("About to verify password for member"); // ADDED: Debug log
-            boolean|error isVerified = verifyPassword(loginReq.password, member.passwordHash);
-            io:println("Password verification result for member: ", isVerified); // ADDED: Enhanced logging
-            
-            if isVerified is error {
-                io:println("Password verification error: ", isVerified.message()); // ADDED: Log error details
-                return http:UNAUTHORIZED;
-            }
-            
-            if !isVerified {
-                io:println("Password verification failed - incorrect password"); // ADDED: Log failure reason
-                return http:UNAUTHORIZED;
-            }
+            if member.nic == loginReq.nic {
+                memberFound = true;
+                io:println("Household member found: ", member.fullName);
+                io:println("Member role: ", member.role);
+                io:println("Member ID: ", member.id);
 
-            // UPDATED: Check role and only allow verified household members or regular household members
-            string userRole;
-            UserRole jwtRole;
-            
-            if member.role == "verified_household_member" {
-                userRole = "verified_household_member";
-                jwtRole = VERIFIED_HOUSEHOLD_MEMBER;
-                io:println("Verified household member login approved");
-            } else if member.role == "household_member" {
-                userRole = "household_member";
-                jwtRole = HOUSEHOLD_MEMBER;
-                io:println("Regular household member login approved");
-            } else {
-                // ADDED: Reject login if role is not recognized
-                io:println("Unrecognized household member role: ", member.role);
-                return http:UNAUTHORIZED;
-            }
+                io:println("About to verify password for member");
+                boolean|error isVerified = verifyPassword(loginReq.password, member.passwordHash);
+                io:println("Password verification result for member: ", isVerified);
 
-            io:println("About to generate JWT for member ID: ", member.id); // ADDED: Debug log
-            string|error token = generateJwtWithId(member.id.toString(), jwtRole);
-            if token is error {
-                io:println("JWT generation failed for member: ", token.message()); // ADDED: Log JWT error
-                return http:UNAUTHORIZED;
+                if isVerified is error {
+                    io:println("Password verification error: ", isVerified.message());
+                    check memberStream.close();
+                    return http:UNAUTHORIZED;
+                }
+
+                if !isVerified {
+                    io:println("Password verification failed - incorrect password");
+                    check memberStream.close();
+                    return http:UNAUTHORIZED;
+                }
+
+                // Check role and only allow verified household members or regular household members
+                string userRole;
+                UserRole jwtRole;
+
+                if member.role == "verified_household_member" {
+                    userRole = "verified_household_member";
+                    jwtRole = VERIFIED_HOUSEHOLD_MEMBER;
+                    io:println("Verified household member login approved");
+                } else if member.role == "household_member" {
+                    userRole = "household_member";
+                    jwtRole = HOUSEHOLD_MEMBER;
+                    io:println("Regular household member login approved");
+                } else {
+                    // Reject login if role is not recognized
+                    io:println("Unrecognized household member role: ", member.role);
+                    check memberStream.close();
+                    return http:UNAUTHORIZED;
+                }
+
+                io:println("About to generate JWT for member ID: ", member.id);
+                string|error token = generateJwtWithId(member.id.toString(), jwtRole);
+                if token is error {
+                    io:println("JWT generation failed for member: ", token.message());
+                    check memberStream.close();
+                    return http:UNAUTHORIZED;
+                }
+
+                io:println("JWT generated successfully for member");
+                io:println("Returning successful login response for member");
+
+                check memberStream.close();
+
+                // Response with cookie
+                LoginResponse response = {
+                    userId: member.id,
+                    userType: userRole,
+                    fullName: member.fullName,
+                    message: member.passwordchanged ? "Login successful" : "First-time login. Please change your password."
+                };
+
+                return response;
             }
-            
-            io:println("JWT generated successfully for member"); // ADDED: Success log
-            io:println("Returning successful login response for member"); // ADDED: Final success log
-            
-            return {
-                userId: member.id,
-                userType: userRole, // UPDATED: Return the actual role
-                fullName: member.fullName,
-                message: member.passwordchanged ? "Login successful" : "First-time login. Please change your password.",
-                token: token
-            };
+            // If NIC doesn't match, continue to next iteration
         };
     check memberStream.close();
-    
+
     if !memberFound {
         io:println("No household member found with NIC: ", loginReq.nic); // ADDED: Log when no member found
     }
-    
 
-    // Government officials & election commission login (AdminUsers table) - NO CHANGES
-    io:println("Now checking AdminUsers table...");
+    log:printInfo("Total members checked: " + memberCount.toString());
+    if !memberFound {
+        log:printInfo("No member found with NIC: " + loginReq.nic);
+    }
+
+    // Government officials & election commission login (AdminUsers table)
+    log:printInfo("Checking AdminUsers table...");
     stream<store:AdminUsers, persist:Error?> adminStream = dbClient->/adminusers.get();
+    int adminCount = 0;
+    boolean adminFound = false;
+
     check from store:AdminUsers admin in adminStream
-        where admin.username == loginReq.nic
         do {
-            io:println("Found matching username in AdminUsers: ", admin.username);
-            check adminStream.close();
-            boolean|error isVerified = verifyPassword(loginReq.password, admin.passwordHash);
-             io:println("Password verification result for admin: ", isVerified);
-            if isVerified is error || !isVerified {
-                return http:UNAUTHORIZED;
-            }
+            adminCount += 1;
+            log:printInfo("Checking admin #" + adminCount.toString() + ": " + admin.username + " vs " + loginReq.nic);
 
-            // Map admin role to UserRole enum
-            UserRole role;
-            if admin.role == "government_official" {
-                role = GOVERNMENT_OFFICIAL;
-            } else if admin.role == "election_commission" {
-                role = ELECTION_COMMISSION;
-            } else if admin.role == "admin" {
-                role = ADMIN;
-            } else {
-                return http:UNAUTHORIZED; // Unknown role
-            }
+            if admin.username == loginReq.nic {
+                adminFound = true;
+                log:printInfo("Admin found: " + admin.username);
+                log:printInfo("Stored password hash: " + admin.passwordHash);
 
-            string|error token = generateJwtWithId(admin.id.toString(), role);
-            if token is error {
-                return http:UNAUTHORIZED;
+                boolean|error isVerified = verifyPassword(loginReq.password, admin.passwordHash);
+                log:printInfo("Password verification result: " + (check isVerified).toString());
+
+                if isVerified is error {
+                    log:printError("Password verification error: " + isVerified.message());
+                    check adminStream.close();
+                    return http:UNAUTHORIZED;
+                }
+
+                if !isVerified {
+                    log:printInfo("Password verification failed - passwords don't match");
+                    check adminStream.close();
+                    return http:UNAUTHORIZED;
+                }
+
+                UserRole role;
+                if admin.role == "government_official" {
+                    role = GOVERNMENT_OFFICIAL;
+                } else if admin.role == "election_commission" {
+                    role = ELECTION_COMMISSION;
+                } else if admin.role == "polling_station" {
+                    role = POLLING_STATION;
+                } else if admin.role == "admin" {
+                    role = ADMIN;
+                } else {
+                    log:printError("Unknown admin role: " + admin.role);
+                    check adminStream.close();
+                    return http:UNAUTHORIZED;
+                }
+
+                string|error token = generateJwtWithId(admin.id.toString(), role);
+                if token is error {
+                    log:printError("JWT generation failed: " + token.message());
+                    check adminStream.close();
+                    return http:UNAUTHORIZED;
+                }
+
+                check adminStream.close();
+                log:printInfo("Admin login successful");
+
+                // Response with cookie
+                LoginResponse response = {
+                    userId: admin.id,
+                    userType: admin.role,
+                    fullName: admin.username,
+                    message: "Login successful"
+                };
+
+                return response;
             }
-            return {
-                userId: admin.id,
-                userType: admin.role,
-               
-                fullName: admin.username,
-                message: "Login successful",
-                token: token
-            };
         };
     check adminStream.close();
 
-io:println("Did not find a matching user in AdminUsers table, or password was incorrect.");
+    log:printInfo("Total admins checked: " + adminCount.toString());
+    if !adminFound {
+        log:printInfo("No admin found with username: " + loginReq.nic);
+    }
+
+    log:printInfo("=== LOGIN DEBUG END - NO USER FOUND ===");
     return http:UNAUTHORIZED;
 }
 
@@ -484,4 +568,5 @@ public function postResetPassword(PasswordResetRequest req) returns http:Ok|http
     // Then update their password similar to changePassword function
 
     return http:OK;
+
 }

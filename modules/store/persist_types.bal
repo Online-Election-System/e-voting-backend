@@ -603,3 +603,98 @@ public type DeleteMemberRequestUpdate record {|
     string? requiredDocumentPath?;
 |};
 
+public type CandidateDistrictVoteSummary record {|
+    readonly string electionId;
+    readonly string candidateId;
+    int ampara;
+    int anuradhapura;
+    int badulla;
+    int batticaloa;
+    int colombo;
+    int galle;
+    int gampaha;
+    int hambantota;
+    int jaffna;
+    int kalutara;
+    int kandy;
+    int kegalle;
+    int kilinochchi;
+    int kurunegala;
+    int mannar;
+    int matale;
+    int matara;
+    int monaragala;
+    int mullaitivu;
+    int nuwaraeliya;
+    int polonnaruwa;
+    int puttalam;
+    int ratnapura;
+    int trincomalee;
+    int vavuniya;
+    int totals;
+|};
+
+public type CandidateDistrictVoteSummaryOptionalized record {|
+    string electionId?;
+    string candidateId?;
+    int ampara?;
+    int anuradhapura?;
+    int badulla?;
+    int batticaloa?;
+    int colombo?;
+    int galle?;
+    int gampaha?;
+    int hambantota?;
+    int jaffna?;
+    int kalutara?;
+    int kandy?;
+    int kegalle?;
+    int kilinochchi?;
+    int kurunegala?;
+    int mannar?;
+    int matale?;
+    int matara?;
+    int monaragala?;
+    int mullaitivu?;
+    int nuwaraeliya?;
+    int polonnaruwa?;
+    int puttalam?;
+    int ratnapura?;
+    int trincomalee?;
+    int vavuniya?;
+    int totals?;
+|};
+
+public type CandidateDistrictVoteSummaryTargetType typedesc<CandidateDistrictVoteSummaryOptionalized>;
+
+public type CandidateDistrictVoteSummaryInsert CandidateDistrictVoteSummary;
+
+public type CandidateDistrictVoteSummaryUpdate record {|
+    int ampara?;
+    int anuradhapura?;
+    int badulla?;
+    int batticaloa?;
+    int colombo?;
+    int galle?;
+    int gampaha?;
+    int hambantota?;
+    int jaffna?;
+    int kalutara?;
+    int kandy?;
+    int kegalle?;
+    int kilinochchi?;
+    int kurunegala?;
+    int mannar?;
+    int matale?;
+    int matara?;
+    int monaragala?;
+    int mullaitivu?;
+    int nuwaraeliya?;
+    int polonnaruwa?;
+    int puttalam?;
+    int ratnapura?;
+    int trincomalee?;
+    int vavuniya?;
+    int totals?;
+|};
+
