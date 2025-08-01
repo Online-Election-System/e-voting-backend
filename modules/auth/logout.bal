@@ -1,8 +1,9 @@
+import ballerina/crypto;
 import ballerina/http;
 import ballerina/jwt;
 import ballerina/log;
 import ballerina/time;
-import ballerina/crypto;
+import online_election.activityLog;
 
 // Enhanced token blacklist with expiry matching JWT exp claim
 final map<BlacklistedTokenRecord> tokenBlacklist = {};
@@ -95,6 +96,16 @@ public function logout(http:Request request) returns http:Response|error {
         // Kill any refresh tokens for this user (implement based on your refresh token storage)
         int revokedRefreshTokens = revokeRefreshTokensForUser(userIdClaim);
 
+        // Log logout
+        error? logLogout = activityLog:logAuthenticationActivity(
+                userIdClaim,
+                roleClaim,
+                activityLog:LOGOUT,
+                activityLog:SUCCESS,
+                request,
+                "User logged out successfully"
+            );
+
         log:printInfo(string `User logged out - ID: ${userIdClaim}, Role: ${roleClaim}, JWT: ${jtiClaim}, Refresh tokens revoked: ${revokedRefreshTokens}`);
     }
 
@@ -135,26 +146,26 @@ function revokeRefreshTokensForUser(string userId) returns int {
 public function validateTokenWithBlacklist(string token) returns AuthenticatedUser|AuthenticationError {
     log:printInfo("=== JWT VALIDATION START ===");
     log:printInfo("Validating token...");
-    
+
     // Step 1: Decode public key from certificate using crypto library
     crypto:PublicKey|error publicKeyResult = crypto:decodeRsaPublicKeyFromCertFile(
-        "./resources/certificate.crt"
+            "./resources/certificate.crt"
     );
-    
+
     if publicKeyResult is error {
         log:printError("Failed to decode public key: " + publicKeyResult.message());
         return error AuthenticationError("Public key loading failed: " + publicKeyResult.message());
     }
-    
+
     log:printInfo("Public key loaded successfully");
-    
+
     // Step 2: Configure JWT validator with decoded public key
     jwt:ValidatorConfig validatorConfig = {
         issuer: "election-authority",
         audience: "election-clients",
         clockSkew: 300, // 5 minutes tolerance
         signatureConfig: {
-            certFile: publicKeyResult     // Use decoded crypto:PublicKey directly
+            certFile: publicKeyResult // Use decoded crypto:PublicKey directly
         }
     };
 

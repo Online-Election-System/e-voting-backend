@@ -233,3 +233,9 @@ public type VoterLogin record {
     string nationalId;
     string password;
 };
+
+public type RequestMetadata record {
+    string? ipAddress;
+    string? userAgent;
+    string? sessionId;
+};
