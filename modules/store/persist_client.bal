@@ -301,6 +301,52 @@ public isolated client class Client {
             },
             keyFields: ["id"]
         },
+        [ADD_MEMBER_REQUEST]: {
+            entityName: "AddMemberRequest",
+            tableName: "AddMemberRequest",
+            fieldMetadata: {
+                addRequestId: {columnName: "add_request_id"},
+                chiefOccupantId: {columnName: "chief_occupant_id"},
+                nicNumber: {columnName: "nic_number"},
+                fullName: {columnName: "full_name"},
+                dateOfBirth: {columnName: "date_of_birth"},
+                gender: {columnName: "gender"},
+                civilStatus: {columnName: "civil_status"},
+                relationshipToChief: {columnName: "relationship_to_chief"},
+                chiefOccupantApproval: {columnName: "chief_occupant_approval"},
+                requestStatus: {columnName: "request_status"},
+                reason: {columnName: "reason"},
+                nicOrBirthCertificatePath: {columnName: "nic_or_birth_certificate_path"},
+                photoCopyPath: {columnName: "photo_copy_path"}
+            },
+            keyFields: ["addRequestId"]
+        },
+        [UPDATE_MEMBER_REQUEST]: {
+            entityName: "UpdateMemberRequest",
+            tableName: "UpdateMemberRequest",
+            fieldMetadata: {
+                updateRequestId: {columnName: "update_request_id"},
+                chiefOccupantId: {columnName: "chief_occupant_id"},
+                householdMemberId: {columnName: "household_member_id"},
+                newFullName: {columnName: "new_full_name"},
+                newCivilStatus: {columnName: "new_civil_status"},
+                relevantCertificatePath: {columnName: "relevant_certificate_path"},
+                reason: {columnName: "reason"}
+            },
+            keyFields: ["updateRequestId"]
+        },
+        [DELETE_MEMBER_REQUEST]: {
+            entityName: "DeleteMemberRequest",
+            tableName: "DeleteMemberRequest",
+            fieldMetadata: {
+                deleteRequestId: {columnName: "delete_request_id"},
+                chiefOccupantId: {columnName: "chief_occupant_id"},
+                householdMemberId: {columnName: "household_member_id"},
+                requestStatus: {columnName: "request_status"},
+                reason: {columnName: "reason"},
+                requiredDocumentPath: {columnName: "required_document_path"},
+                rejectionReason: {columnName: "rejection_reason"}
+
         [CANDIDATE_DISTRICT_VOTE_SUMMARY]: {
             entityName: "CandidateDistrictVoteSummary",
             tableName: "CandidateDistrictVoteSummary",

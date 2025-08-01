@@ -199,64 +199,6 @@ public type AdminUsers record {|
     boolean isActive;
 |};
 
-public type AddMemberRequest record {|
-    @sql:Name {value: "add_request_id"}
-    readonly string addRequestId;
-    @sql:Name {value: "chief_occupant_id"}
-    string chiefOccupantId;
-    @sql:Name {value: "nic_number"}
-    string nicNumber;
-    @sql:Name {value: "full_name"}
-    string fullName;
-    @sql:Name {value: "date_of_birth"}
-    string dateOfBirth;
-    string gender; 
-    @sql:Name {value: "civil_status"}
-    string civilStatus;
-    @sql:Name {value: "relationship_to_chief"}
-    string relationshipToChief;
-    @sql:Name {value: "chief_occupant_approval"}
-    string chiefOccupantApproval; 
-    @sql:Name {value: "request_status"}
-    string requestStatus;
-    string? reason;
-    @sql:Name {value: "nic_or_birth_certificate_path"}
-    string? nicOrBirthCertificatePath;
-    @sql:Name {value: "photo_copy_path"}
-    string? photoCopyPath;
-|};
-
-public type UpdateMemberRequest record {|
-    @sql:Name {value: "update_request_id"}
-    readonly string updateRequestId;
-    @sql:Name {value: "chief_occupant_id"}
-    string chiefOccupantId;
-    @sql:Name {value: "household_member_id"}
-    string? householdMemberId;
-    @sql:Name {value: "new_full_name"}
-    string? newFullName;
-    @sql:Name {value: "new_civil_status"}
-    string? newCivilStatus;
-    @sql:Name {value: "relevant_certificate_path"}
-    string relevantCertificatePath;
-    string? reason;
-|};
-
-public type DeleteMemberRequest record {|
-    @sql:Name {value: "delete_request_id"}
-    readonly string deleteRequestId;
-    @sql:Name {value: "chief_occupant_id"}
-    string chiefOccupantId; 
-    @sql:Name {value: "household_member_id"}
-    string? householdMemberId; 
-    @sql:Name {value: "request_status"}
-    string? requestStatus;
-    string? reason; 
-    @sql:Name {value: "required_document_path"}
-    string? requiredDocumentPath;
-    @sql:Name {value: "rejection_reason"}
-    string? rejectionReason;
-|};
 # Description.
 #
 # + electionId - election id
@@ -305,20 +247,6 @@ public type Enrolment record {|
     readonly string electionId;
     @sql:Name {value: "enrollement_date"}
     time:Utc enrollementDate;
-|};
-
-// -- Removal Requests Table --
-public type RemovalRequest record {|
-    readonly string id;
-    @sql:Name { value: "member_name" }
-    string memberName;
-    string nic;
-    @sql:Name { value: "requested_by" }
-    string requestedBy;
-    string reason;
-    @sql:Name { value: "proof_document" }
-    string proofDocument;
-    string status; // pending, approved, rejected
 |};
 
 // -- Registration Reviews Table --
@@ -402,6 +330,76 @@ public type Voter record {|
     time:Date registrationDate;
     string status;
 |};
+
+public type AddMemberRequest record {|
+    @sql:Name {value: "add_request_id"}
+    readonly string addRequestId;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId;
+    @sql:Name {value: "nic_number"}
+    string nicNumber;
+    @sql:Name {value: "full_name"}
+    string fullName;
+    @sql:Name {value: "date_of_birth"}
+    string dateOfBirth;
+    string gender; 
+    @sql:Name {value: "civil_status"}
+    string civilStatus;
+    @sql:Name {value: "relationship_to_chief"}
+    string relationshipToChief;
+    @sql:Name {value: "chief_occupant_approval"}
+    string chiefOccupantApproval; 
+    @sql:Name {value: "request_status"}
+    string requestStatus;
+    string? reason;
+    @sql:Name {value: "nic_or_birth_certificate_path"}
+    string? nicOrBirthCertificatePath;
+    @sql:Name {value: "photo_copy_path"}
+    string? photoCopyPath;
+|};
+
+public type UpdateMemberRequest record {|
+    @sql:Name {value: "update_request_id"}
+    readonly string updateRequestId;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId;
+    @sql:Name {value: "household_member_id"}
+    string? householdMemberId;
+    @sql:Name {value: "new_full_name"}
+    string? newFullName;
+    @sql:Name {value: "new_civil_status"}
+    string? newCivilStatus;
+    @sql:Name {value: "relevant_certificate_path"}
+    string relevantCertificatePath;
+    string? reason;
+|};
+
+
+# Description.
+#
+# + deleteRequestId - field description  
+# + chiefOccupantId - field description  
+# + householdMemberId - field description  
+# + requestStatus - field description  
+# + reason - field description 
+# + requiredDocumentPath - field description
+# + rejectionReason - field description
+public type DeleteMemberRequest record {|
+    @sql:Name {value: "delete_request_id"}
+    readonly string deleteRequestId;
+    @sql:Name {value: "chief_occupant_id"}
+    string chiefOccupantId; 
+    @sql:Name {value: "household_member_id"}
+    string? householdMemberId; 
+    @sql:Name {value: "request_status"}
+    string? requestStatus;
+    string? reason; 
+    @sql:Name {value: "required_document_path"}
+    string? requiredDocumentPath;
+    @sql:Name {value: "rejection_reason"}
+    string? rejectionReason;
+|};
+
 # Description.
 #
 # + electionId - foreign key reference to the Election record
