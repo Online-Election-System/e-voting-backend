@@ -139,6 +139,7 @@ public type ChiefOccupantInsert record {| // Added role, isVerified, verifiedAt,
     string passwordHash;
     string email;
     string? idCopyPath;
+    string? photoCopyPath;
     string role = "chief_occupant";
 |};
 
@@ -153,6 +154,7 @@ public type HouseholdMembersInsert record {| // Added role, isVerified, verified
     boolean approvedByChief;
     string civilStatus;
     string? idCopyPath;
+    string? photoCopyPath;
     string passwordHash;
     boolean passwordchanged;
     string role = "household_member";

@@ -9,17 +9,19 @@ public type AddMemberRequest record {|
     string relationshipToChief;
     string chiefOccupantApproval;
     string requestStatus;
+    string? reason;
     string? nicOrBirthCertificatePath;
+    string? photoCopyPath;
 |};
 
 public type UpdateMemberRequest record {|
     readonly string updateRequestId;
     string chiefOccupantId;
-    string householdMemberId;
+    string? householdMemberId;
     string? newFullName;
-    string? newResidentArea;
-    string requestStatus;
-    string? relevantCertificatePath;
+    string? newCivilStatus;
+    string relevantCertificatePath;
+    string? reason;
 |};
 
 public type DeleteMemberRequest record {|
@@ -28,4 +30,6 @@ public type DeleteMemberRequest record {|
     string householdMemberId;
     string requestStatus;
     string? requiredDocumentPath;
+    string? reason;
+    string? rejectionReason;
 |};

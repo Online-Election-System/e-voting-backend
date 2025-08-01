@@ -219,8 +219,11 @@ public type AddMemberRequest record {|
     string chiefOccupantApproval; 
     @sql:Name {value: "request_status"}
     string requestStatus;
+    string? reason;
     @sql:Name {value: "nic_or_birth_certificate_path"}
     string? nicOrBirthCertificatePath;
+    @sql:Name {value: "photo_copy_path"}
+    string? photoCopyPath;
 |};
 
 public type UpdateMemberRequest record {|
@@ -232,12 +235,11 @@ public type UpdateMemberRequest record {|
     string? householdMemberId;
     @sql:Name {value: "new_full_name"}
     string? newFullName;
-    @sql:Name {value: "new_resident_area"}
-    string? newResidentArea;
-    @sql:Name {value: "request_status"}
-    string requestStatus;
+    @sql:Name {value: "new_civil_status"}
+    string? newCivilStatus;
     @sql:Name {value: "relevant_certificate_path"}
-    string? relevantCertificatePath;
+    string relevantCertificatePath;
+    string? reason;
 |};
 
 public type DeleteMemberRequest record {|
@@ -248,9 +250,12 @@ public type DeleteMemberRequest record {|
     @sql:Name {value: "household_member_id"}
     string? householdMemberId; 
     @sql:Name {value: "request_status"}
-    string requestStatus; 
+    string? requestStatus;
+    string? reason; 
     @sql:Name {value: "required_document_path"}
     string? requiredDocumentPath;
+    @sql:Name {value: "rejection_reason"}
+    string? rejectionReason;
 |};
 # Description.
 #
