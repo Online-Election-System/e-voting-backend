@@ -5,12 +5,13 @@ import online_election.results;
 import online_election.vote;
 import online_election.store;
 import online_election.HouseholdManagement;
-// import online_election.activityLog;
+import online_election.activityLog;
 
 import ballerina/http;
 import ballerina/persist;
 import online_election.verification;
 import online_election.enrollment;
+import ballerina/time;
 
 listener http:Listener SharedListener = new (8080);
 
@@ -81,17 +82,17 @@ service /admin/api/v1 on SharedListener {
 }
 service /voter\-registration/api/v1 on SharedListener {
 
-    // Public registration endpoint
-    resource function post register(auth:VoterRegistrationRequest request)
+    // Enhanced public registration endpoint with complete request logging
+    resource function post register(auth:VoterRegistrationRequest request, http:Request httpRequest)
     returns json|http:Forbidden|error {
-        return check auth:postRegistration(request);
+        return check auth:postRegistration(request, httpRequest);
     }
 
-    // Public login endpoint
-    resource function post login(auth:LoginRequest loginReq, http:Request request)
+    // Enhanced public login endpoint with complete request logging
+    resource function post login(auth:LoginRequest loginReq, http:Request httpRequest)
     returns http:Response|http:Unauthorized|error {
 
-        auth:LoginResponse|http:Unauthorized loginResult = check auth:postLogin(loginReq);
+        auth:LoginResponse|http:Unauthorized loginResult = check auth:postLogin(loginReq, httpRequest);
 
         if loginResult is http:Unauthorized {
             return loginResult;
@@ -126,11 +127,64 @@ service /voter\-registration/api/v1 on SharedListener {
         return response;
     }
     
-    resource function get profile/[string voterId]() returns json|error {
-        return check vote:getCompleteVoterProfile(voterId);
+    // Enhanced profile endpoint with complete request logging
+    resource function get profile/[string voterId](http:Request httpRequest) returns json|error {
+        // Log profile access attempt
+        string? ipAddress = activityLog:getIpFromRequest(httpRequest);
+        string? userAgent = activityLog:getUserAgentFromRequest(httpRequest);
+        
+        error? logAccess = activityLog:logActivity({
+            userId: voterId,
+            userType: (), // Can be extracted from JWT if needed
+            action: activityLog:DATA_EXPORT,
+            resourceId: voterId,
+            httpMethod: httpRequest.method,
+            endpoint: httpRequest.rawPath,
+            ipAddress: ipAddress,
+            userAgent: userAgent,
+            status: activityLog:PENDING,
+            details: string `Profile access attempt for voter: ${voterId}`,
+            sessionId: () // Can be extracted from JWT if needed
+        });
+        
+        json|error result = check vote:getCompleteVoterProfile(voterId);
+        
+        if result is json {
+            // Log successful profile access
+            error? logSuccess = activityLog:logActivity({
+                userId: voterId,
+                userType: (),
+                action: activityLog:DATA_EXPORT,
+                resourceId: voterId,
+                httpMethod: httpRequest.method,
+                endpoint: httpRequest.rawPath,
+                ipAddress: ipAddress,
+                userAgent: userAgent,
+                status: activityLog:SUCCESS,
+                details: string `Profile successfully retrieved for voter: ${voterId}`,
+                sessionId: ()
+            });
+        } else {
+            // Log failed profile access
+            error? logFailure = activityLog:logActivity({
+                userId: voterId,
+                userType: (),
+                action: activityLog:DATA_EXPORT,
+                resourceId: voterId,
+                httpMethod: httpRequest.method,
+                endpoint: httpRequest.rawPath,
+                ipAddress: ipAddress,
+                userAgent: userAgent,
+                status: activityLog:FAILURE,
+                details: string `Profile retrieval failed for voter: ${voterId}. Error: ${result.message()}`,
+                sessionId: ()
+            });
+        }
+        
+        return result;
     }
 
-    // Get elections where voter is enrolled
+    // Enhanced elections endpoint with complete request logging
     @http:ResourceConfig {
         cors: {
             allowOrigins: ["http://localhost:3000"],
@@ -139,12 +193,63 @@ service /voter\-registration/api/v1 on SharedListener {
             allowMethods: ["GET", "OPTIONS"]
         }
     }
-    resource function get voter/[string voterId]/elections() returns store:Election[]|error {
-        return check vote:getVoterEnrolledElections(voterId);
+    resource function get voter/[string voterId]/elections(http:Request httpRequest) returns store:Election[]|error {
+        // Log elections access attempt
+        string? ipAddress = activityLog:getIpFromRequest(httpRequest);
+        string? userAgent = activityLog:getUserAgentFromRequest(httpRequest);
+        
+        error? logAccess = activityLog:logActivity({
+            userId: voterId,
+            userType: (), // Can be extracted from JWT if needed
+            action: activityLog:ELECTION_VIEWED,
+            resourceId: voterId,
+            httpMethod: httpRequest.method,
+            endpoint: httpRequest.rawPath,
+            ipAddress: ipAddress,
+            userAgent: userAgent,
+            status: activityLog:PENDING,
+            details: string `Voter elections access attempt for: ${voterId}`,
+            sessionId: () // Can be extracted from JWT if needed
+        });
+        
+        store:Election[]|error result = check vote:getVoterEnrolledElections(voterId);
+        
+        if result is store:Election[] {
+            // Log successful elections access
+            error? logSuccess = activityLog:logActivity({
+                userId: voterId,
+                userType: (),
+                action: activityLog:ELECTION_VIEWED,
+                resourceId: voterId,
+                httpMethod: httpRequest.method,
+                endpoint: httpRequest.rawPath,
+                ipAddress: ipAddress,
+                userAgent: userAgent,
+                status: activityLog:SUCCESS,
+                details: string `Voter elections successfully retrieved for: ${voterId}. Found ${result.length()} elections`,
+                sessionId: ()
+            });
+        } else {
+            // Log failed elections access
+            error? logFailure = activityLog:logActivity({
+                userId: voterId,
+                userType: (),
+                action: activityLog:ELECTION_VIEWED,
+                resourceId: voterId,
+                httpMethod: httpRequest.method,
+                endpoint: httpRequest.rawPath,
+                ipAddress: ipAddress,
+                userAgent: userAgent,
+                status: activityLog:FAILURE,
+                details: string `Voter elections retrieval failed for: ${voterId}. Error: ${result.message()}`,
+                sessionId: ()
+            });
+        }
+        
+        return result;
     }
 
-    // Logout - any logged in user
-    // Unified logout endpoint - 204 No Content response
+    // Enhanced logout endpoint with complete request logging
     @http:ResourceConfig {
         cors: {
             allowOrigins: ["http://localhost:3000"],
@@ -153,12 +258,75 @@ service /voter\-registration/api/v1 on SharedListener {
             allowMethods: ["POST", "OPTIONS"]
         }
     }
-    resource function post logout(http:Request request) returns http:Response|error {
-        return check auth:logout(request);
+    resource function post logout(http:Request httpRequest) returns http:Response|error {
+        // Extract user info from JWT before logout (if possible)
+        string? userId = (); // Extract from JWT if available
+        string? userType = (); // Extract from JWT if available
+        string? sessionId = (); // Extract from session if available
+        
+        string? ipAddress = activityLog:getIpFromRequest(httpRequest);
+        string? userAgent = activityLog:getUserAgentFromRequest(httpRequest);
+        
+        // Log logout attempt
+        error? logAttempt = activityLog:logActivity({
+            userId: userId,
+            userType: userType,
+            action: activityLog:LOGOUT,
+            resourceId: userId,
+            httpMethod: httpRequest.method,
+            endpoint: httpRequest.rawPath,
+            ipAddress: ipAddress,
+            userAgent: userAgent,
+            status: activityLog:PENDING,
+            details: string `Logout attempt from IP: ${ipAddress ?: "unknown"}`,
+            sessionId: sessionId
+        });
+        
+        http:Response|error result = check auth:logout(httpRequest);
+        
+        if result is http:Response {
+            // Log successful logout
+            error? logSuccess = activityLog:logActivity({
+                userId: userId,
+                userType: userType,
+                action: activityLog:LOGOUT,
+                resourceId: userId,
+                httpMethod: httpRequest.method,
+                endpoint: httpRequest.rawPath,
+                ipAddress: ipAddress,
+                userAgent: userAgent,
+                status: activityLog:SUCCESS,
+                details: string `Successful logout for user: ${userId ?: "unknown"}`,
+                sessionId: sessionId
+            });
+            
+            // Clear session if userId is available
+            if userId is string && userType is string {
+                string sessionKey = string `${userType}:${userId}`;
+                // Remove from session map (in production, clear from Redis/database)
+                // userSessions.remove(sessionKey);
+            }
+        } else {
+            // Log failed logout
+            error? logFailure = activityLog:logActivity({
+                userId: userId,
+                userType: userType,
+                action: activityLog:LOGOUT,
+                resourceId: userId,
+                httpMethod: httpRequest.method,
+                endpoint: httpRequest.rawPath,
+                ipAddress: ipAddress,
+                userAgent: userAgent,
+                status: activityLog:FAILURE,
+                details: string `Logout failed for user: ${userId ?: "unknown"}. Error: ${result.message()}`,
+                sessionId: sessionId
+            });
+        }
+        
+        return result;
     }
 
-    // Protected endpoint - requires authentication
-    // Change Password
+    // Enhanced change password endpoint with complete request logging
     @http:ResourceConfig {
         cors: {
             allowOrigins: ["http://localhost:3000"],
@@ -167,9 +335,23 @@ service /voter\-registration/api/v1 on SharedListener {
             allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
         }
     }
-    resource function put change\-password(http:Request request, auth:ChangePasswordRequest req)
+    resource function put change\-password(http:Request httpRequest, auth:ChangePasswordRequest req)
     returns http:Ok|http:Unauthorized|json|error|http:Response {
-        return check auth:putChangePassword(req);
+        return check auth:putChangePassword(req, httpRequest);
+    }
+
+    // Enhanced password reset endpoint with complete request logging
+    @http:ResourceConfig {
+        cors: {
+            allowOrigins: ["http://localhost:3000"],
+            allowCredentials: true,
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["POST", "OPTIONS"]
+        }
+    }
+    resource function post reset\-password(http:Request httpRequest, auth:PasswordResetRequest req)
+    returns http:Ok|http:Unauthorized|json|error {
+        return check auth:postResetPassword(req, httpRequest);
     }
 }
 
@@ -959,135 +1141,127 @@ service /household\-management/api/v1 on SharedListener {
 }
 
 // ==================== ADMIN ACTIVITY LOG SERVICE ====================
-// @http:ServiceConfig {
-//     cors: {
-//         allowOrigins: ["http://localhost:3000"],
-//         allowHeaders: ["Content-Type", "Authorization"],
-//         allowMethods: ["GET", "POST", "OPTIONS"],
-//         allowCredentials: true
-//     }
-// }
-// service /admin/activity\-logs/api/v1 on SharedListener {
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["http://localhost:3000"],
+        allowHeaders: ["Content-Type", "Authorization"],
+        allowMethods: ["GET", "POST", "OPTIONS"],
+        allowCredentials: true
+    }
+}
+service /admin/activity\-logs/api/v1 on SharedListener {
 
-//     // Get activity logs with filtering - Admin only
-//     resource function get logs(
-//         http:Request request,
-//         string? userId = (),
-//         string? userType = (),
-//         string? action = (),
-//         string? status = (),
-//         string? startTime = (),
-//         string? endTime = (),
-//         string? endpoint = (),
-//         string? ipAddress = (),
-//         int 'limit = 100,
-//         int offset = 0
-//     ) returns activitylog:SecurityAlert[]|http:Response|error {
+    // Get activity logs with filtering - Admin only
+    resource function get logs(
+        http:Request request,
+        string? userId = (),
+        string? userType = (),
+        string? action = (),
+        string? status = (),
+        string? startTime = (),
+        string? endTime = (),
+        string? endpoint = (),
+        string? ipAddress = (),
+        int 'limit = 100,
+        int offset = 0
+    ) returns activityLog:ActivityLogResponse[]|http:Response|error {
 
-//         // Only admin can access activity logs
-//         auth:AuthOptions options = {
-//             allowedRoles: [auth:ADMIN],
-//             requiredPermissions: [auth:VIEW_AUDIT_LOGS]
-//         };
+        // Only admin can access activity logs
+        auth:AuthOptions options = {
+            allowedRoles: [auth:ADMIN],
+            requiredPermissions: [auth:VIEW_AUDIT_LOGS]
+        };
 
-//         auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
-//         if authResult is http:Response {
-//             return authResult;
-//         }
+        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
+        if authResult is http:Response {
+            return authResult;
+        }
 
-//         // Log admin access to activity logs
-//         error? logAccess = activitylog:logActivity({
-//             userId: authResult.id,
-//             userType: authResult.userType,
-//             action: activitylog:DATA_EXPORT,
-//             endpoint: "/admin/activity-logs/api/v1/logs",
-//             httpMethod: "GET",
-//             status: activitylog:SUCCESS,
-//             details: string `Admin ${authResult.fullName} accessed activity logs`
-//         });
+        // Log admin access to activity logs
+        error? logAccess = activityLog:logActivity({
+            userId: authResult.id,
+            userType: authResult.userType,
+            action: activityLog:DATA_EXPORT,
+            endpoint: "/admin/activity-logs/api/v1/logs",
+            httpMethod: "GET",
+            status: activityLog:SUCCESS,
+            details: string `Admin ${authResult.fullName} accessed activity logs`
+        });
 
-//         // Build filter
-//         activitylog:ActivityLogFilter filter = {
-//             userId: userId,
-//             userType: userType,
-//             endpoint: endpoint,
-//             ipAddress: ipAddress,
-//             'limit: 'limit,
-//             offset: offset
-//         };
+        // Build filter
+        activityLog:ActivityLogFilter filter = {
+            userId: userId,
+            userType: userType,
+            endpoint: endpoint,
+            ipAddress: ipAddress,
+            'limit: 'limit,
+            offset: offset
+        };
 
-//         // Parse time filters if provided
-//         if startTime is string {
-//             // Parse ISO string to time:Utc - you may need to adjust this based on your date format
-//             // For now, using a simple conversion
-//             // filter.startTime = time:utcFromString(startTime);
-//         }
+        // Parse time filters
+        if startTime is string {
+            filter.startTime = check time:utcFromString(startTime);
+        }
 
-//         if endTime is string {
-//             // filter.endTime = time:utcFromString(endTime);
-//         }
+        if endTime is string {
+            filter.endTime = check time:utcFromString(endTime);
+        }
 
-//         // Parse action filter
-//         if action is string {
-//             // Convert string to ActivityType enum
-//             // You might need to add proper enum parsing here
-//         }
+        return check activityLog:getActivityLogs(filter);
+    }
 
-//         return check activitylog:getActivityLogs(filter);
-//     }
-
-//     // Get activity statistics - Admin only
-//     resource function get stats(http:Request request) returns activitylog:ActivityStats|http:Response|error {
+    // Get activity statistics - Admin only
+    resource function get stats(http:Request request) returns activityLog:ActivityStats|http:Response|error {
         
-//         auth:AuthOptions options = {
-//             allowedRoles: [auth:ADMIN],
-//             requiredPermissions: [auth:VIEW_AUDIT_LOGS]
-//         };
+        auth:AuthOptions options = {
+            allowedRoles: [auth:ADMIN],
+            requiredPermissions: [auth:VIEW_AUDIT_LOGS]
+        };
 
-//         auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
-//         if authResult is http:Response {
-//             return authResult;
-//         }
+        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
+        if authResult is http:Response {
+            return authResult;
+        }
 
-//         // Log admin access to statistics
-//         error? logAccess = activitylog:logActivity({
-//             userId: authResult.id,
-//             userType: authResult.userType,
-//             action: activitylog:REPORT_GENERATED,
-//             endpoint: "/admin/activity-logs/api/v1/stats",
-//             httpMethod: "GET",
-//             status: activitylog:SUCCESS,
-//             details: "Activity statistics accessed"
-//         });
+        // Log admin access to statistics
+        error? logAccess = activityLog:logActivity({
+            userId: authResult.id,
+            userType: authResult.userType,
+            action: activityLog:REPORT_GENERATED,
+            endpoint: "/admin/activity-logs/api/v1/stats",
+            httpMethod: "GET",
+            status: activityLog:SUCCESS,
+            details: "Activity statistics accessed"
+        });
 
-//         return check activitylog:getActivityStats();
-//     }
+        return check activityLog:getActivityStats();
+    }
 
-//     // Get security alerts - Admin only
-//     resource function get security\-alerts(http:Request request) returns activitylog:SecurityAlert[]|http:Response|error {
+    // Get security alerts - Admin only
+    resource function get security\-alerts(http:Request request) returns activityLog:SecurityAlert[]|http:Response|error {
         
-//         auth:AuthOptions options = {
-//             allowedRoles: [auth:ADMIN],
-//             requiredPermissions: [auth:VIEW_AUDIT_LOGS]
-//         };
+        auth:AuthOptions options = {
+            allowedRoles: [auth:ADMIN],
+            requiredPermissions: [auth:VIEW_AUDIT_LOGS]
+        };
 
-//         auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
-//         if authResult is http:Response {
-//             return authResult;
-//         }
+        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request, options);
+        if authResult is http:Response {
+            return authResult;
+        }
 
-//         // Log admin access to security alerts
-//         error? logAccess = activitylog:logActivity({
-//             userId: authResult.id,
-//             userType: authResult.userType,
-//             action: activitylog:REPORT_GENERATED,
-//             endpoint: "/admin/activity-logs/api/v1/security-alerts",
-//             httpMethod: "GET",
-//             status: activitylog:SUCCESS,
-//             details: "Security alerts accessed"
-//         });
+        // Log admin access to security alerts
+        error? logAccess = activityLog:logActivity({
+            userId: authResult.id,
+            userType: authResult.userType,
+            action: activityLog:REPORT_GENERATED,
+            endpoint: "/admin/activity-logs/api/v1/security-alerts",
+            httpMethod: "GET",
+            status: activityLog:SUCCESS,
+            details: "Security alerts accessed"
+        });
 
-//         return check activitylog:getSecurityAlerts();
-//     }
-// }
+        return check activityLog:getSecurityAlerts();
+    }
+}
 

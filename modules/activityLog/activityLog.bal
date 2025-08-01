@@ -6,6 +6,7 @@ import ballerina/time;
 import ballerina/persist;
 import ballerina/log;
 import ballerina/io;
+import ballerina/regex;
 
 // Database client for activity logging
 final store:Client activityDbClient = check new ();
@@ -44,7 +45,7 @@ public function logActivity(ActivityLogInput activityInput) returns error? {
     
     // Log to console for critical activities
     if activityInput.status.toString() == "ERROR" || activityInput.action.toString() == "UNAUTHORIZED_ACCESS" {
-        string alertMessage = string `🚨 SECURITY ALERT: ${activityInput.action} by user ${activityInput?.userId ?: "UNKNOWN"} at ${time:utcToString(time:utcNow())}`;
+        string alertMessage = string `SECURITY ALERT: ${activityInput.action} by user ${activityInput?.userId ?: "UNKNOWN"} at ${time:utcToString(time:utcNow())}`;
         io:println(alertMessage);
     }
     
@@ -450,7 +451,74 @@ function getUserFullName(string? userId, string? userType) returns string? {
     return fullName;
 }
 
-function getEndpointFromRequest(http:Request? request) returns string {
+// Enhanced IP address extraction with multiple header fallbacks
+public function getIpFromRequest(http:Request? request) returns string {
+    if request is () {
+        return "unknown";
+    }
+    
+    // Try X-Forwarded-For header (most common for load balancers/proxies)
+    string|http:HeaderNotFoundError xForwardedFor = request.getHeader("X-Forwarded-For");
+    if xForwardedFor is string && xForwardedFor.trim() != "" {
+        // X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
+        // Take the first IP (the original client)
+        string[] ips = regex:split(xForwardedFor, ",");
+        if ips.length() > 0 {
+            string clientIp = ips[0].trim();
+            if clientIp != "" {
+                return clientIp;
+            }
+        }
+    }
+    
+    // Try X-Real-IP header (used by nginx and others)
+    string|http:HeaderNotFoundError xRealIp = request.getHeader("X-Real-IP");
+    if xRealIp is string && xRealIp.trim() != "" {
+        return xRealIp.trim();
+    }
+    
+    // Try X-Client-IP header (used by some proxies)
+    string|http:HeaderNotFoundError xClientIp = request.getHeader("X-Client-IP");
+    if xClientIp is string && xClientIp.trim() != "" {
+        return xClientIp.trim();
+    }
+    
+    // Try CF-Connecting-IP header (Cloudflare)
+    string|http:HeaderNotFoundError cfConnectingIp = request.getHeader("CF-Connecting-IP");
+    if cfConnectingIp is string && cfConnectingIp.trim() != "" {
+        return cfConnectingIp.trim();
+    }
+    
+    // Try True-Client-IP header (Cloudflare and others)
+    string|http:HeaderNotFoundError trueClientIp = request.getHeader("True-Client-IP");
+    if trueClientIp is string && trueClientIp.trim() != "" {
+        return trueClientIp.trim();
+    }
+    
+    // If all else fails, return unknown
+    return "unknown";
+}
+
+// Enhanced User-Agent extraction with validation
+public function getUserAgentFromRequest(http:Request? request) returns string {
+    if request is () {
+        return "unknown";
+    }
+    
+    string|http:HeaderNotFoundError userAgent = request.getHeader("User-Agent");
+    if userAgent is string && userAgent.trim() != "" {
+        // Truncate very long user agent strings (some bots send extremely long ones)
+        if userAgent.length() > 500 {
+            return userAgent.substring(0, 500) + "...";
+        }
+        return userAgent.trim();
+    }
+    
+    return "unknown";
+}
+
+// Enhanced endpoint extraction
+public function getEndpointFromRequest(http:Request? request) returns string {
     if request is () {
         return "unknown";
     }
@@ -458,39 +526,159 @@ function getEndpointFromRequest(http:Request? request) returns string {
     return request.rawPath;
 }
 
-function getMethodFromRequest(http:Request? request) returns string? {
+// Get HTTP method with validation
+public function getMethodFromRequest(http:Request? request) returns string {
     if request is () {
-        return ();
+        return "UNKNOWN";
     }
-    return request.method;
+    return request.method.toUpperAscii(); // Normalize to uppercase
 }
 
-function getIpFromRequest(http:Request? request) returns string? {
+// Extract referrer information for security analysis
+public function getReferrerFromRequest(http:Request? request) returns string {
     if request is () {
-        return ();
+        return "unknown";
     }
     
-    // Try various headers for IP address
-    string|http:HeaderNotFoundError xForwardedFor = request.getHeader("X-Forwarded-For");
-    if xForwardedFor is string {
-        // Take the first IP if there are multiple
-        return xForwardedFor;
+    string|http:HeaderNotFoundError referrer = request.getHeader("Referer");
+    if referrer is string && referrer.trim() != "" {
+        return referrer.trim();
     }
     
-    string|http:HeaderNotFoundError xRealIp = request.getHeader("X-Real-IP");
-    if xRealIp is string {
-        return xRealIp;
-    }
-    
-    // Fallback to unknown
     return "unknown";
 }
 
-function getUserAgentFromRequest(http:Request? request) returns string? {
+// Extract content type for request analysis
+public function getContentTypeFromRequest(http:Request? request) returns string {
     if request is () {
-        return ();
+        return "unknown";
     }
     
-    string|http:HeaderNotFoundError userAgent = request.getHeader("User-Agent");
-    return userAgent is string ? userAgent : ();
+    string|http:HeaderNotFoundError contentType = request.getHeader("Content-Type");
+    if contentType is string && contentType.trim() != "" {
+        return contentType.trim();
+    }
+    
+    return "unknown";
+}
+
+// Function to enhance details with additional context
+public function enhanceDetailsWithContext(string? originalDetails, http:Request? request) returns string {
+    if request is () {
+        return originalDetails ?: "No additional context";
+    }
+    
+    string[] contextParts = [];
+    
+    if originalDetails is string {
+        contextParts.push(originalDetails);
+    }
+    
+    // Add referrer if available and not unknown
+    string referrer = getReferrerFromRequest(request);
+    if referrer != "unknown" {
+        contextParts.push(string `Referrer: ${referrer}`);
+    }
+    
+    // Add content type if available and not unknown
+    string contentType = getContentTypeFromRequest(request);
+    if contentType != "unknown" {
+        contextParts.push(string `Content-Type: ${contentType}`);
+    }
+    
+    // Add request size if available
+    string|http:HeaderNotFoundError contentLength = request.getHeader("Content-Length");
+    if contentLength is string {
+        contextParts.push(string `Content-Length: ${contentLength}`);
+    }
+    
+    if contextParts.length() == 0 {
+        return "No additional context";
+    }
+    
+    // Join the context parts with separator
+    string result = "";
+    foreach int i in 0 ..< contextParts.length() {
+        if i > 0 {
+            result += " | ";
+        }
+        result += contextParts[i];
+    }
+    
+    return result;
+}
+
+// Function to detect suspicious activity patterns
+public function detectSuspiciousActivity(string ipAddress, string userAgent) returns boolean {
+    // Simple suspicious patterns (can be enhanced)
+    string[] suspiciousIPs = [
+        "0.0.0.0",
+        "127.0.0.1"
+    ];
+    
+    foreach string suspiciousIP in suspiciousIPs {
+        if ipAddress.includes(suspiciousIP) {
+            return true;
+        }
+    }
+    
+    // Check for suspicious user agents
+    if userAgent != "unknown" {
+        string[] suspiciousUserAgents = [
+            "bot",
+            "crawler",
+            "spider",
+            "scraper",
+            "automated"
+        ];
+        
+        string lowercaseUserAgent = userAgent.toLowerAscii();
+        foreach string suspicious in suspiciousUserAgents {
+            if lowercaseUserAgent.includes(suspicious) {
+                return true;
+            }
+        }
+    }
+    
+    return false;
+}
+
+// Simple logging helper that captures all available context
+public function logWithFullContext(
+    string? userId,
+    string? userType,
+    string action,
+    string? resourceId,
+    string status,
+    string? details,
+    http:Request? request
+) returns error? {
+    
+    string ipAddress = getIpFromRequest(request);
+    string userAgent = getUserAgentFromRequest(request);
+    string httpMethod = getMethodFromRequest(request);
+    string endpoint = getEndpointFromRequest(request);
+    string sessionId = common:generateId(); // Generate new session ID each time
+    
+    // Enhance details with context
+    string enhancedDetails = enhanceDetailsWithContext(details, request);
+    
+    // Check for suspicious activity
+    boolean isSuspicious = detectSuspiciousActivity(ipAddress, userAgent);
+    if isSuspicious {
+        enhancedDetails += " | SUSPICIOUS ACTIVITY DETECTED";
+    }
+    
+    // TODO: Replace this with actual activity log insertion
+    // This is a placeholder - you'll need to call your actual logging function
+    io:println(string `LOG: User=${userId ?: "unknown"}, Type=${userType ?: "unknown"}, Action=${action}, Status=${status}, IP=${ipAddress}, Method=${httpMethod}, Endpoint=${endpoint}, Details=${enhancedDetails}`);
+    
+    return ();
+}
+
+// Function to get session info for a user (simplified version)
+public function getSessionInfo(string userId, string userType) returns string {
+    // In production, this would query a session store
+    // For now, just generate a session ID
+    return common:generateId();
 }

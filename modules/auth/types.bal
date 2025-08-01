@@ -87,7 +87,7 @@ public type ChiefOccupantInput record {|
     string email;
     string passwordHash;
     string? idCopyPath;
-    string? phophotoCopyPath;
+    string? photoCopyPath;
 |};
 
 public type HouseholdMemberInput record {
@@ -98,7 +98,7 @@ public type HouseholdMemberInput record {
     string civilStatus;
     string relationshipWithChiefOccupant;
     string? idCopyPath;
-    string? phophotoCopyPath;
+    string? photoCopyPath;
     boolean approvedByChief;
 };
 
@@ -230,4 +230,10 @@ public type EnhancedLoginResponse record {|
 public type VoterLogin record {
     string nationalId;
     string password;
+};
+
+public type RequestMetadata record {
+    string? ipAddress;
+    string? userAgent;
+    string? sessionId;
 };
