@@ -1,3 +1,4 @@
+import online_election.store;
 
 // This file defines custom data structures (view models) for the registration service API.
 // These records shape the data sent to and received from the frontend.
@@ -78,7 +79,7 @@ public type RemovalRequest record {|
     string reason;
     string? proofDocument;
     string submittedDate;
-    string status; // "pending", "approved", "rejected"
+    string status;
 |};
 
 public type RemovalRequestCounts record {|
@@ -86,4 +87,30 @@ public type RemovalRequestCounts record {|
     int approved;
     int rejected;
     int total;
+|};
+
+
+// Response types
+public type AddMemberRequestResponse record {|
+    string addRequestId;
+    string fullName;
+    string nicNumber;
+    string dateOfBirth;
+    string gender;
+    string relationshipToChief;
+    string requestStatus;
+    string? reason;
+|};
+
+public type AddMemberRequestCounts record {|
+    int pending;
+    int approved;
+    int rejected;
+    int total;
+|};
+
+public type AddMemberRequestDetail record {|
+    store:AddMemberRequest request;
+    store:ChiefOccupant? chiefOccupant;
+    store:HouseholdDetails? householdDetails;
 |};

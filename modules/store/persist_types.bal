@@ -499,9 +499,10 @@ public type AddMemberRequest record {|
     string civilStatus;
     string relationshipToChief;
     string chiefOccupantApproval;
-    string? requestStatus;
+    string requestStatus;
     string? reason;
     string? nicOrBirthCertificatePath;
+    string? photoCopyPath;
 |};
 
 public type AddMemberRequestOptionalized record {|
@@ -514,9 +515,10 @@ public type AddMemberRequestOptionalized record {|
     string civilStatus?;
     string relationshipToChief?;
     string chiefOccupantApproval?;
-    string? requestStatus?;
+    string requestStatus?;
     string? reason?;
     string? nicOrBirthCertificatePath?;
+    string? photoCopyPath?;
 |};
 
 public type AddMemberRequestTargetType typedesc<AddMemberRequestOptionalized>;
@@ -532,9 +534,10 @@ public type AddMemberRequestUpdate record {|
     string civilStatus?;
     string relationshipToChief?;
     string chiefOccupantApproval?;
-    string? requestStatus?;
+    string requestStatus?;
     string? reason?;
     string? nicOrBirthCertificatePath?;
+    string? photoCopyPath?;
 |};
 
 public type UpdateMemberRequest record {|
@@ -542,10 +545,9 @@ public type UpdateMemberRequest record {|
     string chiefOccupantId;
     string? householdMemberId;
     string? newFullName;
-    string? newResidentArea;
-    string? requestStatus;
+    string? newCivilStatus;
+    string relevantCertificatePath;
     string? reason;
-    string? relevantCertificatePath;
 |};
 
 public type UpdateMemberRequestOptionalized record {|
@@ -553,10 +555,9 @@ public type UpdateMemberRequestOptionalized record {|
     string chiefOccupantId?;
     string? householdMemberId?;
     string? newFullName?;
-    string? newResidentArea?;
-    string? requestStatus?;
+    string? newCivilStatus?;
+    string relevantCertificatePath?;
     string? reason?;
-    string? relevantCertificatePath?;
 |};
 
 public type UpdateMemberRequestTargetType typedesc<UpdateMemberRequestOptionalized>;
@@ -567,10 +568,9 @@ public type UpdateMemberRequestUpdate record {|
     string chiefOccupantId?;
     string? householdMemberId?;
     string? newFullName?;
-    string? newResidentArea?;
-    string? requestStatus?;
+    string? newCivilStatus?;
+    string relevantCertificatePath?;
     string? reason?;
-    string? relevantCertificatePath?;
 |};
 
 public type DeleteMemberRequest record {|
@@ -580,6 +580,7 @@ public type DeleteMemberRequest record {|
     string? requestStatus;
     string? reason;
     string? requiredDocumentPath;
+    string? rejectionReason;
 |};
 
 public type DeleteMemberRequestOptionalized record {|
@@ -589,6 +590,7 @@ public type DeleteMemberRequestOptionalized record {|
     string? requestStatus?;
     string? reason?;
     string? requiredDocumentPath?;
+    string? rejectionReason?;
 |};
 
 public type DeleteMemberRequestTargetType typedesc<DeleteMemberRequestOptionalized>;
@@ -601,5 +603,6 @@ public type DeleteMemberRequestUpdate record {|
     string? requestStatus?;
     string? reason?;
     string? requiredDocumentPath?;
+    string? rejectionReason?;
 |};
 

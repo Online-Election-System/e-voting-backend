@@ -335,20 +335,6 @@ public type Voter record {|
     string status;
 |};
 
-# Description.
-#
-# + addRequestId - field description  
-# + chiefOccupantId - field description  
-# + nicNumber - field description  
-# + fullName - field description  
-# + dateOfBirth - field description  
-# + gender - field description  
-# + civilStatus - field description  
-# + relationshipToChief - field description  
-# + chiefOccupantApproval - field description  
-# + requestStatus - field description  
-# + reason - field description
-# + nicOrBirthCertificatePath - field description
 public type AddMemberRequest record {|
     @sql:Name {value: "add_request_id"}
     readonly string addRequestId;
@@ -368,22 +354,14 @@ public type AddMemberRequest record {|
     @sql:Name {value: "chief_occupant_approval"}
     string chiefOccupantApproval; 
     @sql:Name {value: "request_status"}
-    string? requestStatus;
+    string requestStatus;
     string? reason;
     @sql:Name {value: "nic_or_birth_certificate_path"}
     string? nicOrBirthCertificatePath;
+    @sql:Name {value: "photo_copy_path"}
+    string? photoCopyPath;
 |};
 
-# Description.
-#
-# + updateRequestId - field description  
-# + chiefOccupantId - field description  
-# + householdMemberId - field description  
-# + newFullName - field description  
-# + newResidentArea - field description  
-# + requestStatus - field description 
-# + reason - field description  
-# + relevantCertificatePath - field description
 public type UpdateMemberRequest record {|
     @sql:Name {value: "update_request_id"}
     readonly string updateRequestId;
@@ -393,14 +371,13 @@ public type UpdateMemberRequest record {|
     string? householdMemberId;
     @sql:Name {value: "new_full_name"}
     string? newFullName;
-    @sql:Name {value: "new_resident_area"}
-    string? newResidentArea;
-    @sql:Name {value: "request_status"}
-    string? requestStatus;
-    string? reason;
+    @sql:Name {value: "new_civil_status"}
+    string? newCivilStatus;
     @sql:Name {value: "relevant_certificate_path"}
-    string? relevantCertificatePath;
+    string relevantCertificatePath;
+    string? reason;
 |};
+
 
 # Description.
 #
@@ -410,6 +387,7 @@ public type UpdateMemberRequest record {|
 # + requestStatus - field description  
 # + reason - field description 
 # + requiredDocumentPath - field description
+# + rejectionReason - field description
 public type DeleteMemberRequest record {|
     @sql:Name {value: "delete_request_id"}
     readonly string deleteRequestId;
@@ -422,4 +400,6 @@ public type DeleteMemberRequest record {|
     string? reason; 
     @sql:Name {value: "required_document_path"}
     string? requiredDocumentPath;
+    @sql:Name {value: "rejection_reason"}
+    string? rejectionReason;
 |};
