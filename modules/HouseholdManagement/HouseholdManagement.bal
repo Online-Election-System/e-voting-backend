@@ -105,7 +105,7 @@ public isolated function submitDeleteMemberRequest(store:DeleteMemberRequest req
         requestStatus: request.requestStatus,
         requiredDocumentPath: request.requiredDocumentPath,
         reason: request.reason,
-        rejectionReason:request.rejectionReason
+        rejectionReason: request.rejectionReason
     };
     
     string[]|error deleteResponse = dbclient->/deletememberrequests.post([insertRequest]);
@@ -117,9 +117,9 @@ public isolated function submitDeleteMemberRequest(store:DeleteMemberRequest req
     log:printInfo("Delete request submitted successfully");
     return [newId];
 }
+
 // --- Get Household Members ---
-// Updated getHouseholdMembers function to show existing members AND new add member requests
-// Updated getHouseholdMembers function to include update requests
+// Updated getHouseholdMembers function to show existing members, add member requests, update requests, and delete requests
 public function getHouseholdMembers(string chiefOccupantId) returns json|error {
     // Fetch chief occupant
     store:ChiefOccupant|persist:Error chief = dbclient->/chiefoccupants/[chiefOccupantId].get();
@@ -154,6 +154,12 @@ public function getHouseholdMembers(string chiefOccupantId) returns json|error {
     store:UpdateMemberRequest[] updateRequestsList = check from var u in updateRequestsStream
         where u.chiefOccupantId == chiefOccupantId
         select u;
+
+    // Fetch delete member requests for this chief occupant
+    stream<store:DeleteMemberRequest, persist:Error?> deleteRequestsStream = dbclient->/deletememberrequests.get();
+    store:DeleteMemberRequest[] deleteRequestsList = check from var d in deleteRequestsStream
+        where d.chiefOccupantId == chiefOccupantId
+        select d;
 
     json[] memberData = [];
 
@@ -266,8 +272,37 @@ public function getHouseholdMembers(string chiefOccupantId) returns json|error {
             newFullName: updateReq.newFullName,
             newCivilStatus: updateReq.newCivilStatus,
             relevantCertificatePath: updateReq.relevantCertificatePath,
-            rejectionReason: updateReq.reason,
+            reason: updateReq.reason,
             isChiefOccupantUpdate: isChiefOccupantUpdate
+        });
+    }
+
+    // Process delete requests and format them for the frontend
+    json[] deleteRequestsData = [];
+    foreach store:DeleteMemberRequest deleteReq in deleteRequestsList {
+        string memberName = "";
+        string memberNic = "";
+        
+        // Find the household member being deleted
+        string householdMemberId = deleteReq.householdMemberId.toString();
+        foreach store:HouseholdMembers member in existingMembers {
+            if (member.id == householdMemberId) {
+                memberName = member.fullName;
+                memberNic = member.nic ?: "N/A";
+                break;
+            }
+        }
+
+        deleteRequestsData.push({
+            deleteRequestId: deleteReq.deleteRequestId,
+            chiefOccupantId: deleteReq.chiefOccupantId,
+            householdMemberId: deleteReq.householdMemberId,
+            memberName: memberName,
+            memberNic: memberNic,
+            requestStatus: deleteReq.requestStatus,
+            requiredDocumentPath: deleteReq.requiredDocumentPath,
+            reason: deleteReq.reason,
+            rejectionReason: deleteReq.rejectionReason
         });
     }
 
@@ -284,6 +319,7 @@ public function getHouseholdMembers(string chiefOccupantId) returns json|error {
         },
         totalMembers: totalMembers,
         members: memberData,
-        updateRequests: updateRequestsData // Add update requests to the response
+        updateRequests: updateRequestsData,
+        deleteRequests: deleteRequestsData 
     };
 }
