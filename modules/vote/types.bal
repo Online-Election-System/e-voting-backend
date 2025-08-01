@@ -12,3 +12,15 @@ public type Vote record {|
     string district;
     string timestamp;
 |};
+
+public type AuthResult record {|
+    string userId;
+    string userType;
+    string fullName;
+    boolean authenticated;
+|};
+
+public type VoterValidationRequest record {|
+    string nationalId;
+    string password;
+|};

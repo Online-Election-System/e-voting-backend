@@ -979,5 +979,3 @@ public function rejectAddMemberRequest(string addRequestId, string rejectionReas
         return error("Failed to reject add member request: " + e.message());
     }
 }
-
-

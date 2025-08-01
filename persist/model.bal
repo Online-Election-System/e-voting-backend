@@ -42,6 +42,7 @@ public type Candidate record {|
 # + email - email of chiefoccupant
 # + role - Role of the user
 
+
 public type ChiefOccupant record {|
     readonly string id;
     @sql:Name {value: "full_name"}
@@ -66,7 +67,7 @@ public type ChiefOccupant record {|
 # HouseholdDetails Table
 #
 # + id - Auto-incrementing Primary Key
-# + chiefOccupantId - Foreign Key (ChiefOccupant)
+# + chiefOccupantId - Foreign Key (ChiefOccupant)https://claude.ai/new
 # + electoralDistrict - District of Registration
 # + pollingDivision - Polling Division Name
 # + pollingDistrictNumber - Polling District Number
@@ -97,19 +98,19 @@ public type HouseholdDetails record {|
 
 # HouseholdMembers Table
 #
-# + id - Auto-incrementing Primary Key
-# + chiefOccupantId - Foreign Key (ChiefOccupant)
-# + fullName - Full Name of Household Member
-# + nic - National Identity Card (Nullable)
-# + dob - Date of Birth (MM/DD/YYYY)
-# + gender - Gender (Male/Female)
-# + civilStatus - Marital Status
-# + relationshipWithChiefOccupant - Relationship with Chief Occupant
-# + idCopyPath - File Path of ID Copy
-# + photoCopyPath - File Path of Image
-# + approvedByChief - Chief Occupant Approval Status
-# + passwordHash - Hashed Password
-# + passwordchanged - if the password change
+# + id - Auto-incrementing Primary Key  
+# + chiefOccupantId - Foreign Key (ChiefOccupant)  
+# + fullName - Full Name of Household Member  
+# + nic - National Identity Card (Nullable)  
+# + dob - Date of Birth (MM/DD/YYYY)  
+# + gender - Gender (Male/Female)  
+# + civilStatus - Marital Status  
+# + relationshipWithChiefOccupant - Relationship with Chief Occupant  
+# + idCopyPath - File Path of ID Copy  
+# + photoCopyPath - field description  
+# + approvedByChief - Chief Occupant Approval Status  
+# + passwordHash - Hashed Password  
+# + passwordchanged - if the password change  
 # + role - Role of the user
 
 public type HouseholdMembers record {|
@@ -249,19 +250,14 @@ public type Enrolment record {|
 |};
 
 // -- Registration Reviews Table --
-# Description.
-#
-# + id - field description  
-# + memberNic - field description  
-# + status - field description  
-# + reason - field description  
-# + reviewedAt - field description
 public type RegistrationReview record {|
     readonly string id;
     @sql:Name { value: "member_nic" }
     string memberNic;
+    @sql:Name { value: "reviewed_by" }
+    string reviewedBy;
     string status; // pending, approved, rejected
-    string? reason;
+    string? comments;
     @sql:Name { value: "reviewed_at" }
     time:Utc? reviewedAt;
 |};
@@ -402,4 +398,68 @@ public type DeleteMemberRequest record {|
     string? requiredDocumentPath;
     @sql:Name {value: "rejection_reason"}
     string? rejectionReason;
+|};
+
+# Description.
+#
+# + electionId - foreign key reference to the Election record
+# + candidateId - foreign key reference to the Candidate record
+# + ampara - number of votes in the Ampara district
+# + anuradhapura - number of votes in the Anuradhapura district
+# + badulla - number of votes in the Badulla district
+# + batticaloa - number of votes in the Batticaloa district
+# + colombo - field description
+# + galle - field description
+# + gampaha - field description
+# + hambantota - field description
+# + jaffna - field description
+# + kalutara - field description
+# + kandy - field description
+# + kegalle - field description
+# + kilinochchi - field description
+# + kurunegala - field description
+# + mannar - field description
+# + matale - field description
+# + matara - field description
+# + monaragala - field description
+# + mullaitivu - field description
+# + nuwaraeliya - field description
+# + polonnaruwa - field description
+# + puttalam - field description
+# + ratnapura - field description
+# + trincomalee - field description
+# + vavuniya - field description
+# + totals - field description
+public type CandidateDistrictVoteSummary record {|
+    @sql:Name { value: "election_id" }
+    readonly string electionId;
+
+    @sql:Name { value: "candidate_id" }
+    readonly string candidateId;
+    int ampara;
+    int anuradhapura;
+    int badulla;
+    int batticaloa;
+    int colombo;
+    int galle;
+    int gampaha;
+    int hambantota;
+    int jaffna;
+    int kalutara;
+    int kandy;
+    int kegalle;
+    int kilinochchi;
+    int kurunegala;
+    int mannar;
+    int matale;
+    int matara;
+    int monaragala;
+    int mullaitivu;
+    int nuwaraeliya;
+    int polonnaruwa;
+    int puttalam;
+    int ratnapura;
+    int trincomalee;
+    int vavuniya;
+    int totals;
 |};
