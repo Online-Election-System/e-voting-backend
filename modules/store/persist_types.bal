@@ -447,54 +447,19 @@ public type EnrolmentUpdate record {|
     time:Utc enrollementDate?;
 |};
 
-public type RemovalRequest record {|
-    readonly string id;
-    string memberName;
-    string nic;
-    string requestedBy;
-    string reason;
-    string proofDocument;
-    string status;
-|};
-
-public type RemovalRequestOptionalized record {|
-    string id?;
-    string memberName?;
-    string nic?;
-    string requestedBy?;
-    string reason?;
-    string proofDocument?;
-    string status?;
-|};
-
-public type RemovalRequestTargetType typedesc<RemovalRequestOptionalized>;
-
-public type RemovalRequestInsert RemovalRequest;
-
-public type RemovalRequestUpdate record {|
-    string memberName?;
-    string nic?;
-    string requestedBy?;
-    string reason?;
-    string proofDocument?;
-    string status?;
-|};
-
 public type RegistrationReview record {|
     readonly string id;
     string memberNic;
-    string reviewedBy;
     string status;
-    string? comments;
+    string? reason;
     time:Utc? reviewedAt;
 |};
 
 public type RegistrationReviewOptionalized record {|
     string id?;
     string memberNic?;
-    string reviewedBy?;
     string status?;
-    string? comments?;
+    string? reason?;
     time:Utc? reviewedAt?;
 |};
 
@@ -504,9 +469,8 @@ public type RegistrationReviewInsert RegistrationReview;
 
 public type RegistrationReviewUpdate record {|
     string memberNic?;
-    string reviewedBy?;
     string status?;
-    string? comments?;
+    string? reason?;
     time:Utc? reviewedAt?;
 |};
 

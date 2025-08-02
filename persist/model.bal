@@ -308,29 +308,20 @@ public type Enrolment record {|
     time:Utc enrollementDate;
 |};
 
-// -- Removal Requests Table --
-public type RemovalRequest record {|
-    readonly string id;
-    @sql:Name { value: "member_name" }
-    string memberName;
-    string nic;
-    @sql:Name { value: "requested_by" }
-    string requestedBy;
-    string reason;
-    @sql:Name { value: "proof_document" }
-    string proofDocument;
-    string status; // pending, approved, rejected
-|};
-
 // -- Registration Reviews Table --
+# Description.
+#
+# + id - field description  
+# + memberNic - field description  
+# + status - field description  
+# + reason - field description  
+# + reviewedAt - field description
 public type RegistrationReview record {|
     readonly string id;
     @sql:Name { value: "member_nic" }
     string memberNic;
-    @sql:Name { value: "reviewed_by" }
-    string reviewedBy;
     string status; // pending, approved, rejected
-    string? comments;
+    string? reason;
     @sql:Name { value: "reviewed_at" }
     time:Utc? reviewedAt;
 |};
@@ -403,6 +394,7 @@ public type Voter record {|
     time:Date registrationDate;
     string status;
 |};
+
 # Description.
 #
 # + electionId - foreign key reference to the Election record

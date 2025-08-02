@@ -11,7 +11,6 @@ DROP TABLE IF EXISTS "Election";
 DROP TABLE IF EXISTS "Notification";
 DROP TABLE IF EXISTS "HouseholdMembers";
 DROP TABLE IF EXISTS "AdminUsers";
-DROP TABLE IF EXISTS "RemovalRequest";
 DROP TABLE IF EXISTS "CandidateDistrictVoteSummary";
 DROP TABLE IF EXISTS "DeleteMemberRequest";
 DROP TABLE IF EXISTS "UpdateMemberRequest";
@@ -25,9 +24,8 @@ DROP TABLE IF EXISTS "RegistrationReview";
 CREATE TABLE "RegistrationReview" (
 	"id" VARCHAR(191) NOT NULL,
 	"member_nic" VARCHAR(191) NOT NULL,
-	"reviewed_by" VARCHAR(191) NOT NULL,
 	"status" VARCHAR(191) NOT NULL,
-	"comments" VARCHAR(191),
+	"reason" VARCHAR(191),
 	"reviewed_at" TIMESTAMP,
 	PRIMARY KEY("id")
 );
@@ -163,17 +161,6 @@ CREATE TABLE "CandidateDistrictVoteSummary" (
 	"vavuniya" INT NOT NULL,
 	"totals" INT NOT NULL,
 	PRIMARY KEY("election_id","candidate_id")
-);
-
-CREATE TABLE "RemovalRequest" (
-	"id" VARCHAR(191) NOT NULL,
-	"member_name" VARCHAR(191) NOT NULL,
-	"nic" VARCHAR(191) NOT NULL,
-	"requested_by" VARCHAR(191) NOT NULL,
-	"reason" VARCHAR(191) NOT NULL,
-	"proof_document" VARCHAR(191) NOT NULL,
-	"status" VARCHAR(191) NOT NULL,
-	PRIMARY KEY("id")
 );
 
 CREATE TABLE "AdminUsers" (
