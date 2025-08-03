@@ -239,6 +239,7 @@ public type UpdateMemberRequest record {|
     string? newCivilStatus;
     @sql:Name {value: "relevant_certificate_path"}
     string relevantCertificatePath;
+    string? requestStatus;
     string? reason;
 |};
 

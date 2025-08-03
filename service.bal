@@ -830,24 +830,24 @@ service /api/v1 on SharedListener {
 
     // NEW ENDPOINT: Get detailed registration information by NIC
 // Get detailed registration information by NIC
-    // resource function get registrations/application/[string nic]()
-    // returns verification:RegistrationDetail|http:NotFound|http:InternalServerError {
+    resource function get registrations/application/[string nic]()
+    returns verification:RegistrationDetail|http:NotFound|http:InternalServerError {
         
-    //     do {
-    //         verification:RegistrationDetail registrationDetail = check verification:getRegistrationDetailByNic(nic);
-    //         return registrationDetail;
-    //     } on fail error e {
-    //         log:printError("Error fetching registration detail for NIC: " + nic, e);
+        do {
+            verification:RegistrationDetail registrationDetail = check verification:getRegistrationDetailByNic(nic);
+            return registrationDetail;
+        } on fail error e {
+            log:printError("Error fetching registration detail for NIC: " + nic, e);
             
-    //         // Check if it's a "not found" error
-    //         if e.message().includes("Registration not found") {
-    //             return http:NOT_FOUND;
-    //         }
+            // Check if it's a "not found" error
+            if e.message().includes("Registration not found") {
+                return http:NOT_FOUND;
+            }
             
-    //         // Otherwise, it's an internal server error
-    //         return http:INTERNAL_SERVER_ERROR;
-    //     }
-    // }
+            // Otherwise, it's an internal server error
+            return http:INTERNAL_SERVER_ERROR;
+        }
+    }
 
     // Approve registration endpoint
     resource function post registrations/[string nic]/approve()
@@ -871,6 +871,7 @@ service /api/v1 on SharedListener {
     
 
     // Reject registration endpoint
+    // service.bal
 resource function post registrations/[string nic]/reject(@http:Payload json payload)
     returns http:InternalServerError & readonly|http:BadRequest & readonly|http:NotFound & readonly|http:Ok & readonly|error {
         
@@ -914,6 +915,8 @@ resource function post registrations/[string nic]/reject(@http:Payload json payl
             return http:INTERNAL_SERVER_ERROR;
         }
     }
+
+
 
 //REMOVAL REQUEST ENDPOINTS
 
@@ -1106,6 +1109,122 @@ returns http:InternalServerError & readonly|http:BadRequest & readonly|http:NotF
     }
 }
 
+
+// UPDATE MEMBER REQUESTS REVIEW
+
+// Get all update member requests with optional filtering
+    resource function get update\-member\-requests(string? search, string? status)
+    returns json|error {
+        
+        // Get requests 
+        verification:UpdateMemberRequestResponse[]|error requestsResult = verification:getUpdateMemberRequests(search, status);
+        
+        if requestsResult is error {
+            return requestsResult;
+        }
+        
+        // Return the array for frontend compatibility
+        return requestsResult;
+    }
+
+    // Get update member request counts by status
+    resource function get update\-member\-requests/counts()
+    returns verification:UpdateMemberRequestCounts|error {
+        return verification:getUpdateMemberRequestCounts();
+    }
+
+    // Get specific update member request details
+    resource function get update\-member\-requests/[string updateRequestId]()
+    returns json|http:NotFound|error {
+        verification:UpdateMemberRequestDetail|error result = verification:getUpdateMemberRequestDetail(updateRequestId);
+        
+        if result is error {
+            if result.message().includes("not found") {
+                return http:NOT_FOUND;
+            }
+            return result;
+        }
+        
+        // Return the structured response that matches frontend expectations
+        return {
+            "updateRequest": result.updateRequest,
+            "householdDetails": result.householdDetails
+        };
+    }
+
+    // Approve update member request endpoint
+    resource function post update\-member\-requests/[string updateRequestId]/approve()
+    returns http:Ok|http:NotFound|http:InternalServerError {
+        
+        do {
+            string _ = check verification:approveUpdateMemberRequest(updateRequestId);
+            log:printInfo("Update member request approved successfully for ID: " + updateRequestId);
+            return http:OK;
+        } on fail error e {
+            log:printError("Error approving update member request for ID: " + updateRequestId, e);
+            
+            if e.message().includes("not found") || e.message().includes("Update member request not found") {
+                return http:NOT_FOUND;
+            }
+            
+            return http:INTERNAL_SERVER_ERROR;
+        }
+    }
+
+    // Reject update member request endpoint
+    resource function post update\-member\-requests/[string updateRequestId]/reject(@http:Payload json payload)
+    returns http:InternalServerError & readonly|http:BadRequest & readonly|http:NotFound & readonly|http:Ok & readonly|error {
+        
+        // Extract reason from JSON payload
+        string reason;
+        do {
+            if payload is map<json> {
+                json reasonValue = payload["reason"];
+                if reasonValue is string {
+                    reason = reasonValue;
+                } else {
+                    log:printWarn("Invalid reason format in payload for update member request ID: " + updateRequestId);
+                    return http:BAD_REQUEST;
+                }
+            } else {
+                log:printWarn("Invalid payload format for update member request ID: " + updateRequestId);
+                return http:BAD_REQUEST;
+            }
+        } on fail error e {
+            log:printError("Error parsing payload for update member request ID: " + updateRequestId, e);
+            return http:BAD_REQUEST;
+        }
+        
+        // Validate rejection reason
+        if reason.trim() == "" {
+            log:printWarn("Rejection attempted without reason for update member request ID: " + updateRequestId);
+            return http:BAD_REQUEST;
+        }
+        
+        do {
+            string result = check verification:rejectUpdateMemberRequest(updateRequestId, reason);
+            log:printInfo("Update member request rejected successfully for ID: " + updateRequestId + " with reason: " + reason + ". Result: " + result);
+            return http:OK;
+        } on fail error e {
+            log:printError("Error rejecting update member request for ID: " + updateRequestId, e);
+            
+            if e.message().includes("not found") || e.message().includes("Update member request not found") {
+                return http:NOT_FOUND;
+            }
+            
+            return http:INTERNAL_SERVER_ERROR;
+        }
+    }
+
+
+
+
+
+
+
+
+
+
         // === VOTER ENDPOINTS ===
 
     // resource function post voter/login(@http:Payload enrollment:LoginRequest payload) 
@@ -1159,14 +1278,14 @@ service /household\-management/api/v1 on SharedListener {
     }
 
     // Update member request
-    resource function post update\-member(HouseholdManagement:UpdateMemberRequest req)
-        returns json|error {
-        string[]|error result = HouseholdManagement:submitUpdateMemberRequest(req);
-        if result is error {
-            return { message: result.message() };
-        }
-        return { message: "Update member request submitted", requestId: result[0] };
-    }
+    // resource function post update\-member(HouseholdManagement:UpdateMemberRequest req)
+    //     returns json|error {
+    //     string[]|error result = HouseholdManagement:submitUpdateMemberRequest(req);
+    //     if result is error {
+    //         return { message: result.message() };
+    //     }
+    //     return { message: "Update member request submitted", requestId: result[0] };
+    // }
 
     // Delete member request
     resource function post delete\-member(HouseholdManagement:DeleteMemberRequest req)

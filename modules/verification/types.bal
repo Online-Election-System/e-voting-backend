@@ -114,3 +114,42 @@ public type AddMemberRequestDetail record {|
     store:ChiefOccupant? chiefOccupant;
     store:HouseholdDetails? householdDetails;
 |};
+
+// Response types for frontend
+public type UpdateMemberRequestResponse record {|
+    string updateRequestId;
+    string chiefOccupantId;
+    string householdMemberId;
+    string nic;
+    string? newFullName;
+    string? newCivilStatus;
+    string relevantCertificatePath;
+    string requestStatus;
+    string? reason;
+|};
+
+public type UpdateMemberRequestCounts record {|
+    int pending;
+    int approved;
+    int rejected;
+    int total;
+|};
+
+public type UpdateMemberRequestDetailInfo record {|
+    string updateRequestId;
+    string chiefOccupantId;
+    string householdMemberId;
+    string nic;
+    string currentFullName;
+    string currentCivilStatus;
+    string? newFullName;
+    string? newCivilStatus;
+    string relevantCertificatePath;
+    string requestStatus;
+    string? reason;
+|};
+
+public type UpdateMemberRequestDetail record {|
+    UpdateMemberRequestDetailInfo updateRequest;
+    store:HouseholdDetails? householdDetails;
+|};
