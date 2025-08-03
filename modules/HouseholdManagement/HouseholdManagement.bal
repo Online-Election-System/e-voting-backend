@@ -68,6 +68,7 @@ public isolated function submitUpdateMemberRequest(store:UpdateMemberRequest req
         newFullName: request.newFullName,
         newCivilStatus: request.newCivilStatus,
         relevantCertificatePath: request.relevantCertificatePath,
+        requestStatus: request.requestStatus,
         reason: request.reason
     };
     

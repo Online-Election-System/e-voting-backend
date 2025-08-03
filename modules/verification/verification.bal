@@ -979,3 +979,270 @@ public function rejectAddMemberRequest(string addRequestId, string rejectionReas
         return error("Failed to reject add member request: " + e.message());
     }
 }
+
+
+// UPDATE MEMBER REQUESTS
+// Get all update member requests with NIC numbers
+public function getUpdateMemberRequests(string? search, string? status) returns UpdateMemberRequestResponse[]|error {
+    
+    stream<store:UpdateMemberRequest, persist:Error?> updateRequestStream = dbClient->/updatememberrequests;
+    store:UpdateMemberRequest[] updateRequests = check from store:UpdateMemberRequest umr in updateRequestStream
+        select umr;
+    
+    UpdateMemberRequestResponse[] responses = [];
+    
+    foreach store:UpdateMemberRequest request in updateRequests {
+        // Get household member to fetch NIC
+        stream<store:HouseholdMembers, persist:Error?> householdMemberStream = dbClient->/householdmembers;
+        store:HouseholdMembers[] householdMembers = check from store:HouseholdMembers hm in householdMemberStream
+            where hm.id == (request.householdMemberId ?: "")
+            select hm;
+        
+        if householdMembers.length() > 0 {
+            store:HouseholdMembers householdMember = householdMembers[0];
+            string nic = householdMember.nic ?: "";
+            string requestStatus = request.requestStatus ?: "pending";
+            
+            // Apply filters
+            boolean includeRecord = true;
+            
+            if status is string && status != "all" && requestStatus != status {
+                includeRecord = false;
+            }
+            
+            if search is string && search.trim() != "" {
+                string searchLower = 'string:toLowerAscii(search);
+                boolean matchesSearch = 'string:toLowerAscii(nic).includes(searchLower) ||
+                    'string:toLowerAscii(request.newFullName ?: "").includes(searchLower) ||
+                    'string:toLowerAscii(request.updateRequestId).includes(searchLower);
+                if !matchesSearch {
+                    includeRecord = false;
+                }
+            }
+            
+            if includeRecord {
+                UpdateMemberRequestResponse response = {
+                    updateRequestId: request.updateRequestId,
+                    chiefOccupantId: request.chiefOccupantId,
+                    householdMemberId: request.householdMemberId ?: "",
+                    nic: nic,
+                    newFullName: request.newFullName,
+                    newCivilStatus: request.newCivilStatus,
+                    relevantCertificatePath: request.relevantCertificatePath,
+                    requestStatus:requestStatus,
+                    reason: request.reason
+                };
+                responses.push(response);
+            }
+        }
+    }
+    
+    return responses;
+}
+
+// Get update member request counts by status
+public function getUpdateMemberRequestCounts() returns UpdateMemberRequestCounts|error {
+    
+    stream<store:UpdateMemberRequest, persist:Error?> updateRequestStream = dbClient->/updatememberrequests;
+    store:UpdateMemberRequest[] updateRequests = check from store:UpdateMemberRequest umr in updateRequestStream
+        select umr;
+    
+    int pending = 0;
+    int approved = 0;
+    int rejected = 0;
+    
+    foreach store:UpdateMemberRequest request in updateRequests {
+        string status = request.requestStatus ?: "pending";
+        if status == "pending" {
+            pending += 1;
+        } else if status == "approved" {
+            approved += 1;
+        } else if status == "rejected" {
+            rejected += 1;
+        }
+    }
+    
+    return {
+        pending: pending,
+        approved: approved,
+        rejected: rejected,
+        total: updateRequests.length()
+    };
+}
+
+// Get detailed information for a specific update member request
+public function getUpdateMemberRequestDetail(string updateRequestId) returns UpdateMemberRequestDetail|error {
+    
+    // Get the update member request
+    stream<store:UpdateMemberRequest, persist:Error?> updateRequestStream = dbClient->/updatememberrequests;
+    store:UpdateMemberRequest[] updateRequests = check from store:UpdateMemberRequest umr in updateRequestStream
+        where umr.updateRequestId == updateRequestId
+        select umr;
+    
+    if updateRequests.length() == 0 {
+        return error("Update member request not found for ID: " + updateRequestId);
+    }
+    
+    store:UpdateMemberRequest updateRequest = updateRequests[0];
+    
+    // Get household member details to get current info and NIC
+    stream<store:HouseholdMembers, persist:Error?> householdMemberStream = dbClient->/householdmembers;
+    store:HouseholdMembers[] householdMembers = check from store:HouseholdMembers hm in householdMemberStream
+        where hm.id == (updateRequest.householdMemberId ?: "")
+        select hm;
+    
+    if householdMembers.length() == 0 {
+        return error("Household member not found for ID: " + (updateRequest.householdMemberId ?: ""));
+    }
+    
+    store:HouseholdMembers householdMember = householdMembers[0];
+    
+    // Get household details using chiefOccupantId from updateRequest
+    stream<store:HouseholdDetails, persist:Error?> householdStream = dbClient->/householddetails;
+    store:HouseholdDetails[] householdDetails = check from store:HouseholdDetails hd in householdStream
+        where hd.chiefOccupantId == updateRequest.chiefOccupantId
+        select hd;
+    
+    store:HouseholdDetails? householdDetail = householdDetails.length() > 0 ? householdDetails[0] : ();
+    
+    UpdateMemberRequestDetailInfo requestDetail = {
+        updateRequestId: updateRequest.updateRequestId,
+        chiefOccupantId: updateRequest.chiefOccupantId,
+        householdMemberId: updateRequest.householdMemberId ?: "",
+        nic: householdMember.nic ?: "",
+        currentFullName: householdMember.fullName,
+        currentCivilStatus: householdMember.civilStatus,
+        newFullName: updateRequest.newFullName,
+        newCivilStatus: updateRequest.newCivilStatus,
+        relevantCertificatePath: updateRequest.relevantCertificatePath,
+        requestStatus: updateRequest.requestStatus ?: "pending",
+        reason: updateRequest.reason
+    };
+    
+    return {
+        updateRequest: requestDetail,
+        householdDetails: householdDetail
+    };
+}
+
+// Approve update member request
+public function approveUpdateMemberRequest(string updateRequestId) returns string|error {
+    
+    transaction {
+        // Get the update member request details
+        stream<store:UpdateMemberRequest, persist:Error?> updateRequestStream = dbClient->/updatememberrequests;
+        store:UpdateMemberRequest[] updateRequests = check from store:UpdateMemberRequest umr in updateRequestStream
+            where umr.updateRequestId == updateRequestId
+            select umr;
+        
+        if updateRequests.length() == 0 {
+            check commit;
+            return error("Update member request not found for ID: " + updateRequestId);
+        }
+        
+        store:UpdateMemberRequest updateRequest = updateRequests[0];
+        
+        // Update the request status to approved and clear reason
+        _ = check dbClient->/updatememberrequests/[updateRequestId].put({
+            chiefOccupantId: updateRequest.chiefOccupantId,
+            householdMemberId: updateRequest.householdMemberId,
+            newFullName: updateRequest.newFullName,
+            newCivilStatus: updateRequest.newCivilStatus,
+            relevantCertificatePath: updateRequest.relevantCertificatePath,
+            requestStatus: "approved",
+            reason: ()
+        });
+        
+        // Get household member details
+        stream<store:HouseholdMembers, persist:Error?> householdMemberStream = dbClient->/householdmembers;
+        store:HouseholdMembers[] householdMembers = check from store:HouseholdMembers hm in householdMemberStream
+            where hm.id == (updateRequest.householdMemberId ?: "")
+            select hm;
+        
+        if householdMembers.length() == 0 {
+            return error("Household member not found for ID: " + (updateRequest.householdMemberId ?: ""));
+        }
+        
+        store:HouseholdMembers householdMember = householdMembers[0];
+        
+        // Update household member details (name and/or civil status)
+        string updatedFullName = updateRequest.newFullName ?: householdMember.fullName;
+        string updatedCivilStatus = updateRequest.newCivilStatus ?: householdMember.civilStatus;
+        
+        _ = check dbClient->/householdmembers/[householdMember.id].put({
+            chiefOccupantId: householdMember.chiefOccupantId,
+            fullName: updatedFullName,
+            nic: householdMember.nic,
+            dob: householdMember.dob,
+            gender: householdMember.gender,
+            civilStatus: updatedCivilStatus,
+            relationshipWithChiefOccupant: householdMember.relationshipWithChiefOccupant,
+            idCopyPath: householdMember.idCopyPath,
+            photoCopyPath: householdMember.photoCopyPath,
+            approvedByChief: householdMember.approvedByChief,
+            passwordHash: householdMember.passwordHash,
+            passwordchanged: householdMember.passwordchanged,
+            role: householdMember.role
+        });
+        
+        // Update voter table if name is changed and NIC exists
+        if updateRequest.newFullName is string && householdMember.nic is string {
+            stream<store:Voter, persist:Error?> voterStream = dbClient->/voters;
+            store:Voter[] voters = check from store:Voter v in voterStream
+                where v.nationalId == (householdMember.nic ?: "")
+                select v;
+            
+            if voters.length() > 0 {
+                store:Voter voter = voters[0];
+                _ = check dbClient->/voters/[voter.id].put({
+                    nationalId: voter.nationalId,
+                    name: updatedFullName,
+                    password: voter.password,
+                    district: voter.district,
+                    pollingStation: voter.pollingStation,
+                    registrationDate: voter.registrationDate,
+                    status: voter.status
+                });
+            }
+        }
+        
+    } on fail error e {
+        return error("Failed to approve update member request: " + e.message());
+    }
+    
+    return "Update member request approved successfully and member information updated";
+}
+
+// Reject update member request
+public function rejectUpdateMemberRequest(string updateRequestId, string rejectionReason) returns string|error {
+    
+    transaction {
+        // Get the update member request details
+        stream<store:UpdateMemberRequest, persist:Error?> updateRequestStream = dbClient->/updatememberrequests;
+        store:UpdateMemberRequest[] updateRequests = check from store:UpdateMemberRequest umr in updateRequestStream
+            where umr.updateRequestId == updateRequestId
+            select umr;
+        
+        if updateRequests.length() == 0 {
+            check commit;
+            return error("Update member request not found for ID: " + updateRequestId);
+        }
+        
+        store:UpdateMemberRequest updateRequest = updateRequests[0];
+        
+        // Update the request status to rejected with reason
+        _ = check dbClient->/updatememberrequests/[updateRequestId].put({
+            chiefOccupantId: updateRequest.chiefOccupantId,
+            householdMemberId: updateRequest.householdMemberId,
+            newFullName: updateRequest.newFullName,
+            newCivilStatus: updateRequest.newCivilStatus,
+            relevantCertificatePath: updateRequest.relevantCertificatePath,
+            requestStatus: "rejected",
+            reason: rejectionReason
+        });
+        
+        return "Update member request rejected successfully";
+    } on fail error e {
+        return error("Failed to reject update member request: " + e.message());
+    }
+}
