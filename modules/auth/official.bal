@@ -25,7 +25,6 @@ public function registerGovernmentOfficial(GovernmentOfficialRegistrationRequest
     store:AdminUsersInsert insertRec = {
         id: id,
         username: request.official.nic,  // use NIC as username for login
-        email: request.official.email,
         passwordHash: hashedPassword,
         role: "government_official",
         createdAt: time:utcNow(),
@@ -66,7 +65,6 @@ public function registerElectionCommission(ElectionCommissionRegistrationRequest
     store:AdminUsersInsert insertRec = {
         id: id,
         username: request.commission.nic,  // use NIC as username for login
-        email: request.commission.email,
         passwordHash: hashedPassword,
         role: "election_commission",
         createdAt: time:utcNow(),
@@ -107,7 +105,6 @@ public function registerPollingStation(PollingStationRegistrationRequest request
     store:AdminUsersInsert insertRec = {
         id: id,
         username: request.station.nic,  // use NIC as username for login
-        email: request.station.email,
         passwordHash: hashedPassword,
         role: "polling_station",
         createdAt: time:utcNow(),
