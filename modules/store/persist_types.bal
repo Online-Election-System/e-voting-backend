@@ -230,7 +230,6 @@ public type ElectionUpdate record {|
 public type AdminUsers record {|
     readonly string id;
     string username;
-    string email;
     string passwordHash;
     string role;
     time:Utc createdAt;
@@ -240,7 +239,6 @@ public type AdminUsers record {|
 public type AdminUsersOptionalized record {|
     string id?;
     string username?;
-    string email?;
     string passwordHash?;
     string role?;
     time:Utc createdAt?;
@@ -253,7 +251,6 @@ public type AdminUsersInsert AdminUsers;
 
 public type AdminUsersUpdate record {|
     string username?;
-    string email?;
     string passwordHash?;
     string role?;
     time:Utc createdAt?;
@@ -723,5 +720,56 @@ public type CandidateDistrictVoteSummaryUpdate record {|
     int trincomalee?;
     int vavuniya?;
     int totals?;
+|};
+
+public type ActivityLog record {|
+    readonly string id;
+    string? userId;
+    string? userType;
+    string action;
+    string? resourceId;
+    string? httpMethod;
+    string endpoint;
+    string? ipAddress;
+    string? userAgent;
+    time:Utc timestamp;
+    string status;
+    string? details;
+    string? sessionId;
+|};
+
+public type ActivityLogOptionalized record {|
+    string id?;
+    string? userId?;
+    string? userType?;
+    string action?;
+    string? resourceId?;
+    string? httpMethod?;
+    string endpoint?;
+    string? ipAddress?;
+    string? userAgent?;
+    time:Utc timestamp?;
+    string status?;
+    string? details?;
+    string? sessionId?;
+|};
+
+public type ActivityLogTargetType typedesc<ActivityLogOptionalized>;
+
+public type ActivityLogInsert ActivityLog;
+
+public type ActivityLogUpdate record {|
+    string? userId?;
+    string? userType?;
+    string action?;
+    string? resourceId?;
+    string? httpMethod?;
+    string endpoint?;
+    string? ipAddress?;
+    string? userAgent?;
+    time:Utc timestamp?;
+    string status?;
+    string? details?;
+    string? sessionId?;
 |};
 

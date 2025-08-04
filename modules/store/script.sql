@@ -6,6 +6,7 @@
 DROP TABLE IF EXISTS "Candidate";
 DROP TABLE IF EXISTS "Vote";
 DROP TABLE IF EXISTS "EnrolCandidates";
+DROP TABLE IF EXISTS "ActivityLog";
 DROP TABLE IF EXISTS "Enrolment";
 DROP TABLE IF EXISTS "Election";
 DROP TABLE IF EXISTS "Notification";
@@ -175,7 +176,6 @@ CREATE TABLE "RemovalRequest" (
 CREATE TABLE "AdminUsers" (
 	"id" VARCHAR(191) NOT NULL,
 	"username" VARCHAR(191) NOT NULL,
-	"email" VARCHAR(191) NOT NULL,
 	"password_hash" VARCHAR(191) NOT NULL,
 	"role" VARCHAR(191) NOT NULL,
 	"created_at" TIMESTAMP NOT NULL,
@@ -235,6 +235,23 @@ CREATE TABLE "Enrolment" (
 	PRIMARY KEY("voter_id","election_id")
 );
 
+CREATE TABLE "ActivityLog" (
+	"id" VARCHAR(191) NOT NULL,
+	"user_id" VARCHAR(191),
+	"user_type" VARCHAR(191),
+	"action" VARCHAR(191) NOT NULL,
+	"resource_id" VARCHAR(191),
+	"http_method" VARCHAR(191),
+	"endpoint" VARCHAR(191) NOT NULL,
+	"ip_address" VARCHAR(191),
+	"user_agent" VARCHAR(191),
+	"timestamp" TIMESTAMP NOT NULL,
+	"status" VARCHAR(191) NOT NULL,
+	"details" VARCHAR(191),
+	"session_id" VARCHAR(191),
+	PRIMARY KEY("id")
+);
+
 CREATE TABLE "EnrolCandidates" (
 	"election_id" VARCHAR(191) NOT NULL,
 	"candidate_id" VARCHAR(191) NOT NULL,
@@ -262,3 +279,5 @@ CREATE TABLE "Candidate" (
 	"is_active" BOOLEAN NOT NULL,
 	PRIMARY KEY("candidate_id")
 );
+
+

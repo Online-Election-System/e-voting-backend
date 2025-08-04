@@ -172,16 +172,12 @@ public type GovernmentOfficialInput record {|
 |};
 
 public type ElectionCommissionInput record {|
-    string fullName;
     string nic;
-    string email;
     string passwordHash;
 |};
 
 public type PollingStationInput record {|
-    string fullName;
     string nic;
-    string email;
     string passwordHash;
 |};
 
@@ -230,4 +226,10 @@ public type EnhancedLoginResponse record {|
 public type VoterLogin record {
     string nationalId;
     string password;
+};
+
+public type RequestMetadata record {
+    string? ipAddress;
+    string? userAgent;
+    string? sessionId;
 };
