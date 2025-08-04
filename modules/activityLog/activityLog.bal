@@ -457,45 +457,54 @@ public function getIpFromRequest(http:Request? request) returns string {
         return "unknown";
     }
     
-    // Try X-Forwarded-For header (most common for load balancers/proxies)
+    // Try X-Forwarded-For header first (most common for proxies/load balancers)
     string|http:HeaderNotFoundError xForwardedFor = request.getHeader("X-Forwarded-For");
-    if xForwardedFor is string && xForwardedFor.trim() != "" {
-        // X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
-        // Take the first IP (the original client)
-        string[] ips = regex:split(xForwardedFor, ",");
-        if ips.length() > 0 {
-            string clientIp = ips[0].trim();
-            if clientIp != "" {
-                return clientIp;
+    if xForwardedFor is string {
+        string trimmed = xForwardedFor.trim();
+        if trimmed != "" {
+            // X-Forwarded-For can have multiple IPs: "client, proxy1, proxy2"
+            // Split by comma and take the first one (original client)
+            string[] parts = regex:split(trimmed, ",");
+            if parts.length() > 0 {
+                string clientIp = parts[0].trim();
+                if clientIp != "" && clientIp != "unknown" {
+                    return clientIp;
+                }
             }
         }
     }
     
-    // Try X-Real-IP header (used by nginx and others)
+    // Try X-Real-IP header (nginx)
     string|http:HeaderNotFoundError xRealIp = request.getHeader("X-Real-IP");
-    if xRealIp is string && xRealIp.trim() != "" {
-        return xRealIp.trim();
+    if xRealIp is string {
+        string trimmed = xRealIp.trim();
+        if trimmed != "" && trimmed != "unknown" {
+            return trimmed;
+        }
     }
     
-    // Try X-Client-IP header (used by some proxies)
+    // Try X-Client-IP header
     string|http:HeaderNotFoundError xClientIp = request.getHeader("X-Client-IP");
-    if xClientIp is string && xClientIp.trim() != "" {
-        return xClientIp.trim();
+    if xClientIp is string {
+        string trimmed = xClientIp.trim();
+        if trimmed != "" && trimmed != "unknown" {
+            return trimmed;
+        }
     }
     
-    // Try CF-Connecting-IP header (Cloudflare)
-    string|http:HeaderNotFoundError cfConnectingIp = request.getHeader("CF-Connecting-IP");
-    if cfConnectingIp is string && cfConnectingIp.trim() != "" {
-        return cfConnectingIp.trim();
+    // Try CF-Connecting-IP (Cloudflare)
+    string|http:HeaderNotFoundError cfIp = request.getHeader("CF-Connecting-IP");
+    if cfIp is string {
+        string trimmed = cfIp.trim();
+        if trimmed != "" && trimmed != "unknown" {
+            return trimmed;
+        }
     }
     
-    // Try True-Client-IP header (Cloudflare and others)
-    string|http:HeaderNotFoundError trueClientIp = request.getHeader("True-Client-IP");
-    if trueClientIp is string && trueClientIp.trim() != "" {
-        return trueClientIp.trim();
-    }
+    // Debug: Log all headers to see what's available
+    log:printInfo("=== DEBUG: Available headers for IP extraction ===");
+    // You might need to iterate through available headers to see what's there
     
-    // If all else fails, return unknown
     return "unknown";
 }
 
