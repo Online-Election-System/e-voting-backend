@@ -172,16 +172,12 @@ public type GovernmentOfficialInput record {|
 |};
 
 public type ElectionCommissionInput record {|
-    string fullName;
     string nic;
-    string email;
     string passwordHash;
 |};
 
 public type PollingStationInput record {|
-    string fullName;
     string nic;
-    string email;
     string passwordHash;
 |};
 

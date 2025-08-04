@@ -230,7 +230,6 @@ public type ElectionUpdate record {|
 public type AdminUsers record {|
     readonly string id;
     string username;
-    string email;
     string passwordHash;
     string role;
     time:Utc createdAt;
@@ -240,7 +239,6 @@ public type AdminUsers record {|
 public type AdminUsersOptionalized record {|
     string id?;
     string username?;
-    string email?;
     string passwordHash?;
     string role?;
     time:Utc createdAt?;
@@ -253,7 +251,6 @@ public type AdminUsersInsert AdminUsers;
 
 public type AdminUsersUpdate record {|
     string username?;
-    string email?;
     string passwordHash?;
     string role?;
     time:Utc createdAt?;

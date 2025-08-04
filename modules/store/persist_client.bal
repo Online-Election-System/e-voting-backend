@@ -133,7 +133,6 @@ public isolated client class Client {
             fieldMetadata: {
                 id: {columnName: "id"},
                 username: {columnName: "username"},
-                email: {columnName: "email"},
                 passwordHash: {columnName: "password_hash"},
                 role: {columnName: "role"},
                 createdAt: {columnName: "created_at"},

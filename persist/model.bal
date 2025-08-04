@@ -180,8 +180,7 @@ public type Election record {|
 # Description.
 #
 # + id - field description  
-# + username - field description  
-# + email - field description  
+# + username - field description 
 # + passwordHash - field description  
 # + role - field description  
 # + createdAt - field description  
@@ -189,7 +188,6 @@ public type Election record {|
 public type AdminUsers record {|
     readonly string id;
     string username;
-    string email;
     @sql:Name {value: "password_hash"}
     string passwordHash;
     string role;

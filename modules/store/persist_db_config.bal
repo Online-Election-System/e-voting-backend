@@ -10,6 +10,7 @@ configurable string host = ?;
 configurable string user = ?;
 configurable string database = ?;
 configurable string password = ?;
+// configurable string pool_mode = ?;
 configurable postgresql:Options & readonly connectionOptions = {};
 configurable string? defaultSchema = ();
 

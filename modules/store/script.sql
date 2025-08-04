@@ -176,7 +176,6 @@ CREATE TABLE "RemovalRequest" (
 CREATE TABLE "AdminUsers" (
 	"id" VARCHAR(191) NOT NULL,
 	"username" VARCHAR(191) NOT NULL,
-	"email" VARCHAR(191) NOT NULL,
 	"password_hash" VARCHAR(191) NOT NULL,
 	"role" VARCHAR(191) NOT NULL,
 	"created_at" TIMESTAMP NOT NULL,
