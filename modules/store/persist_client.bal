@@ -22,7 +22,6 @@ const DELETE_MEMBER_REQUEST = "deletememberrequests";
 const ENROL_CANDIDATES = "enrolcandidates";
 const VOTE = "votes";
 const ENROLMENT = "enrolments";
-const REMOVAL_REQUEST = "removalrequests";
 const REGISTRATION_REVIEW = "registrationreviews";
 const GRAMA_NILADHARI = "gramaniladharis";
 const NOTIFICATION = "notifications";
@@ -154,7 +153,9 @@ public isolated client class Client {
                 relationshipToChief: {columnName: "relationship_to_chief"},
                 chiefOccupantApproval: {columnName: "chief_occupant_approval"},
                 requestStatus: {columnName: "request_status"},
-                nicOrBirthCertificatePath: {columnName: "nic_or_birth_certificate_path"}
+                reason: {columnName: "reason"},
+                nicOrBirthCertificatePath: {columnName: "nic_or_birth_certificate_path"},
+                photoCopyPath: {columnName: "photo_copy_path"}
             },
             keyFields: ["addRequestId"]
         },
@@ -166,9 +167,9 @@ public isolated client class Client {
                 chiefOccupantId: {columnName: "chief_occupant_id"},
                 householdMemberId: {columnName: "household_member_id"},
                 newFullName: {columnName: "new_full_name"},
-                newResidentArea: {columnName: "new_resident_area"},
-                requestStatus: {columnName: "request_status"},
-                relevantCertificatePath: {columnName: "relevant_certificate_path"}
+                newCivilStatus: {columnName: "new_civil_status"},
+                relevantCertificatePath: {columnName: "relevant_certificate_path"},
+                reason: {columnName: "reason"}
             },
             keyFields: ["updateRequestId"]
         },
@@ -180,7 +181,9 @@ public isolated client class Client {
                 chiefOccupantId: {columnName: "chief_occupant_id"},
                 householdMemberId: {columnName: "household_member_id"},
                 requestStatus: {columnName: "request_status"},
-                requiredDocumentPath: {columnName: "required_document_path"}
+                reason: {columnName: "reason"},
+                requiredDocumentPath: {columnName: "required_document_path"},
+                rejectionReason: {columnName: "rejection_reason"}
             },
             keyFields: ["deleteRequestId"]
         },
@@ -217,29 +220,14 @@ public isolated client class Client {
             },
             keyFields: ["voterId", "electionId"]
         },
-        [REMOVAL_REQUEST]: {
-            entityName: "RemovalRequest",
-            tableName: "RemovalRequest",
-            fieldMetadata: {
-                id: {columnName: "id"},
-                memberName: {columnName: "member_name"},
-                nic: {columnName: "nic"},
-                requestedBy: {columnName: "requested_by"},
-                reason: {columnName: "reason"},
-                proofDocument: {columnName: "proof_document"},
-                status: {columnName: "status"}
-            },
-            keyFields: ["id"]
-        },
         [REGISTRATION_REVIEW]: {
             entityName: "RegistrationReview",
             tableName: "RegistrationReview",
             fieldMetadata: {
                 id: {columnName: "id"},
                 memberNic: {columnName: "member_nic"},
-                reviewedBy: {columnName: "reviewed_by"},
                 status: {columnName: "status"},
-                comments: {columnName: "comments"},
+                reason: {columnName: "reason"},
                 reviewedAt: {columnName: "reviewed_at"}
             },
             keyFields: ["id"]
@@ -392,7 +380,6 @@ public isolated client class Client {
             [ENROL_CANDIDATES]: check new (dbClient, self.metadata.get(ENROL_CANDIDATES).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [VOTE]: check new (dbClient, self.metadata.get(VOTE).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [ENROLMENT]: check new (dbClient, self.metadata.get(ENROLMENT).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
-            [REMOVAL_REQUEST]: check new (dbClient, self.metadata.get(REMOVAL_REQUEST).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [REGISTRATION_REVIEW]: check new (dbClient, self.metadata.get(REGISTRATION_REVIEW).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [GRAMA_NILADHARI]: check new (dbClient, self.metadata.get(GRAMA_NILADHARI).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
             [NOTIFICATION]: check new (dbClient, self.metadata.get(NOTIFICATION).cloneReadOnly(), psql:POSTGRESQL_SPECIFICS),
@@ -867,45 +854,6 @@ public isolated client class Client {
             sqlClient = self.persistClients.get(ENROLMENT);
         }
         _ = check sqlClient.runDeleteQuery({"voterId": voterId, "electionId": electionId});
-        return result;
-    }
-
-    isolated resource function get removalrequests(RemovalRequestTargetType targetType = <>, sql:ParameterizedQuery whereClause = ``, sql:ParameterizedQuery orderByClause = ``, sql:ParameterizedQuery limitClause = ``, sql:ParameterizedQuery groupByClause = ``) returns stream<targetType, persist:Error?> = @java:Method {
-        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
-        name: "query"
-    } external;
-
-    isolated resource function get removalrequests/[string id](RemovalRequestTargetType targetType = <>) returns targetType|persist:Error = @java:Method {
-        'class: "io.ballerina.stdlib.persist.sql.datastore.PostgreSQLProcessor",
-        name: "queryOne"
-    } external;
-
-    isolated resource function post removalrequests(RemovalRequestInsert[] data) returns string[]|persist:Error {
-        psql:SQLClient sqlClient;
-        lock {
-            sqlClient = self.persistClients.get(REMOVAL_REQUEST);
-        }
-        _ = check sqlClient.runBatchInsertQuery(data);
-        return from RemovalRequestInsert inserted in data
-            select inserted.id;
-    }
-
-    isolated resource function put removalrequests/[string id](RemovalRequestUpdate value) returns RemovalRequest|persist:Error {
-        psql:SQLClient sqlClient;
-        lock {
-            sqlClient = self.persistClients.get(REMOVAL_REQUEST);
-        }
-        _ = check sqlClient.runUpdateQuery(id, value);
-        return self->/removalrequests/[id].get();
-    }
-
-    isolated resource function delete removalrequests/[string id]() returns RemovalRequest|persist:Error {
-        RemovalRequest result = check self->/removalrequests/[id].get();
-        psql:SQLClient sqlClient;
-        lock {
-            sqlClient = self.persistClients.get(REMOVAL_REQUEST);
-        }
-        _ = check sqlClient.runDeleteQuery(id);
         return result;
     }
 

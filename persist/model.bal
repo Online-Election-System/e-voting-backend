@@ -217,8 +217,11 @@ public type AddMemberRequest record {|
     string chiefOccupantApproval; 
     @sql:Name {value: "request_status"}
     string requestStatus;
+    string? reason;
     @sql:Name {value: "nic_or_birth_certificate_path"}
     string? nicOrBirthCertificatePath;
+    @sql:Name {value: "photo_copy_path"}
+    string? photoCopyPath;
 |};
 
 public type UpdateMemberRequest record {|
@@ -230,12 +233,11 @@ public type UpdateMemberRequest record {|
     string? householdMemberId;
     @sql:Name {value: "new_full_name"}
     string? newFullName;
-    @sql:Name {value: "new_resident_area"}
-    string? newResidentArea;
-    @sql:Name {value: "request_status"}
-    string requestStatus;
+    @sql:Name {value: "new_civil_status"}
+    string? newCivilStatus;
     @sql:Name {value: "relevant_certificate_path"}
-    string? relevantCertificatePath;
+    string relevantCertificatePath;
+    string? reason;
 |};
 
 public type DeleteMemberRequest record {|
@@ -246,10 +248,14 @@ public type DeleteMemberRequest record {|
     @sql:Name {value: "household_member_id"}
     string? householdMemberId; 
     @sql:Name {value: "request_status"}
-    string requestStatus; 
+    string? requestStatus;
+    string? reason; 
     @sql:Name {value: "required_document_path"}
     string? requiredDocumentPath;
+    @sql:Name {value: "rejection_reason"}
+    string? rejectionReason;
 |};
+
 # Description.
 #
 # + electionId - election id
@@ -300,29 +306,20 @@ public type Enrolment record {|
     time:Utc enrollementDate;
 |};
 
-// -- Removal Requests Table --
-public type RemovalRequest record {|
-    readonly string id;
-    @sql:Name { value: "member_name" }
-    string memberName;
-    string nic;
-    @sql:Name { value: "requested_by" }
-    string requestedBy;
-    string reason;
-    @sql:Name { value: "proof_document" }
-    string proofDocument;
-    string status; // pending, approved, rejected
-|};
-
 // -- Registration Reviews Table --
+# Description.
+#
+# + id - field description  
+# + memberNic - field description  
+# + status - field description  
+# + reason - field description  
+# + reviewedAt - field description
 public type RegistrationReview record {|
     readonly string id;
     @sql:Name { value: "member_nic" }
     string memberNic;
-    @sql:Name { value: "reviewed_by" }
-    string reviewedBy;
     string status; // pending, approved, rejected
-    string? comments;
+    string? reason;
     @sql:Name { value: "reviewed_at" }
     time:Utc? reviewedAt;
 |};
@@ -395,6 +392,7 @@ public type Voter record {|
     time:Date registrationDate;
     string status;
 |};
+
 # Description.
 #
 # + electionId - foreign key reference to the Election record

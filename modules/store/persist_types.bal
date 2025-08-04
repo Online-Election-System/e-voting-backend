@@ -268,7 +268,9 @@ public type AddMemberRequest record {|
     string relationshipToChief;
     string chiefOccupantApproval;
     string requestStatus;
+    string? reason;
     string? nicOrBirthCertificatePath;
+    string? photoCopyPath;
 |};
 
 public type AddMemberRequestOptionalized record {|
@@ -282,7 +284,9 @@ public type AddMemberRequestOptionalized record {|
     string relationshipToChief?;
     string chiefOccupantApproval?;
     string requestStatus?;
+    string? reason?;
     string? nicOrBirthCertificatePath?;
+    string? photoCopyPath?;
 |};
 
 public type AddMemberRequestTargetType typedesc<AddMemberRequestOptionalized>;
@@ -299,7 +303,9 @@ public type AddMemberRequestUpdate record {|
     string relationshipToChief?;
     string chiefOccupantApproval?;
     string requestStatus?;
+    string? reason?;
     string? nicOrBirthCertificatePath?;
+    string? photoCopyPath?;
 |};
 
 public type UpdateMemberRequest record {|
@@ -307,9 +313,9 @@ public type UpdateMemberRequest record {|
     string chiefOccupantId;
     string? householdMemberId;
     string? newFullName;
-    string? newResidentArea;
-    string requestStatus;
-    string? relevantCertificatePath;
+    string? newCivilStatus;
+    string relevantCertificatePath;
+    string? reason;
 |};
 
 public type UpdateMemberRequestOptionalized record {|
@@ -317,9 +323,9 @@ public type UpdateMemberRequestOptionalized record {|
     string chiefOccupantId?;
     string? householdMemberId?;
     string? newFullName?;
-    string? newResidentArea?;
-    string requestStatus?;
-    string? relevantCertificatePath?;
+    string? newCivilStatus?;
+    string relevantCertificatePath?;
+    string? reason?;
 |};
 
 public type UpdateMemberRequestTargetType typedesc<UpdateMemberRequestOptionalized>;
@@ -330,25 +336,29 @@ public type UpdateMemberRequestUpdate record {|
     string chiefOccupantId?;
     string? householdMemberId?;
     string? newFullName?;
-    string? newResidentArea?;
-    string requestStatus?;
-    string? relevantCertificatePath?;
+    string? newCivilStatus?;
+    string relevantCertificatePath?;
+    string? reason?;
 |};
 
 public type DeleteMemberRequest record {|
     readonly string deleteRequestId;
     string chiefOccupantId;
     string? householdMemberId;
-    string requestStatus;
+    string? requestStatus;
+    string? reason;
     string? requiredDocumentPath;
+    string? rejectionReason;
 |};
 
 public type DeleteMemberRequestOptionalized record {|
     string deleteRequestId?;
     string chiefOccupantId?;
     string? householdMemberId?;
-    string requestStatus?;
+    string? requestStatus?;
+    string? reason?;
     string? requiredDocumentPath?;
+    string? rejectionReason?;
 |};
 
 public type DeleteMemberRequestTargetType typedesc<DeleteMemberRequestOptionalized>;
@@ -358,8 +368,10 @@ public type DeleteMemberRequestInsert DeleteMemberRequest;
 public type DeleteMemberRequestUpdate record {|
     string chiefOccupantId?;
     string? householdMemberId?;
-    string requestStatus?;
+    string? requestStatus?;
+    string? reason?;
     string? requiredDocumentPath?;
+    string? rejectionReason?;
 |};
 
 public type EnrolCandidates record {|
@@ -432,54 +444,19 @@ public type EnrolmentUpdate record {|
     time:Utc enrollementDate?;
 |};
 
-public type RemovalRequest record {|
-    readonly string id;
-    string memberName;
-    string nic;
-    string requestedBy;
-    string reason;
-    string proofDocument;
-    string status;
-|};
-
-public type RemovalRequestOptionalized record {|
-    string id?;
-    string memberName?;
-    string nic?;
-    string requestedBy?;
-    string reason?;
-    string proofDocument?;
-    string status?;
-|};
-
-public type RemovalRequestTargetType typedesc<RemovalRequestOptionalized>;
-
-public type RemovalRequestInsert RemovalRequest;
-
-public type RemovalRequestUpdate record {|
-    string memberName?;
-    string nic?;
-    string requestedBy?;
-    string reason?;
-    string proofDocument?;
-    string status?;
-|};
-
 public type RegistrationReview record {|
     readonly string id;
     string memberNic;
-    string reviewedBy;
     string status;
-    string? comments;
+    string? reason;
     time:Utc? reviewedAt;
 |};
 
 public type RegistrationReviewOptionalized record {|
     string id?;
     string memberNic?;
-    string reviewedBy?;
     string status?;
-    string? comments?;
+    string? reason?;
     time:Utc? reviewedAt?;
 |};
 
@@ -489,9 +466,8 @@ public type RegistrationReviewInsert RegistrationReview;
 
 public type RegistrationReviewUpdate record {|
     string memberNic?;
-    string reviewedBy?;
     string status?;
-    string? comments?;
+    string? reason?;
     time:Utc? reviewedAt?;
 |};
 
