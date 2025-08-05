@@ -1,3 +1,4 @@
+import online_election.candidate;
 import online_election.common;
 import online_election.store;
 
@@ -5,7 +6,6 @@ import ballerina/http;
 import ballerina/log;
 import ballerina/persist;
 import ballerina/time;
-import online_election.candidate;
 
 final store:Client dbElection = check new ();
 
@@ -21,9 +21,25 @@ public function getElections() returns ElectionWithCandidates[]|error {
         // Get enrolled candidates with details for each election
         EnrolledCandidateWithDetails[]|error enrolledCandidates = getCandidatesForElection(election.id);
 
+        // Get enrolled voters count for each election
+        int|error votersCount = getEnrolledVotersCount(election.id);
+        if votersCount is error {
+            log:printWarn("Failed to get enrolled voters count", electionId = election.id, 'error = votersCount);
+            votersCount = 0; // Default to 0 if error
+        }
+
+        // Get voted count for each election
+        int|error votesCount = getVotedCount(election.id);
+        if votesCount is error {
+            log:printWarn("Failed to get enrolled voters count", electionId = election.id, 'error = votesCount);
+            votesCount = 0; // Default to 0 if error
+        }
+
         ElectionWithCandidates electionWithCandidates = {
             ...election,
-            enrolledCandidates: check enrolledCandidates
+            enrolledCandidates: check enrolledCandidates,
+            enrolledVotersCount: check votersCount,
+            votedCount: check votesCount
         };
 
         electionsWithCandidates.push(electionWithCandidates);
@@ -45,13 +61,28 @@ public function getElectionById(string electionId) returns ElectionWithCandidate
     EnrolledCandidateWithDetails[]|error enrolledCandidates = getCandidatesForElection(electionId);
     if enrolledCandidates is error {
         log:printWarn("Failed to fetch candidates for election", electionId = electionId, 'error = enrolledCandidates);
-        // Return election without candidates rather than failing completely
         enrolledCandidates = [];
+    }
+
+    // Get enrolled voters count for this election
+    int|error votersCount = getEnrolledVotersCount(electionId);
+    if votersCount is error {
+        log:printWarn("Failed to get enrolled voters count", electionId = electionId, 'error = votersCount);
+        votersCount = 0; // Default to 0 if error
+    }
+
+    // Get voted count for each election
+    int|error votesCount = getVotedCount(election.id);
+    if votesCount is error {
+        log:printWarn("Failed to get enrolled voters count", electionId = election.id, 'error = votesCount);
+        votesCount = 0; // Default to 0 if error
     }
 
     ElectionWithCandidates response = {
         ...election,
-        enrolledCandidates: check enrolledCandidates
+        enrolledCandidates: check enrolledCandidates,
+        enrolledVotersCount: check votersCount,
+        votedCount: check votesCount
     };
 
     return response;
@@ -262,8 +293,8 @@ function removeAllCandidatesFromElection(string electionId) returns error? {
         }
     }
 
-    log:printInfo("Enrollment records removed, now checking candidate deactivation", 
-        electionId = electionId, candidateCount = candidateIds.length());
+    log:printInfo("Enrollment records removed, now checking candidate deactivation",
+            electionId = electionId, candidateCount = candidateIds.length());
 
     // IMPORTANT: Check if candidates should be deactivated after removal
     // Only deactivate if they're not enrolled in any other elections with future end dates
@@ -370,7 +401,7 @@ function checkAndDeactivateCandidatesAfterRemoval(string[] candidateIds) returns
 
         // Check if any other enrollments are in elections that haven't ended yet
         boolean hasActiveOrFutureElection = false;
-        
+
         foreach store:EnrolCandidates enrollment in otherEnrollments {
             // Get the election details
             store:Election|persist:Error election = dbElection->/elections/[enrollment.electionId];
@@ -378,8 +409,8 @@ function checkAndDeactivateCandidatesAfterRemoval(string[] candidateIds) returns
                 // Check if this election hasn't ended yet (end date is today or in the future)
                 if !candidate:isDateAfter(today, election.endDate) {
                     hasActiveOrFutureElection = true;
-                    log:printInfo("Candidate has enrollment in future/current election", 
-                        candidateId = candidateId, electionId = election.id, endDate = election.endDate);
+                    log:printInfo("Candidate has enrollment in future/current election",
+                            candidateId = candidateId, electionId = election.id, endDate = election.endDate);
                     break;
                 }
             }
@@ -390,8 +421,8 @@ function checkAndDeactivateCandidatesAfterRemoval(string[] candidateIds) returns
             log:printInfo("No active/future elections found, deactivating candidate", candidateId = candidateId);
             error? deactivateResult = candidate:deactivateCandidatesForElection([candidateId]);
             if deactivateResult is error {
-                log:printError("Failed to deactivate candidate after checking enrollments", 
-                    candidateId = candidateId, 'error = deactivateResult);
+                log:printError("Failed to deactivate candidate after checking enrollments",
+                        candidateId = candidateId, 'error = deactivateResult);
             }
         } else {
             log:printInfo("Candidate remains active due to other enrollments", candidateId = candidateId);
@@ -413,7 +444,7 @@ public function updateElectionWithStatusManagement(string electionId, ElectionUp
 
     // Store the old end date for comparison
     time:Date oldEndDate = existingElection.endDate;
-    
+
     // Extract candidateIds from the update request
     string[]? candidateIds = updatedElection?.candidateIds;
 
@@ -446,8 +477,8 @@ public function updateElectionWithStatusManagement(string electionId, ElectionUp
 
     // If election end date changed and is now in the past, check candidate deactivation
     if !isDateEqual(oldEndDate, newEndDate) && candidate:isDateAfter(today, newEndDate) {
-        log:printInfo("Election end date changed to past, checking candidate deactivation", 
-            electionId = electionId, oldEndDate = oldEndDate, newEndDate = newEndDate);
+        log:printInfo("Election end date changed to past, checking candidate deactivation",
+                electionId = electionId, oldEndDate = oldEndDate, newEndDate = newEndDate);
 
         // Get current enrolled candidates
         string[] currentCandidateIds = [];
@@ -461,8 +492,8 @@ public function updateElectionWithStatusManagement(string electionId, ElectionUp
         if currentCandidateIds.length() > 0 {
             error? deactivationResult = checkAndDeactivateCandidatesAfterRemoval(currentCandidateIds);
             if deactivationResult is error {
-                log:printWarn("Failed to deactivate candidates after election end date change", 
-                    electionId = electionId, 'error = deactivationResult);
+                log:printWarn("Failed to deactivate candidates after election end date change",
+                        electionId = electionId, 'error = deactivationResult);
             }
         }
     }
@@ -524,11 +555,11 @@ public function deactivateCandidatesFromEndedElections() returns error? {
             // Check and deactivate candidates (only if they have no other active enrollments)
             error? deactivationResult = checkAndDeactivateCandidatesAfterRemoval(candidateIds);
             if deactivationResult is error {
-                log:printError("Failed to deactivate candidates from ended election", 
-                    electionId = election.id, 'error = deactivationResult);
+                log:printError("Failed to deactivate candidates from ended election",
+                        electionId = election.id, 'error = deactivationResult);
             } else {
-                log:printInfo("Processed candidate deactivation for ended election", 
-                    electionId = election.id, candidateCount = candidateIds.length());
+                log:printInfo("Processed candidate deactivation for ended election",
+                        electionId = election.id, candidateCount = candidateIds.length());
             }
         }
     }
@@ -540,4 +571,22 @@ public function deactivateCandidatesFromEndedElections() returns error? {
 // Helper function to check if two dates are equal
 function isDateEqual(time:Date date1, time:Date date2) returns boolean {
     return date1.year == date2.year && date1.month == date2.month && date1.day == date2.day;
+}
+
+public function getEnrolledVotersCount(string electionId) returns int|error {
+    stream<store:Enrolment, persist:Error?> enrolmentStream = dbElection->/enrolments;
+    store:Enrolment[] enrolments = check from store:Enrolment enrolment in enrolmentStream
+        where enrolment.electionId == electionId
+        select enrolment;
+
+    return enrolments.length();
+}
+
+public function getVotedCount(string electionId) returns int|error {
+    stream<store:Vote, persist:Error?> voteStream = dbElection->/votes;
+    store:Vote[] votes = check from store:Vote vote in voteStream
+        where vote.electionId == electionId
+        select vote;
+
+    return votes.length();
 }

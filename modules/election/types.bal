@@ -43,6 +43,8 @@ public type ElectionUpdateWithCandidates record {|
 public type ElectionWithCandidates record {|
     *store:Election;
     EnrolledCandidateWithDetails[]? enrolledCandidates?;
+    int enrolledVotersCount?;
+    int votedCount?;
 |};
 
 public type EnrolledCandidateWithDetails record {|
