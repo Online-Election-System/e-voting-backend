@@ -41,10 +41,10 @@ service /admin/api/v1 on SharedListener {
     resource function post election\-commission/register(http:Request request, auth:ElectionCommissionRegistrationRequest req)
     returns json|http:Response|error {
 
-        // auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request);
-        // if authResult is http:Response {
-        //     return authResult;
-        // }
+        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request);
+        if authResult is http:Response {
+            return authResult;
+        }
 
         return check auth:registerElectionCommission(req);
     }
@@ -59,6 +59,15 @@ service /admin/api/v1 on SharedListener {
         }
 
         return check auth:registerPollingStation(req);
+    }
+
+    resource function get admins(http:Request request) returns store:AdminUsers[]|http:Response|error {
+        auth:AuthenticatedUser|http:Response authResult = check auth:withAuth(request);
+        if authResult is http:Response {
+            return authResult;
+        }
+
+        return check auth:getAdmins();
     }
 
     // Admin endpoint for token monitoring - Admin Only

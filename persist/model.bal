@@ -185,6 +185,7 @@ public type Election record {|
 # + role - field description  
 # + createdAt - field description  
 # + isActive - field description
+# + division - field description
 public type AdminUsers record {|
     readonly string id;
     string username;
@@ -195,6 +196,7 @@ public type AdminUsers record {|
     time:Utc createdAt;
     @sql:Name {value: "is_active"}
     boolean isActive;
+    string? division;
 |};
 
 public type AddMemberRequest record {|

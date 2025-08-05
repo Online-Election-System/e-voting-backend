@@ -171,6 +171,7 @@ CREATE TABLE "AdminUsers" (
 	"role" VARCHAR(191) NOT NULL,
 	"created_at" TIMESTAMP NOT NULL,
 	"is_active" BOOLEAN NOT NULL,
+	"division" VARCHAR(191),
 	PRIMARY KEY("id")
 );
 

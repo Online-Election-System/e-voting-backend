@@ -135,7 +135,8 @@ public isolated client class Client {
                 passwordHash: {columnName: "password_hash"},
                 role: {columnName: "role"},
                 createdAt: {columnName: "created_at"},
-                isActive: {columnName: "is_active"}
+                isActive: {columnName: "is_active"},
+                division: {columnName: "division"}
             },
             keyFields: ["id"]
         },

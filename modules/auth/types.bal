@@ -162,15 +162,13 @@ public type HouseholdMembersInsert record {| // Added role, isVerified, verified
 
 # -- Government official & election commission registration types --
 #
-# + fullName - Full Name
 # + nic - National Identity Card Number
-# + email - Email
 # + passwordHash - Account Password
+# + division - Division (optional, for government officials)
 public type GovernmentOfficialInput record {|
-    string fullName;
     string nic;
-    string email;
     string passwordHash;
+    string? division;
 |};
 
 public type ElectionCommissionInput record {|
@@ -181,6 +179,7 @@ public type ElectionCommissionInput record {|
 public type PollingStationInput record {|
     string nic;
     string passwordHash;
+    string? division; // optional division field
 |};
 
 public type GovernmentOfficialRegistrationRequest record {|

@@ -3,6 +3,7 @@ import online_election.store;
 
 import ballerina/log;
 import ballerina/time;
+import ballerina/persist;
 
 public function registerGovernmentOfficial(GovernmentOfficialRegistrationRequest request) returns json|error {
     // Validate password policy
@@ -28,7 +29,8 @@ public function registerGovernmentOfficial(GovernmentOfficialRegistrationRequest
         passwordHash: hashedPassword,
         role: "government_official",
         createdAt: time:utcNow(),
-        isActive: true
+        isActive: true,
+        division: request.official.division // optional division field
     };
 
     string[]|error resp = dbClient->/adminusers.post([insertRec]);
@@ -68,7 +70,8 @@ public function registerElectionCommission(ElectionCommissionRegistrationRequest
         passwordHash: hashedPassword,
         role: "election_commission",
         createdAt: time:utcNow(),
-        isActive: true
+        isActive: true,
+        division: ()
     };
 
     string[]|error resp = dbClient->/adminusers.post([insertRec]);
@@ -108,7 +111,8 @@ public function registerPollingStation(PollingStationRegistrationRequest request
         passwordHash: hashedPassword,
         role: "polling_station",
         createdAt: time:utcNow(),
-        isActive: true
+        isActive: true,
+        division: request.station.division // optional division field
     };
 
     string[]|error resp = dbClient->/adminusers.post([insertRec]);
@@ -122,4 +126,10 @@ public function registerPollingStation(PollingStationRegistrationRequest request
         id: id,
         message: "Polling Station user registered successfully"
     };
+}
+
+public function getAdmins() returns store:AdminUsers[]|error {
+    stream<store:AdminUsers, persist:Error?> adminUsersStream = dbClient->/adminusers;
+    return check from store:AdminUsers admin in adminUsersStream
+        select admin;
 }

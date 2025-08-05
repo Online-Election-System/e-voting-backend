@@ -234,6 +234,7 @@ public type AdminUsers record {|
     string role;
     time:Utc createdAt;
     boolean isActive;
+    string? division;
 |};
 
 public type AdminUsersOptionalized record {|
@@ -243,6 +244,7 @@ public type AdminUsersOptionalized record {|
     string role?;
     time:Utc createdAt?;
     boolean isActive?;
+    string? division?;
 |};
 
 public type AdminUsersTargetType typedesc<AdminUsersOptionalized>;
@@ -255,6 +257,7 @@ public type AdminUsersUpdate record {|
     string role?;
     time:Utc createdAt?;
     boolean isActive?;
+    string? division?;
 |};
 
 public type AddMemberRequest record {|
