@@ -74,7 +74,7 @@ public type EnrolledElection record {|
     string electionId;
     string title;
     time:Date electionDate;
-    string status;
+    //string status;
     time:Utc enrollmentDate;
 |};
 

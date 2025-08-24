@@ -99,7 +99,7 @@ public function getUserProfile(string nic) returns UserProfile|http:NotFound|err
                         electionId: election.id,
                         title: election.electionName,
                         electionDate: election.electionDate,
-                        status: election.status,
+                        //status: election.status,
                         enrollmentDate: enrolment.enrollementDate
                     });
                 }

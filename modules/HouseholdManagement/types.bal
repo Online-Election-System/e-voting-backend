@@ -21,6 +21,7 @@ public type UpdateMemberRequest record {|
     string? newFullName;
     string? newCivilStatus;
     string relevantCertificatePath;
+    string? requestStatus?;
     string? reason;
 |};
 

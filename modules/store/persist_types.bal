@@ -318,6 +318,7 @@ public type UpdateMemberRequest record {|
     string? newFullName;
     string? newCivilStatus;
     string relevantCertificatePath;
+    string? requestStatus;
     string? reason;
 |};
 
@@ -328,6 +329,7 @@ public type UpdateMemberRequestOptionalized record {|
     string? newFullName?;
     string? newCivilStatus?;
     string relevantCertificatePath?;
+    string? requestStatus?;
     string? reason?;
 |};
 
@@ -341,6 +343,7 @@ public type UpdateMemberRequestUpdate record {|
     string? newFullName?;
     string? newCivilStatus?;
     string relevantCertificatePath?;
+    string? requestStatus?;
     string? reason?;
 |};
 

@@ -170,6 +170,7 @@ public isolated client class Client {
                 newFullName: {columnName: "new_full_name"},
                 newCivilStatus: {columnName: "new_civil_status"},
                 relevantCertificatePath: {columnName: "relevant_certificate_path"},
+                requestStatus: {columnName: "requestStatus"},
                 reason: {columnName: "reason"}
             },
             keyFields: ["updateRequestId"]

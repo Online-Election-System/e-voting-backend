@@ -117,6 +117,7 @@ CREATE TABLE "UpdateMemberRequest" (
 	"new_full_name" VARCHAR(191),
 	"new_civil_status" VARCHAR(191),
 	"relevant_certificate_path" VARCHAR(191) NOT NULL,
+	"requestStatus" VARCHAR(191),
 	"reason" VARCHAR(191),
 	PRIMARY KEY("update_request_id")
 );

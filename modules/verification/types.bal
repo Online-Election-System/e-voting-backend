@@ -114,3 +114,104 @@ public type AddMemberRequestDetail record {|
     store:ChiefOccupant? chiefOccupant;
     store:HouseholdDetails? householdDetails;
 |};
+
+// Response types for frontend
+public type UpdateMemberRequestResponse record {|
+    string updateRequestId;
+    string chiefOccupantId;
+    string householdMemberId;
+    string nic;
+    string? newFullName;
+    string? newCivilStatus;
+    string relevantCertificatePath;
+    string requestStatus;
+    string? reason;
+|};
+
+public type UpdateMemberRequestCounts record {|
+    int pending;
+    int approved;
+    int rejected;
+    int total;
+|};
+
+public type UpdateMemberRequestDetailInfo record {|
+    string updateRequestId;
+    string chiefOccupantId;
+    string householdMemberId;
+    string nic;
+    string currentFullName;
+    string currentCivilStatus;
+    string? newFullName;
+    string? newCivilStatus;
+    string relevantCertificatePath;
+    string requestStatus;
+    string? reason;
+|};
+
+public type UpdateMemberRequestDetail record {|
+    UpdateMemberRequestDetailInfo updateRequest;
+    store:HouseholdDetails? householdDetails;
+|};
+
+// Response types
+public type HouseholdResponse record {|
+    string id;
+    string? houseNumber;
+    string? villageStreetEstate;
+    string chiefOccupantName;
+    string chiefOccupantNic;
+    string? chiefOccupantPhone;
+    int totalMembers; // household_member_count + 1 (including chief occupant)
+    string electoralDistrict;
+    string pollingDivision;
+    string? pollingDistrictNumber;
+    string? gramaNiladhariDivision;
+    string lastUpdated;
+    string status;
+|};
+
+public type HouseholdDetailResponse record {|
+    HouseholdDetailInfo household;
+    ChiefOccupantInfo chiefOccupant;
+|};
+
+public type HouseholdDetailInfo record {|
+    string id;
+    string chiefOccupantId;
+    string electoralDistrict;
+    string pollingDivision;
+    string? pollingDistrictNumber;
+    string? gramaNiladhariDivision;
+    string? villageStreetEstate;
+    string? houseNumber;
+    int householdMemberCount;
+    int totalMembers;
+|};
+
+public type ChiefOccupantInfo record {|
+    string id;
+    string fullName;
+    string nic;
+    string? phoneNumber;
+    string dob;
+    string gender;
+    string civilStatus;
+    string email;
+    string role;
+|};
+
+public type HouseholdStatistics record {|
+    int totalHouseholds;
+    int totalMembers;
+    int activeHouseholds;
+    int inactiveHouseholds;
+    map<int> memberDistribution;
+    map<int> districtDistribution;
+|};
+
+public type HouseholdCounts record {|
+    int active;
+    int inactive;
+    int total;
+|};
