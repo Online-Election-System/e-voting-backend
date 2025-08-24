@@ -148,7 +148,7 @@ Feel free to contribute to the project by submitting pull requests or reporting 
 
 ## 🙏 Acknowledgments
 
-- Special thanks to [University of Moratuwa](https://uom.lk) Faculty of Information Technology for supporting this project.
+- Special thanks to [WSO2](https://wso2.com/) & [University of Moratuwa](https://uom.lk) Faculty of Information Technology for supporting this project.
 - This project architecture is inspired by best practices in secure, modern e-voting systems.
 
 ---
