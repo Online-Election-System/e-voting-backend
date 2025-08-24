@@ -5,6 +5,16 @@ import ballerina/log;
 import ballerina/time;
 import ballerina/persist;
 
+// Helper function to check if username already exists
+function isUsernameExists(string username) returns boolean|error {
+    stream<store:AdminUsers, persist:Error?> adminUsersStream = dbClient->/adminusers;
+    store:AdminUsers[] existingUsers = check from store:AdminUsers admin in adminUsersStream
+        where admin.username == username
+        select admin;
+    
+    return existingUsers.length() > 0;
+}
+
 public function registerGovernmentOfficial(GovernmentOfficialRegistrationRequest request) returns json|error {
     // Validate password policy
     string? passwordError = validatePasswordPolicy(request.official.passwordHash);
@@ -15,12 +25,32 @@ public function registerGovernmentOfficial(GovernmentOfficialRegistrationRequest
         };
     }
 
+    // Check if username (NIC) already exists
+    boolean|error usernameExists = isUsernameExists(request.official.nic);
+    if usernameExists is error {
+        log:printError("Failed to check username existence: " + usernameExists.message());
+        return {
+            status: "error",
+            message: "Failed to validate user information"
+        };
+    }
+    
+    if usernameExists {
+        return {
+            status: "error",
+            message: "User with this NIC already exists"
+        };
+    }
+
     string id = common:generateId();
 
     string|error hashedPassword = hashPassword(request.official.passwordHash);
     if hashedPassword is error {
         log:printError("Failed to hash password: " + hashedPassword.message());
-        return error("Failed to hash password");
+        return {
+            status: "error",
+            message: "Failed to process password"
+        };
     }
 
     store:AdminUsersInsert insertRec = {
@@ -36,7 +66,17 @@ public function registerGovernmentOfficial(GovernmentOfficialRegistrationRequest
     string[]|error resp = dbClient->/adminusers.post([insertRec]);
     if resp is error {
         log:printError("Failed to create government official: " + resp.message());
-        return error("Failed to create government official");
+        // Check if it's a unique constraint violation (in case DB has unique constraint)
+        if resp.message().includes("unique") || resp.message().includes("duplicate") {
+            return {
+                status: "error",
+                message: "User with this NIC already exists"
+            };
+        }
+        return {
+            status: "error",
+            message: "Failed to create government official"
+        };
     }
 
     return {
@@ -56,12 +96,32 @@ public function registerElectionCommission(ElectionCommissionRegistrationRequest
         };
     }
 
+    // Check if username (NIC) already exists
+    boolean|error usernameExists = isUsernameExists(request.commission.nic);
+    if usernameExists is error {
+        log:printError("Failed to check username existence: " + usernameExists.message());
+        return {
+            status: "error",
+            message: "Failed to validate user information"
+        };
+    }
+    
+    if usernameExists {
+        return {
+            status: "error",
+            message: "User with this NIC already exists"
+        };
+    }
+
     string id = common:generateId();
 
     string|error hashedPassword = hashPassword(request.commission.passwordHash);
     if hashedPassword is error {
         log:printError("Failed to hash password: " + hashedPassword.message());
-        return error("Failed to hash password");
+        return {
+            status: "error",
+            message: "Failed to process password"
+        };
     }
 
     store:AdminUsersInsert insertRec = {
@@ -77,7 +137,17 @@ public function registerElectionCommission(ElectionCommissionRegistrationRequest
     string[]|error resp = dbClient->/adminusers.post([insertRec]);
     if resp is error {
         log:printError("Failed to create election commission: " + resp.message());
-        return error("Failed to create election commission");
+        // Check if it's a unique constraint violation (in case DB has unique constraint)
+        if resp.message().includes("unique") || resp.message().includes("duplicate") {
+            return {
+                status: "error",
+                message: "User with this NIC already exists"
+            };
+        }
+        return {
+            status: "error",
+            message: "Failed to create election commission"
+        };
     }
 
     return {
@@ -97,12 +167,32 @@ public function registerPollingStation(PollingStationRegistrationRequest request
         };
     }
 
+    // Check if username (NIC) already exists
+    boolean|error usernameExists = isUsernameExists(request.station.nic);
+    if usernameExists is error {
+        log:printError("Failed to check username existence: " + usernameExists.message());
+        return {
+            status: "error",
+            message: "Failed to validate user information"
+        };
+    }
+    
+    if usernameExists {
+        return {
+            status: "error",
+            message: "User with this NIC already exists"
+        };
+    }
+
     string id = common:generateId();
 
     string|error hashedPassword = hashPassword(request.station.passwordHash);
     if hashedPassword is error {
         log:printError("Failed to hash password: " + hashedPassword.message());
-        return error("Failed to hash password");
+        return {
+            status: "error",
+            message: "Failed to process password"
+        };
     }
 
     store:AdminUsersInsert insertRec = {
@@ -118,7 +208,17 @@ public function registerPollingStation(PollingStationRegistrationRequest request
     string[]|error resp = dbClient->/adminusers.post([insertRec]);
     if resp is error {
         log:printError("Failed to create polling station: " + resp.message());
-        return error("Failed to create polling station");
+        // Check if it's a unique constraint violation (in case DB has unique constraint)
+        if resp.message().includes("unique") || resp.message().includes("duplicate") {
+            return {
+                status: "error",
+                message: "User with this NIC already exists"
+            };
+        }
+        return {
+            status: "error",
+            message: "Failed to create polling station"
+        };
     }
 
     return {
