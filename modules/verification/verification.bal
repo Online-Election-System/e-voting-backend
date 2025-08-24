@@ -292,57 +292,34 @@ public function getRegistrationDetailByNic(string nic) returns RegistrationDetai
     return error("Registration not found for NIC: " + nic);
 }
 
-// Function to approve registration
+// Function to approve registration - OPTIMIZED (using existing patterns)
 public function approveRegistration(string nic) returns string|error {
     // Start transaction to ensure data consistency
     transaction {
-        // 1. Insert/Update RegistrationReview table
-        store:RegistrationReview reviewRecord = {
-            id: uuid:createType1AsString(),
-            memberNic: nic,
-            status: "approved",
-            reason: (),
-            reviewedAt: time:utcNow()
-        };
+        // 1. Get user details first (keep existing call)
+        RegistrationDetail userDetail = check getRegistrationDetailByNic(nic);
         
-        // Check if review already exists
+        // 2. Check existing review (optimized single query)
         stream<store:RegistrationReview, persist:Error?> existingReviewStream = dbClient->/registrationreviews;
         store:RegistrationReview[] existingReviews = check from store:RegistrationReview review in existingReviewStream
             where review.memberNic == nic
             select review;
         
-        if existingReviews.length() > 0 {
-            // Update existing record
-            _ = check dbClient->/registrationreviews/[existingReviews[0].id].put({
-                memberNic: nic,
-                status: "approved",
-                reason: (),
-                reviewedAt: time:utcNow()
-            });
-        } else {
-            // Insert new record
-            _ = check dbClient->/registrationreviews.post([reviewRecord]);
-        }
-
-        // 2. Get user details to add to Voter table
-        RegistrationDetail userDetail = check getRegistrationDetailByNic(nic);
-        
-        // 3. Get password from ChiefOccupant or HouseholdMembers table in single query
-        string userPassword = "";
-        store:ChiefOccupant? matchedChief = ();
-        store:HouseholdMembers? matchedMember = ();
-        
-        // Combined query to find user in both tables
+        // 3. Get user from both tables in single optimized query each
         stream<store:ChiefOccupant, persist:Error?> chiefStream = dbClient->/chiefoccupants;
         store:ChiefOccupant[] chiefs = check from store:ChiefOccupant co in chiefStream 
             where co.nic == nic && co.role == "chief_occupant"
             select co;
 
+        string userPassword = "";
+        store:ChiefOccupant? matchedChief = ();
+        store:HouseholdMembers? matchedMember = ();
+
         if chiefs.length() > 0 {
             matchedChief = chiefs[0];
             userPassword = chiefs[0].passwordHash;
         } else {
-            // If not found in chiefs, try household members
+            // Only query household members if not found in chiefs
             stream<store:HouseholdMembers, persist:Error?> memberStream = dbClient->/householdmembers;
             store:HouseholdMembers[] members = check from store:HouseholdMembers hm in memberStream 
                 where hm.nic == nic && hm.role == "household_member"
@@ -356,8 +333,29 @@ public function approveRegistration(string nic) returns string|error {
                 return error("User not found for NIC: " + nic);
             }
         }
-        
-        // 4. Check if voter already exists before creating new record
+
+        // 4. Handle registration review (update or insert)
+        if existingReviews.length() > 0 {
+            // Update existing record
+            _ = check dbClient->/registrationreviews/[existingReviews[0].id].put({
+                memberNic: nic,
+                status: "approved",
+                reason: (),
+                reviewedAt: time:utcNow()
+            });
+        } else {
+            // Insert new record
+            store:RegistrationReview reviewRecord = {
+                id: uuid:createType1AsString(),
+                memberNic: nic,
+                status: "approved",
+                reason: (),
+                reviewedAt: time:utcNow()
+            };
+            _ = check dbClient->/registrationreviews.post([reviewRecord]);
+        }
+
+        // 5. Check if voter already exists (optimized single query)
         stream<store:Voter, persist:Error?> existingVoterStream = dbClient->/voters;
         store:Voter[] existingVoters = check from store:Voter voter in existingVoterStream
             where voter.nationalId == nic
@@ -378,7 +376,7 @@ public function approveRegistration(string nic) returns string|error {
             _ = check dbClient->/voters.post([voterRecord]);
         }
 
-        // 5. Update role using already retrieved data (avoid duplicate queries)
+        // 6. Update role using already retrieved data
         if matchedChief is store:ChiefOccupant {
             // Update ChiefOccupant role
             _ = check dbClient->/chiefoccupants/[matchedChief.id].put({
@@ -419,7 +417,7 @@ public function approveRegistration(string nic) returns string|error {
     }
 }
 
-// Function to reject registration
+// Function to reject registration - OPTIMIZED (using existing patterns)
 public function rejectRegistration(string nic, string reason) returns string|error {
     // First verify the user exists before starting transaction
     RegistrationDetail|error userDetailResult = getRegistrationDetailByNic(nic);
@@ -429,7 +427,7 @@ public function rejectRegistration(string nic, string reason) returns string|err
     
     // Start transaction to ensure data consistency
     transaction {
-        // Check if review already exists
+        // Check if review already exists (single optimized query)
         stream<store:RegistrationReview, persist:Error?> existingReviewStream = dbClient->/registrationreviews;
         store:RegistrationReview[] existingReviews = check from store:RegistrationReview review in existingReviewStream
             where review.memberNic == nic
@@ -437,13 +435,12 @@ public function rejectRegistration(string nic, string reason) returns string|err
         
         if existingReviews.length() > 0 {
             // Update existing record
-            store:RegistrationReviewUpdate updateRecord = {
+            _ = check dbClient->/registrationreviews/[existingReviews[0].id].put({
                 memberNic: nic,
                 status: "rejected",
                 reason: reason,
                 reviewedAt: time:utcNow()
-            };
-            _ = check dbClient->/registrationreviews/[existingReviews[0].id].put(updateRecord);
+            });
         } else {
             // Insert new record
             store:RegistrationReview reviewRecord = {
@@ -589,12 +586,11 @@ public function getRemovalRequestCounts() returns RemovalRequestCounts|error {
     };
 }
 
-// Function to approve removal request
-
+// Function to approve removal request - OPTIMIZED
 public function approveRemovalRequest(string deleteRequestId) returns string|error {
     // Start transaction to ensure data consistency
     transaction {
-        // 1. Get the removal request details
+        // 1. Get the removal request details (single optimized query)
         stream<store:DeleteMemberRequest, persist:Error?> deleteRequestStream = dbClient->/deletememberrequests;
         store:DeleteMemberRequest[] deleteRequests = check from store:DeleteMemberRequest dmr in deleteRequestStream
             where dmr.deleteRequestId == deleteRequestId
@@ -607,7 +603,48 @@ public function approveRemovalRequest(string deleteRequestId) returns string|err
 
         store:DeleteMemberRequest deleteRequest = deleteRequests[0];
 
-        // 2. Update DeleteMemberRequest status to "approved" and clear reason
+        // 2. Get household member details first (before updating request status)
+        string memberIdValue = "";
+        store:HouseholdMembers? member = ();
+        
+        if deleteRequest.householdMemberId is string && deleteRequest.householdMemberId != "" {
+            memberIdValue = <string>deleteRequest.householdMemberId;
+            
+            // Get household member details by ID (single optimized query)
+            stream<store:HouseholdMembers, persist:Error?> memberStream = dbClient->/householdmembers;
+            store:HouseholdMembers[] members = check from store:HouseholdMembers hm in memberStream
+                where hm.id == memberIdValue
+                select hm;
+
+            if members.length() > 0 {
+                member = members[0];
+            } else {
+                
+                return error("Household member not found for ID: " + memberIdValue);
+            }
+        } else {
+            
+            return error("No household member ID provided in removal request");
+        }
+
+        // 3. Get household details for count update (single optimized query)
+        stream<store:HouseholdDetails, persist:Error?> hhDetailsStream = dbClient->/householddetails;
+        store:HouseholdDetails[] householdDetails = check from store:HouseholdDetails hd in hhDetailsStream
+            where hd.chiefOccupantId == deleteRequest.chiefOccupantId
+            select hd;
+
+        // 4. Get voter details if member has NIC (single optimized query)
+        store:Voter[] voters = [];
+        if member is store:HouseholdMembers && member.nic is string && member.nic != "" {
+            stream<store:Voter, persist:Error?> voterStream = dbClient->/voters;
+            voters = check from store:Voter v in voterStream
+                where v.nationalId == <string>member.nic
+                select v;
+        }
+
+        // 5. Now perform all updates/deletes efficiently
+        
+        // Update DeleteMemberRequest status to "approved"
         _ = check dbClient->/deletememberrequests/[deleteRequestId].put({
             chiefOccupantId: deleteRequest.chiefOccupantId,
             householdMemberId: deleteRequest.householdMemberId,
@@ -617,73 +654,44 @@ public function approveRemovalRequest(string deleteRequestId) returns string|err
             rejectionReason: deleteRequest.rejectionReason
         });
 
-        // 3. Get household member details using household_member_id
-        if deleteRequest.householdMemberId is string && deleteRequest.householdMemberId != "" {
-            string memberIdValue = <string>deleteRequest.householdMemberId;
-            
-            // Get household member details by ID
-            stream<store:HouseholdMembers, persist:Error?> memberStream = dbClient->/householdmembers;
-            store:HouseholdMembers[] members = check from store:HouseholdMembers hm in memberStream
-                where hm.id == memberIdValue
-                select hm;
-
-            if members.length() > 0 {
-                store:HouseholdMembers member = members[0];
-
-                // 4. Delete from Voter table using member's NIC
-                if member.nic is string && member.nic != "" {
-                    stream<store:Voter, persist:Error?> voterStream = dbClient->/voters;
-                    store:Voter[] voters = check from store:Voter v in voterStream
-                        where v.nationalId == <string>member.nic
-                        select v;
-
-                    foreach var voter in voters {
-                        _ = check dbClient->/voters/[voter.id].delete();
-                    }
-                }
-
-                // 5. Delete the household member record using the member's ID
-                _ = check dbClient->/householdmembers/[member.id].delete();
-
-                // 6. Update household member count in HouseholdDetails using chief occupant ID
-                stream<store:HouseholdDetails, persist:Error?> hhDetailsStream = dbClient->/householddetails;
-                store:HouseholdDetails[] householdDetails = check from store:HouseholdDetails hd in hhDetailsStream
-                    where hd.chiefOccupantId == deleteRequest.chiefOccupantId
-                    select hd;
-
-                if householdDetails.length() > 0 {
-                    store:HouseholdDetails hh = householdDetails[0];
-                    int newMemberCount = hh.householdMemberCount > 0 ? hh.householdMemberCount - 1 : 0;
-                    
-                    _ = check dbClient->/householddetails/[hh.id].put({
-                        chiefOccupantId: hh.chiefOccupantId,
-                        electoralDistrict: hh.electoralDistrict,
-                        pollingDivision: hh.pollingDivision,
-                        pollingDistrictNumber: hh.pollingDistrictNumber,
-                        gramaNiladhariDivision: hh.gramaNiladhariDivision,
-                        villageStreetEstate: hh.villageStreetEstate,
-                        houseNumber: hh.houseNumber,
-                        householdMemberCount: newMemberCount
-                    });
-                }
-            } else {
-                return error("Household member not found for ID: " + memberIdValue);
-            }
-        } else {
-            return error("No household member ID provided in removal request");
+        // Delete from Voter table if exists
+        foreach var voter in voters {
+            _ = check dbClient->/voters/[voter.id].delete();
         }
+
+        // Delete the household member record
+        if member is store:HouseholdMembers {
+            _ = check dbClient->/householdmembers/[member.id].delete();
+        }
+
+        // Update household member count
+        if householdDetails.length() > 0 {
+            store:HouseholdDetails hh = householdDetails[0];
+            int newMemberCount = hh.householdMemberCount > 0 ? hh.householdMemberCount - 1 : 0;
+            
+            _ = check dbClient->/householddetails/[hh.id].put({
+                chiefOccupantId: hh.chiefOccupantId,
+                electoralDistrict: hh.electoralDistrict,
+                pollingDivision: hh.pollingDivision,
+                pollingDistrictNumber: hh.pollingDistrictNumber,
+                gramaNiladhariDivision: hh.gramaNiladhariDivision,
+                villageStreetEstate: hh.villageStreetEstate,
+                houseNumber: hh.houseNumber,
+                householdMemberCount: newMemberCount
+            });
+        }
+
+        return "Removal request approved successfully and member removed from all systems";
     } on fail error e {
         return error("Failed to approve removal request: " + e.message());
     }
-    
-    return "Removal request approved successfully and member removed from all systems";
 }
 
-// Function to reject removal request
+// Function to reject removal request - OPTIMIZED
 public function rejectRemovalRequest(string deleteRequestId, string rejectionReason) returns string|error {
     // Start transaction to ensure data consistency
     transaction {
-        // 1. Get the removal request details
+        // 1. Get the removal request details (single optimized query)
         stream<store:DeleteMemberRequest, persist:Error?> deleteRequestStream = dbClient->/deletememberrequests;
         store:DeleteMemberRequest[] deleteRequests = check from store:DeleteMemberRequest dmr in deleteRequestStream
             where dmr.deleteRequestId == deleteRequestId
@@ -696,7 +704,7 @@ public function rejectRemovalRequest(string deleteRequestId, string rejectionRea
 
         store:DeleteMemberRequest deleteRequest = deleteRequests[0];
 
-        // 2. Update DeleteMemberRequest status to "rejected" with rejection reason
+        // 2. Update DeleteMemberRequest status to "rejected" with rejection reason (single update)
         _ = check dbClient->/deletememberrequests/[deleteRequestId].put({
             chiefOccupantId: deleteRequest.chiefOccupantId,
             householdMemberId: deleteRequest.householdMemberId,
@@ -1126,21 +1134,17 @@ public function getUpdateMemberRequestDetail(string updateRequestId) returns Upd
 }
 
 // Approve update member request
+// Approve update member request
 public function approveUpdateMemberRequest(string updateRequestId) returns string|error {
     
     transaction {
-        // Get the update member request details
-        stream<store:UpdateMemberRequest, persist:Error?> updateRequestStream = dbClient->/updatememberrequests;
-        store:UpdateMemberRequest[] updateRequests = check from store:UpdateMemberRequest umr in updateRequestStream
-            where umr.updateRequestId == updateRequestId
-            select umr;
+        // Get the update member request details directly by ID
+        store:UpdateMemberRequest|persist:Error updateRequest = dbClient->/updatememberrequests/[updateRequestId];
         
-        if updateRequests.length() == 0 {
+        if updateRequest is persist:Error {
             check commit;
             return error("Update member request not found for ID: " + updateRequestId);
         }
-        
-        store:UpdateMemberRequest updateRequest = updateRequests[0];
         
         // Update the request status to approved and clear reason
         _ = check dbClient->/updatememberrequests/[updateRequestId].put({
@@ -1153,17 +1157,17 @@ public function approveUpdateMemberRequest(string updateRequestId) returns strin
             reason: ()
         });
         
-        // Get household member details
-        stream<store:HouseholdMembers, persist:Error?> householdMemberStream = dbClient->/householdmembers;
-        store:HouseholdMembers[] householdMembers = check from store:HouseholdMembers hm in householdMemberStream
-            where hm.id == (updateRequest.householdMemberId ?: "")
-            select hm;
-        
-        if householdMembers.length() == 0 {
-            return error("Household member not found for ID: " + (updateRequest.householdMemberId ?: ""));
+        // Get household member details directly by ID
+        string householdMemberId = updateRequest.householdMemberId ?: "";
+        if householdMemberId == "" {
+            return error("Invalid household member ID");
         }
         
-        store:HouseholdMembers householdMember = householdMembers[0];
+        store:HouseholdMembers|persist:Error householdMember = dbClient->/householdmembers/[householdMemberId];
+        
+        if householdMember is persist:Error {
+            return error("Household member not found for ID: " + householdMemberId);
+        }
         
         // Update household member details (name and/or civil status)
         string updatedFullName = updateRequest.newFullName ?: householdMember.fullName;
@@ -1187,22 +1191,28 @@ public function approveUpdateMemberRequest(string updateRequestId) returns strin
         
         // Update voter table if name is changed and NIC exists
         if updateRequest.newFullName is string && householdMember.nic is string {
-            stream<store:Voter, persist:Error?> voterStream = dbClient->/voters;
-            store:Voter[] voters = check from store:Voter v in voterStream
-                where v.nationalId == (householdMember.nic ?: "")
-                select v;
-            
-            if voters.length() > 0 {
-                store:Voter voter = voters[0];
-                _ = check dbClient->/voters/[voter.id].put({
-                    nationalId: voter.nationalId,
-                    name: updatedFullName,
-                    password: voter.password,
-                    district: voter.district,
-                    pollingStation: voter.pollingStation,
-                    registrationDate: voter.registrationDate,
-                    status: voter.status
-                });
+            string nicNumber = householdMember.nic ?: "";
+            if nicNumber != "" {
+                // Try to get voter by NIC using a more efficient query if possible
+                // If your database supports indexes on nationalId, this will be faster
+                stream<store:Voter, persist:Error?> voterStream = dbClient->/voters;
+                store:Voter[] voters = check from store:Voter v in voterStream
+                    where v.nationalId == nicNumber
+                    limit 1  // Add limit to stop after finding the first match
+                    select v;
+                
+                if voters.length() > 0 {
+                    store:Voter voter = voters[0];
+                    _ = check dbClient->/voters/[voter.id].put({
+                        nationalId: voter.nationalId,
+                        name: updatedFullName,
+                        password: voter.password,
+                        district: voter.district,
+                        pollingStation: voter.pollingStation,
+                        registrationDate: voter.registrationDate,
+                        status: voter.status
+                    });
+                }
             }
         }
         
@@ -1217,18 +1227,13 @@ public function approveUpdateMemberRequest(string updateRequestId) returns strin
 public function rejectUpdateMemberRequest(string updateRequestId, string rejectionReason) returns string|error {
     
     transaction {
-        // Get the update member request details
-        stream<store:UpdateMemberRequest, persist:Error?> updateRequestStream = dbClient->/updatememberrequests;
-        store:UpdateMemberRequest[] updateRequests = check from store:UpdateMemberRequest umr in updateRequestStream
-            where umr.updateRequestId == updateRequestId
-            select umr;
+        // Get the update member request details directly by ID
+        store:UpdateMemberRequest|persist:Error updateRequest = dbClient->/updatememberrequests/[updateRequestId];
         
-        if updateRequests.length() == 0 {
+        if updateRequest is persist:Error {
             check commit;
             return error("Update member request not found for ID: " + updateRequestId);
         }
-        
-        store:UpdateMemberRequest updateRequest = updateRequests[0];
         
         // Update the request status to rejected with reason
         _ = check dbClient->/updatememberrequests/[updateRequestId].put({
@@ -1245,4 +1250,282 @@ public function rejectUpdateMemberRequest(string updateRequestId, string rejecti
     } on fail error e {
         return error("Failed to reject update member request: " + e.message());
     }
+}
+
+
+// Function to get total eligible voters count
+public function getEligibleVotersCount() returns record {| int count; |}|error {
+    
+    // 1. Get approved registrations count from RegistrationReview table
+    stream<store:RegistrationReview, persist:Error?> approvedStream = dbClient->/registrationreviews;
+    store:RegistrationReview[] approvedReviews = check from store:RegistrationReview review in approvedStream
+        where review.status == "approved"
+        select review;
+    int approvedRegistrations = approvedReviews.length();
+    
+    // 2. Get approved add member requests count
+    stream<store:AddMemberRequest, persist:Error?> approvedAddStream = dbClient->/addmemberrequests;
+    store:AddMemberRequest[] approvedAddRequests = check from store:AddMemberRequest amr in approvedAddStream
+        where amr.requestStatus == "approved"
+        select amr;
+    int approvedAddMembers = approvedAddRequests.length();
+    
+    // 3. Get approved delete member requests count
+    stream<store:DeleteMemberRequest, persist:Error?> approvedDeleteStream = dbClient->/deletememberrequests;
+    store:DeleteMemberRequest[] approvedDeleteRequests = check from store:DeleteMemberRequest dmr in approvedDeleteStream
+        where dmr.requestStatus == "approved"
+        select dmr;
+    int approvedDeleteMembers = approvedDeleteRequests.length();
+    
+    // 4. Calculate total eligible voters
+    int totalEligibleVoters = approvedRegistrations + approvedAddMembers - approvedDeleteMembers;
+    
+    // Ensure count is not negative
+    if totalEligibleVoters < 0 {
+        totalEligibleVoters = 0;
+    }
+    
+    return { count: totalEligibleVoters };
+}
+
+
+// MANAGE HOUSEHOLDS
+
+// Get all households with chief occupant details
+public function getHouseholdsWithChiefOccupant(string? search, string? district, string? division) returns HouseholdResponse[]|error {
+    
+    stream<store:HouseholdDetails, persist:Error?> householdStream = dbClient->/householddetails;
+    store:HouseholdDetails[] households = check from store:HouseholdDetails hd in householdStream
+        select hd;
+    
+    HouseholdResponse[] responses = [];
+    
+    foreach store:HouseholdDetails household in households {
+        // Get chief occupant details
+        stream<store:ChiefOccupant, persist:Error?> chiefOccupantStream = dbClient->/chiefoccupants;
+        store:ChiefOccupant[] chiefOccupants = check from store:ChiefOccupant co in chiefOccupantStream
+            where co.id == household.chiefOccupantId
+            select co;
+        
+        if chiefOccupants.length() > 0 {
+            store:ChiefOccupant chiefOccupant = chiefOccupants[0];
+            
+            // Apply filters
+            boolean includeRecord = true;
+            
+            // Filter by district
+            if district is string && district != "all" && household.electoralDistrict != district {
+                includeRecord = false;
+            }
+            
+            // Filter by polling division
+            if division is string && division != "all" && household.pollingDivision != division {
+                includeRecord = false;
+            }
+            
+            // Filter by search term
+            if search is string && search.trim() != "" {
+                string searchLower = 'string:toLowerAscii(search);
+                boolean matchesSearch = 'string:toLowerAscii(chiefOccupant.fullName).includes(searchLower) ||
+                    'string:toLowerAscii(chiefOccupant.nic).includes(searchLower) ||
+                    'string:toLowerAscii(household.houseNumber ?: "").includes(searchLower) ||
+                    'string:toLowerAscii(household.villageStreetEstate ?: "").includes(searchLower);
+                if !matchesSearch {
+                    includeRecord = false;
+                }
+            }
+            
+            if includeRecord {
+                HouseholdResponse response = {
+                    id: household.id,
+                    houseNumber: household.houseNumber,
+                    villageStreetEstate: household.villageStreetEstate,
+                    chiefOccupantName: chiefOccupant.fullName,
+                    chiefOccupantNic: chiefOccupant.nic,
+                    chiefOccupantPhone: chiefOccupant.phoneNumber,
+                    totalMembers: household.householdMemberCount + 1, // Add 1 to include chief occupant
+                    electoralDistrict: household.electoralDistrict,
+                    pollingDivision: household.pollingDivision,
+                    pollingDistrictNumber: household.pollingDistrictNumber,
+                    gramaNiladhariDivision: household.gramaNiladhariDivision,
+                    lastUpdated: getCurrentTimestamp(),
+                    status: determineHouseholdStatus(chiefOccupant.role)
+                };
+                responses.push(response);
+            }
+        }
+    }
+    
+    return responses;
+}
+
+// Get household by ID with detailed information
+public function getHouseholdById(string householdId) returns HouseholdDetailResponse|error {
+    
+    // Get household details
+    stream<store:HouseholdDetails, persist:Error?> householdStream = dbClient->/householddetails;
+    store:HouseholdDetails[] households = check from store:HouseholdDetails hd in householdStream
+        where hd.id == householdId
+        select hd;
+    
+    if households.length() == 0 {
+        return error("Household not found for ID: " + householdId);
+    }
+    
+    store:HouseholdDetails household = households[0];
+    
+    // Get chief occupant details
+    stream<store:ChiefOccupant, persist:Error?> chiefOccupantStream = dbClient->/chiefoccupants;
+    store:ChiefOccupant[] chiefOccupants = check from store:ChiefOccupant co in chiefOccupantStream
+        where co.id == household.chiefOccupantId
+        select co;
+    
+    if chiefOccupants.length() == 0 {
+        return error("Chief occupant not found for household ID: " + householdId);
+    }
+    
+    store:ChiefOccupant chiefOccupant = chiefOccupants[0];
+    
+    HouseholdDetailInfo householdDetail = {
+        id: household.id,
+        chiefOccupantId: household.chiefOccupantId,
+        electoralDistrict: household.electoralDistrict,
+        pollingDivision: household.pollingDivision,
+        pollingDistrictNumber: household.pollingDistrictNumber,
+        gramaNiladhariDivision: household.gramaNiladhariDivision,
+        villageStreetEstate: household.villageStreetEstate,
+        houseNumber: household.houseNumber,
+        householdMemberCount: household.householdMemberCount,
+        totalMembers: household.householdMemberCount + 1
+    };
+    
+    ChiefOccupantInfo chiefOccupantDetail = {
+        id: chiefOccupant.id,
+        fullName: chiefOccupant.fullName,
+        nic: chiefOccupant.nic,
+        phoneNumber: chiefOccupant.phoneNumber,
+        dob: chiefOccupant.dob,
+        gender: chiefOccupant.gender,
+        civilStatus: chiefOccupant.civilStatus,
+        email: chiefOccupant.email,
+        role: chiefOccupant.role
+    };
+    
+    return {
+        household: householdDetail,
+        chiefOccupant: chiefOccupantDetail
+    };
+}
+
+// Get households by electoral district
+public function getHouseholdsByElectoralDistrict(string electoralDistrict) returns HouseholdResponse[]|error {
+    return getHouseholdsWithChiefOccupant((), electoralDistrict, ());
+}
+
+// Get households by polling division
+public function getHouseholdsByPollingDivision(string pollingDivision) returns HouseholdResponse[]|error {
+    return getHouseholdsWithChiefOccupant((), (), pollingDivision);
+}
+
+// Get household statistics
+public function getHouseholdStatistics() returns HouseholdStatistics|error {
+    
+    stream<store:HouseholdDetails, persist:Error?> householdStream = dbClient->/householddetails;
+    store:HouseholdDetails[] households = check from store:HouseholdDetails hd in householdStream
+        select hd;
+    
+    int totalHouseholds = households.length();
+    int totalMembers = 0;
+    int activeHouseholds = 0;
+    int inactiveHouseholds = 0;
+    map<int> memberDistribution = {};
+    map<int> districtDistribution = {};
+    
+    foreach store:HouseholdDetails household in households {
+        // Calculate total members (household_member_count + 1 for chief occupant)
+        int householdTotalMembers = household.householdMemberCount + 1;
+        totalMembers += householdTotalMembers;
+        
+        // Member distribution
+        string memberCountKey = householdTotalMembers.toString();
+        int currentCount = memberDistribution[memberCountKey] ?: 0;
+        memberDistribution[memberCountKey] = currentCount + 1;
+        
+        // District distribution
+        int districtCount = districtDistribution[household.electoralDistrict] ?: 0;
+        districtDistribution[household.electoralDistrict] = districtCount + 1;
+        
+        // Get chief occupant status for active/inactive count
+        stream<store:ChiefOccupant, persist:Error?> chiefOccupantStream = dbClient->/chiefoccupants;
+        store:ChiefOccupant[] chiefOccupants = check from store:ChiefOccupant co in chiefOccupantStream
+            where co.id == household.chiefOccupantId
+            select co;
+        
+        if chiefOccupants.length() > 0 {
+            store:ChiefOccupant chiefOccupant = chiefOccupants[0];
+            if chiefOccupant.role == "ACTIVE" {
+                activeHouseholds += 1;
+            } else {
+                inactiveHouseholds += 1;
+            }
+        }
+    }
+    
+    return {
+        totalHouseholds: totalHouseholds,
+        totalMembers: totalMembers,
+        activeHouseholds: activeHouseholds,
+        inactiveHouseholds: inactiveHouseholds,
+        memberDistribution: memberDistribution,
+        districtDistribution: districtDistribution
+    };
+}
+
+// Get household counts by status
+public function getHouseholdCounts() returns HouseholdCounts|error {
+    
+    stream<store:HouseholdDetails, persist:Error?> householdStream = dbClient->/householddetails;
+    store:HouseholdDetails[] households = check from store:HouseholdDetails hd in householdStream
+        select hd;
+    
+    int active = 0;
+    int inactive = 0;
+    
+    foreach store:HouseholdDetails household in households {
+        // Get chief occupant status
+        stream<store:ChiefOccupant, persist:Error?> chiefOccupantStream = dbClient->/chiefoccupants;
+        store:ChiefOccupant[] chiefOccupants = check from store:ChiefOccupant co in chiefOccupantStream
+            where co.id == household.chiefOccupantId
+            select co;
+        
+        if chiefOccupants.length() > 0 {
+            store:ChiefOccupant chiefOccupant = chiefOccupants[0];
+            if chiefOccupant.role == "ACTIVE" {
+                active += 1;
+            } else {
+                inactive += 1;
+            }
+        }
+    }
+    
+    return {
+        active: active,
+        inactive: inactive,
+        total: households.length()
+    };
+}
+
+// Helper function to determine household status based on chief occupant role
+function determineHouseholdStatus(string role) returns string {
+    if role == "ACTIVE" {
+        return "active";
+    } else {
+        return "inactive";
+    }
+}
+
+// Helper function to get current timestamp
+function getCurrentTimestamp() returns string {
+    time:Utc currentTime = time:utcNow();
+    return time:utcToString(currentTime);
 }

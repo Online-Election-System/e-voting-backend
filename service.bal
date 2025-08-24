@@ -1217,7 +1217,101 @@ returns http:InternalServerError & readonly|http:BadRequest & readonly|http:NotF
     }
 
 
+// Get total eligible voters count
+resource function get eligible\-voters/count()
+returns record {| int count; |}|error {
+    return verification:getEligibleVotersCount();
+}
 
+   // MANAGE HOUSEHOLDS
+   // Get all households with chief occupant details
+    resource function get households(string? search, string? district, string? division) 
+    returns json|error {
+        
+        // Get households
+        verification:HouseholdResponse[]|error householdsResult = verification:getHouseholdsWithChiefOccupant(search, district, division);
+        
+        if householdsResult is error {
+            log:printError("Error fetching households", householdsResult);
+            return householdsResult;
+        }
+        
+        log:printInfo(string `Successfully retrieved ${householdsResult.length()} households`);
+        return householdsResult;
+    }
+
+    // Get household by ID with chief occupant details
+    resource function get households/[string householdId]() 
+    returns json|http:NotFound|error {
+        
+        verification:HouseholdDetailResponse|error result = verification:getHouseholdById(householdId);
+        
+        if result is error {
+            if result.message().includes("not found") {
+                log:printWarn(string `Household not found with ID: ${householdId}`);
+                return http:NOT_FOUND;
+            }
+            log:printError(string `Error fetching household ${householdId}`, result);
+            return result;
+        }
+        
+        log:printInfo(string `Successfully retrieved household: ${householdId}`);
+        return {
+            "household": result.household,
+            "chiefOccupant": result.chiefOccupant
+        };
+    }
+
+    // Get households by electoral district
+    resource function get households/district/[string electoralDistrict]() 
+    returns json|error {
+        
+        verification:HouseholdResponse[]|error householdsResult = verification:getHouseholdsByElectoralDistrict(electoralDistrict);
+        
+        if householdsResult is error {
+            log:printError(string `Error fetching households for district ${electoralDistrict}`, householdsResult);
+            return householdsResult;
+        }
+        
+        log:printInfo(string `Successfully retrieved ${householdsResult.length()} households for district: ${electoralDistrict}`);
+        return householdsResult;
+    }
+
+    // Get households by polling division
+    resource function get households/polling/[string pollingDivision]() 
+    returns json|error {
+        
+        verification:HouseholdResponse[]|error householdsResult = verification:getHouseholdsByPollingDivision(pollingDivision);
+        
+        if householdsResult is error {
+            log:printError(string `Error fetching households for polling division ${pollingDivision}`, householdsResult);
+            return householdsResult;
+        }
+        
+        log:printInfo(string `Successfully retrieved ${householdsResult.length()} households for polling division: ${pollingDivision}`);
+        return householdsResult;
+    }
+
+    // Get household statistics
+    resource function get households/statistics() 
+    returns verification:HouseholdStatistics|error {
+        
+        verification:HouseholdStatistics|error statsResult = verification:getHouseholdStatistics();
+        
+        if statsResult is error {
+            log:printError("Error fetching household statistics", statsResult);
+            return statsResult;
+        }
+        
+        log:printInfo("Successfully retrieved household statistics");
+        return statsResult;
+    }
+
+    // Get household counts by status
+    resource function get households/counts()
+    returns verification:HouseholdCounts|error {
+        return verification:getHouseholdCounts();
+    }
 
 
 
